@@ -9,20 +9,18 @@ export const metadata: Metadata = {
   description: 'Interactive finance simulation platform built with Next.js',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <head>
+        {/* Tabler Icons CSS in <head> so it doesn’t affect layout flow */}
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"
         />
-        {children}
-      </body>
+      </head>
+      {/* No extra padding/margins here; PageShell controls canvas */}
+      <body className={inter.className}>{children}</body>
     </html>
   )
 }
