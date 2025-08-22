@@ -16,13 +16,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
+      <body className={inter.className}>
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"
         />
-      </head>
-      <body className={inter.className}>{children}</body>
+        {children}
+      </body>
     </html>
   )
 }
