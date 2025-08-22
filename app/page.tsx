@@ -180,10 +180,10 @@ export default function Dashboard() {
           </div>
 
           {/* Bottom Section */}
-          <div className="flex gap-8 h-[400px]">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 h-auto lg:h-[400px]">
             {/* Chat Section */}
             <div className="flex-1 flex flex-col gap-4">
-              <div className="w-[267px] h-10 rounded-[22px] bg-[#04456d]/30 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-[#04456d]/40 transition-all">
+              <div className="w-full lg:w-[267px] h-10 rounded-[22px] bg-[#04456d]/30 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-[#04456d]/40 transition-all">
                 Have a question? Ask Benny!
               </div>
               <div className="flex flex-col gap-4 flex-1">
