@@ -1,6 +1,6 @@
 export default function RightRail() {
   return (
-    <div className="w-[300px] bg-[#E8F3FA] rounded-2xl p-6 space-y-4">
+    <div className="w-full bg-[#E8F3FA] rounded-2xl p-6 space-y-4">
       {/* Unlocked Avatars Section */}
       <div>
         <h2 className="text-lg font-semibold mb-4 text-gray-900">Unlocked Avatars</h2>
