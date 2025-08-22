@@ -71,23 +71,23 @@ export default function Dashboard() {
       <div className="ml-0 sm:ml-[180px] lg:ml-[200px] flex-1 p-4 lg:p-8 pt-20 sm:pt-8">
         <div className="max-w-none lg:max-w-[888px]">
           {/* Hero Section */}
-          <div className="w-full h-40 p-8 mb-8 rounded-[20px] bg-gradient-to-br from-[#04456d] to-[#0369a1] flex items-center justify-between relative overflow-hidden">
-            <div className="flex flex-col gap-6 flex-1">
-              <h1 className="font-bold text-2xl text-white leading-tight">
+          <div className="w-full h-auto lg:h-40 p-4 lg:p-8 mb-6 lg:mb-8 rounded-[20px] bg-gradient-to-br from-[#04456d] to-[#0369a1] flex flex-col lg:flex-row items-center lg:justify-between relative overflow-hidden gap-4 lg:gap-0">
+            <div className="flex flex-col gap-4 lg:gap-6 flex-1 text-center lg:text-left">
+              <h1 className="font-bold text-xl lg:text-2xl text-white leading-tight">
                 Hi Ibnat, Keep it up! You're doing great!
               </h1>
-              <button className="flex items-center gap-2 px-6 py-3 bg-white/20 border border-white/30 rounded-xl text-white font-medium text-sm hover:bg-white/30 transition-all backdrop-blur-sm w-fit">
+              <button className="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 bg-white/20 border border-white/30 rounded-xl text-white font-medium text-sm hover:bg-white/30 transition-all backdrop-blur-sm w-fit mx-auto lg:mx-0">
                 <span>Continue your lesson</span>
                 <i className="ti ti-arrow-right"></i>
               </button>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="w-[117px] h-[119px] bg-white/10 rounded-full flex items-center justify-center">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                  <i className="ti ti-user text-white text-2xl"></i>
+              <div className="w-20 lg:w-[117px] h-20 lg:h-[119px] bg-white/10 rounded-full flex items-center justify-center">
+                <div className="w-12 lg:w-16 h-12 lg:h-16 bg-white/20 rounded-full flex items-center justify-center">
+                  <i className="ti ti-user text-white text-xl lg:text-2xl"></i>
                 </div>
               </div>
-              <div className="font-bold text-lg text-white">Level 9</div>
+              <div className="font-bold text-base lg:text-lg text-white">Level 9</div>
               <div className="text-xs text-white/80 text-center max-w-[140px] leading-relaxed">
                 Complete Two More Modules And Unlock Equity Elephant
               </div>
