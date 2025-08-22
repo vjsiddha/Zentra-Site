@@ -208,18 +208,18 @@ export default function Dashboard() {
 
             {/* Simulator Section */}
             <div className="flex-1 flex flex-col gap-4">
-              <div className="w-[267px] h-10 rounded-[22px] bg-[#04456d]/30 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-[#04456d]/40 transition-all">
+              <div className="w-full lg:w-[267px] h-10 rounded-[22px] bg-[#04456d]/30 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-[#04456d]/40 transition-all">
                 Try the Simulator
               </div>
-              <div className="w-[346px] h-[202px] rounded-[22px] bg-[#d0e9ff] p-6 flex flex-col justify-center items-center relative">
+              <div className="w-full lg:w-[346px] h-[180px] lg:h-[202px] rounded-[22px] bg-[#d0e9ff] p-4 lg:p-6 flex flex-col justify-center items-center relative">
                 <div className="text-center">
                   <div className="font-semibold text-base text-black mb-2">Portfolio Value</div>
-                  <div className="font-medium text-2xl text-[#04456d] mb-2">$ 11,353.31</div>
-                  <div className="absolute top-16 right-20 font-medium text-xs text-[#230503]">+ 6.33%</div>
-                  <div className="absolute bottom-6 font-medium text-xs text-gray-400">Withdraw</div>
+                  <div className="font-medium text-xl lg:text-2xl text-[#04456d] mb-2">$ 11,353.31</div>
+                  <div className="absolute top-12 lg:top-16 right-16 lg:right-20 font-medium text-xs text-[#230503]">+ 6.33%</div>
+                  <div className="absolute bottom-4 lg:bottom-6 font-medium text-xs text-gray-400">Withdraw</div>
                 </div>
               </div>
-              <div className="flex w-[169px] h-[45px] px-3 py-2 items-center gap-3 rounded-[40px] bg-[#04456d] cursor-pointer hover:bg-[#04456d]/90 transition-all">
+              <div className="flex w-full lg:w-[169px] h-[45px] px-3 py-2 items-center justify-center gap-3 rounded-[40px] bg-[#04456d] cursor-pointer hover:bg-[#04456d]/90 transition-all">
                 <div className="text-white font-medium text-xs">Join Now</div>
               </div>
             </div>
