@@ -1,3 +1,4 @@
+import PageShell from '@/components/PageShell'
 import SidebarNav from '@/components/SidebarNav'
 import HeroCard from '@/components/HeroCard'
 import LessonCard from '@/components/LessonCard'
@@ -7,9 +8,9 @@ import RightRail from '@/components/RightRail'
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 3-Column Grid Container */}
-      <div className="grid grid-cols-[240px_1fr_300px] gap-6 max-w-[1280px] mx-auto px-6 py-8">
+    <PageShell>
+      {/* 3-Column Grid */}
+      <div className="grid grid-cols-[240px_1fr_300px] gap-6">
         
         {/* Column 1: Sidebar (240px) */}
         <div className="sticky top-8 h-fit flex-shrink-0">
@@ -75,6 +76,6 @@ export default function Dashboard() {
         </div>
         
       </div>
-    </div>
+    </PageShell>
   )
 }
