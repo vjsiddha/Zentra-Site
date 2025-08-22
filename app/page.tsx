@@ -114,9 +114,9 @@ export default function Dashboard() {
           </div>
 
           {/* Go Back To Your Favourites */}
-          <div className="mb-10">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="font-bold text-lg text-[#202020] uppercase tracking-wider">
+          <div className="mb-8 lg:mb-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 lg:mb-6 gap-4 sm:gap-0">
+              <h2 className="font-bold text-base lg:text-lg text-[#202020] uppercase tracking-wider">
                 Go Back To Your Favourites
               </h2>
               <div className="flex gap-2">
@@ -128,7 +128,7 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-            <div className="flex gap-6">
+            <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 overflow-x-auto pb-4">
               <div className="w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
                 <div className="h-40 bg-gray-100 relative">
                   <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded text-xs font-semibold text-gray-700 uppercase tracking-wider">
