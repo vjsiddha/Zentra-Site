@@ -42,19 +42,19 @@ export default function Dashboard() {
                 <LessonCard
                   title="Lesson 1: Your Savings Matter"
                   category="SAVINGS"
-                  imageUrl="/api/placeholder/280/160"
+                  imageUrl="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=280&h=160&fit=crop"
                   progress={75}
                 />
                 <LessonCard
                   title="Lesson 7: Count Your Pennies"
                   category="SAVINGS"
-                  imageUrl="/api/placeholder/280/160"
+                  imageUrl="https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=280&h=160&fit=crop"
                   progress={50}
                 />
                 <LessonCard
                   title="Lesson 4: Meme Or Money-Maker?"
                   category="STOCKS"
-                  imageUrl="/api/placeholder/280/160"
+                  imageUrl="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=280&h=160&fit=crop"
                   progress={65}
                 />
               </div>
