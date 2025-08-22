@@ -1,5 +1,3 @@
-import Image from 'next/image'
-
 interface LessonCardProps {
   title: string
   category: string
@@ -12,11 +10,10 @@ export default function LessonCard({ title, category, imageUrl, progress }: Less
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
       {/* Image Section */}
       <div className="relative aspect-video bg-gray-100">
-        <Image
+        <img
           src={imageUrl}
           alt={title}
-          fill
-          className="object-cover"
+          className="w-full h-full object-cover"
         />
         {/* Category Tag */}
         <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded-full text-xs font-semibold text-gray-700 uppercase tracking-wider">
