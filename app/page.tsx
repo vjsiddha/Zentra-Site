@@ -70,7 +70,7 @@ export default function Dashboard() {
         </div>
         
         {/* Column 3: Right Rail (300px) */}
-        <div className="sticky top-8 h-fit">
+        <div className="sticky top-8 h-fit flex-shrink-0">
           <RightRail />
         </div>
         
