@@ -12,12 +12,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-[240px_1fr_300px] gap-6 max-w-[1280px] mx-auto px-6 py-8">
         
         {/* Column 1: Sidebar (240px) */}
-        <div className="sticky top-8 h-fit">
+        <div className="sticky top-8 h-fit flex-shrink-0">
           <SidebarNav />
         </div>
-        
+
         {/* Column 2: Main Content (1fr) */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 min-w-0">
           
           {/* Hero Section */}
           <HeroCard />
