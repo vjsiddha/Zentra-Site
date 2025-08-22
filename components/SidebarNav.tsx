@@ -1,6 +1,6 @@
 export default function SidebarNav() {
   return (
-    <div className="w-[240px] h-screen sticky top-0 bg-white rounded-2xl shadow-sm p-8 flex flex-col gap-8">
+    <div className="w-full bg-white rounded-2xl shadow-sm p-8 flex flex-col gap-8">
       {/* Logo */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-[#04456d] rounded-md flex items-center justify-center">
