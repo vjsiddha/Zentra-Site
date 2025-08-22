@@ -129,8 +129,8 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 overflow-x-auto pb-4">
-              <div className="w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
-                <div className="h-40 bg-gray-100 relative">
+              <div className="w-full sm:w-[280px] flex-shrink-0 bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
+                <div className="h-32 sm:h-40 bg-gray-100 relative">
                   <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     SAVINGS
                   </div>
@@ -144,9 +144,9 @@ export default function Dashboard() {
                   <div className="absolute top-0 left-0 h-full w-3/4 bg-[#04456d] rounded-full"></div>
                 </div>
               </div>
-              
-              <div className="w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
-                <div className="h-40 bg-gray-100 relative">
+
+              <div className="w-full sm:w-[280px] flex-shrink-0 bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
+                <div className="h-32 sm:h-40 bg-gray-100 relative">
                   <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     SAVINGS
                   </div>
@@ -161,8 +161,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
-                <div className="h-40 bg-gray-100 relative">
+              <div className="w-full sm:w-[280px] flex-shrink-0 bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all">
+                <div className="h-32 sm:h-40 bg-gray-100 relative">
                   <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     STOCKS
                   </div>
