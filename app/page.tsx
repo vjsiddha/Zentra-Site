@@ -54,9 +54,22 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Mobile Header */}
+      <div className="sm:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 bg-[#04456d] rounded flex items-center justify-center">
+            <div className="w-3 h-3 bg-white rounded-sm"></div>
+          </div>
+          <span className="font-bold text-lg text-[#04456d]">ZENTRA</span>
+        </div>
+        <button className="p-2">
+          <i className="ti ti-menu-2 text-gray-600 text-xl"></i>
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="ml-[200px] flex-1 p-8">
-        <div className="max-w-[888px]">
+      <div className="ml-0 sm:ml-[180px] lg:ml-[200px] flex-1 p-4 lg:p-8 pt-20 sm:pt-8">
+        <div className="max-w-none lg:max-w-[888px]">
           {/* Hero Section */}
           <div className="w-full h-40 p-8 mb-8 rounded-[20px] bg-gradient-to-br from-[#04456d] to-[#0369a1] flex items-center justify-between relative overflow-hidden">
             <div className="flex flex-col gap-6 flex-1">
