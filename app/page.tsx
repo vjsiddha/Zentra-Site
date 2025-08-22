@@ -2,7 +2,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white font-inter flex">
       {/* Sidebar */}
-      <div className="w-[200px] h-screen fixed left-0 top-0 bg-white p-8 flex flex-col gap-8 z-10">
+      <div className="w-[200px] lg:w-[200px] md:w-[180px] sm:hidden h-screen fixed left-0 top-0 bg-white p-4 lg:p-8 flex flex-col gap-6 lg:gap-8 z-10 border-r border-gray-100">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#04456d] rounded-md flex items-center justify-center">
