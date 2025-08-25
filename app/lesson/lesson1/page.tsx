@@ -6,7 +6,7 @@ export default function Lesson1Page() {
     <div className="relative min-h-screen bg-[#F6F8FB] px-6 py-10">
       <main className="mx-auto w-full max-w-5xl">
         <section className="relative bg-white rounded-2xl shadow-sm p-8 md:p-10 pt-14">
-          {/* Close button now above the image */}
+          {/* Close button (top-right, outside image area) */}
           <Link
             href="/lesson"
             aria-label="Close and go back to lessons"
@@ -19,7 +19,12 @@ export default function Lesson1Page() {
             "
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </Link>
 
@@ -47,7 +52,7 @@ export default function Lesson1Page() {
           {/* Centered CTA */}
           <div className="mt-8 flex justify-center">
             <Link
-              href="/lesson/lesson1/step-1"
+              href="/lesson/lesson1/lesson1.1"
               className="
                 inline-flex items-center justify-center
                 px-6 py-3 rounded-full bg-[#0E5B87] text-white font-semibold
