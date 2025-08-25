@@ -111,8 +111,8 @@ export default function Lesson1Page() {
 
           {/* CTA Button - Centered horizontally as requested */}
           <div className="w-full flex justify-center">
-            <Link 
-              href="/lesson/1/scenario"
+            <Link
+              href="/lesson/lesson1/lesson1.2"
               className="inline-flex items-center justify-center h-10 px-4 bg-[#04456D] text-white font-bold text-sm rounded-[20px] hover:bg-[#03374f] transition-colors focus:outline-none focus:ring-2 focus:ring-[#04456d] focus:ring-offset-2 font-manrope"
             >
               Show Me the First Scenario
