@@ -7,7 +7,7 @@ import { subscribeToAuth } from "@/lib/auth";
 type AuthCtx = { user: User | null; loading: boolean };
 const Ctx = createContext<AuthCtx>({ user: null, loading: true });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
