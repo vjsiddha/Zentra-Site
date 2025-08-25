@@ -1,67 +1,70 @@
-import Link from 'next/link';
+import Link from "next/link";
+import Image from "next/image";
 
 export default function Lesson1Page() {
   return (
-    <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
-      {/* Full-width container with max-width constraint */}
-      <div className="relative w-full max-w-[1280px] h-[800px] flex items-center justify-center">
-        
-        {/* Close button - top right */}
-        <Link 
-          href="/lesson"
-          className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 hover:bg-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#04456d] focus:ring-offset-2"
-          aria-label="Close"
-        >
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 16 16" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-gray-600"
+    <div className="relative min-h-screen bg-[#F6F8FB] px-6 py-10">
+      <main className="mx-auto w-full max-w-5xl">
+        <section className="relative bg-white rounded-2xl shadow-sm p-8 md:p-10 pt-14">
+          {/* Close button (top-right, outside image area) */}
+          <Link
+            href="/lesson"
+            aria-label="Close and go back to lessons"
+            className="
+              absolute top-4 right-4
+              inline-flex items-center justify-center
+              w-9 h-9 rounded-full bg-gray-100 shadow
+              text-gray-700 hover:bg-gray-200
+              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04456d]
+            "
           >
-            <path 
-              d="M12 4L4 12M4 4L12 12" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </Link>
 
-        {/* Main content container */}
-        <div className="flex flex-col items-center justify-center max-w-[960px] mx-auto px-4">
-          
-          {/* Illustration */}
-          <div className="w-full mb-8">
-            <img
-              src="https://api.builder.io/api/v1/image/assets/TEMP/9fc8555f0a6595697d3d67dbf3f13d045b0dba8e?width=1856"
-              alt="Money journey illustration"
-              className="w-full h-80 object-cover rounded-xl shadow-sm"
+          {/* Hero image */}
+          <div className="relative aspect-[16/9] w-full mt-4 overflow-hidden rounded-xl">
+            <Image
+              src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1600&auto=format&fit=crop"
+              alt="Start your money journey"
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-cover"
+              priority
             />
           </div>
 
-          {/* Heading */}
-          <h2 className="text-[28px] font-bold text-[#0D171C] text-center mb-4 leading-[35px]">
+          {/* Title and description */}
+          <h1 className="mt-8 text-3xl md:text-4xl font-extrabold tracking-tight text-[#0E3350] text-center">
             Start Your Money Journey
-          </h2>
-
-          {/* Supporting paragraph */}
-          <p className="text-base text-[#0D171C] text-center mb-8 max-w-2xl leading-6">
-            You're about to learn how to manage your money through real-life challenges. Each scenario is simple, fun, and interactive. No stress—just smart decisions.
+          </h1>
+          <p className="mt-4 text-gray-600 leading-relaxed max-w-3xl mx-auto text-center">
+            You’re about to learn how to manage your money through real-life challenges.
+            Each scenario is simple, fun, and interactive. No stress—just smart decisions.
           </p>
 
-          {/* CTA Button */}
-          <Link
-            href="/lesson/lesson1/lesson1.1"
-            className="inline-flex items-center justify-center h-12 px-5 bg-[#04456D] text-white font-bold text-base rounded-3xl hover:bg-[#03374f] transition-colors focus:outline-none focus:ring-2 focus:ring-[#04456d] focus:ring-offset-2"
-          >
-            Let's Get Started
-          </Link>
-
-        </div>
-      </div>
+          {/* Centered CTA */}
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/lesson/lesson1/lesson1.1"
+              className="
+                inline-flex items-center justify-center
+                px-6 py-3 rounded-full bg-[#0E5B87] text-white font-semibold
+                hover:opacity-90 transition
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0E5B87]
+              "
+            >
+              Let’s Get Started
+            </Link>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

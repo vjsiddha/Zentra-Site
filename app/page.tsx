@@ -1,12 +1,38 @@
-import PageShell from '@/components/PageShell'
-import SidebarNav from '@/components/SidebarNav'
-import HeroCard from '@/components/HeroCard'
-import LessonCard from '@/components/LessonCard'
-import AskBennyCard from '@/components/AskBennyCard'
-import SimulatorCard from '@/components/SimulatorCard'
-import RightRail from '@/components/RightRail'
+"use client";
+
+import PageShell from "@/components/PageShell";
+import SidebarNav from "@/components/SidebarNav";
+import HeroCard from "@/components/HeroCard";
+import LessonCard from "@/components/LessonCard";
+import AskBennyCard from "@/components/AskBennyCard";
+import SimulatorCard from "@/components/SimulatorCard";
+import RightRail from "@/components/RightRail";
+
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { signOutUser } from "@/lib/auth";
 
 export default function Dashboard() {
+  // ---- Auth guard ----
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) router.replace("/signin");
+  }, [loading, user, router]);
+
+  // Optionally show nothing while deciding
+  if (loading || !user) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center py-24 text-gray-500">
+          Loading…
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell>
       {/* Desktop-only 3-column grid */}
@@ -24,6 +50,19 @@ export default function Dashboard() {
             after:absolute  after:top-0  after:bottom-0  after:right-[-12px]  after:w-px  after:bg-[#E9EEF3]
           "
         >
+          {/* Top actions row (Sign out, user email) */}
+          <div className="mb-2 flex items-center justify-end gap-3 text-sm text-gray-600">
+            <span className="hidden md:block truncate max-w-[240px]">
+              {user?.email}
+            </span>
+            <button
+              onClick={signOutUser}
+              className="rounded-full bg-gray-100 px-4 py-2 font-medium hover:bg-gray-200 transition"
+            >
+              Sign out
+            </button>
+          </div>
+
           <div className="flex flex-col gap-8">
             {/* Hero */}
             <section className="pt-0">
@@ -35,16 +74,16 @@ export default function Dashboard() {
 
             {/* Favourites */}
             <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-wider">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-lg font-semibold uppercase tracking-wider text-gray-900">
                   Go Back To Your Favourites
                 </h2>
                 <div className="flex gap-2">
-                  <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-                    <i className="ti ti-chevron-left text-gray-600 text-sm" />
+                  <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition hover:bg-gray-200">
+                    <i className="ti ti-chevron-left text-sm text-gray-600" />
                   </button>
-                  <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-                    <i className="ti ti-chevron-right text-gray-600 text-sm" />
+                  <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition hover:bg-gray-200">
+                    <i className="ti ti-chevron-right text-sm text-gray-600" />
                   </button>
                 </div>
               </div>
@@ -91,5 +130,5 @@ export default function Dashboard() {
         </aside>
       </div>
     </PageShell>
-  )
+  );
 }
