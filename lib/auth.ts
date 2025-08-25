@@ -12,6 +12,8 @@ if (app) {
     provider = new GoogleAuthProvider();
   } catch (error) {
     console.warn("Firebase Auth initialization failed:", error);
+    auth = null;
+    provider = null;
   }
 }
 
