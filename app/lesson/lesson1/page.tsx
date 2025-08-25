@@ -35,7 +35,7 @@ export default function Lesson1Page() {
           
           {/* Header Section */}
           <div className="w-full text-center mb-6">
-            <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px] font-[Manrope]">
+            <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px] font-manrope">
               What You'll Be Doing
             </h1>
           </div>
@@ -53,10 +53,10 @@ export default function Lesson1Page() {
                   />
                 </div>
                 <div className="w-full">
-                  <h3 className="text-base font-medium text-[#0D171C] font-[Manrope] mb-1">
+                  <h3 className="text-base font-medium text-[#0D171C] font-manrope mb-1">
                     Learn
                   </h3>
-                  <p className="text-sm text-[#4F7D96] font-[Manrope] leading-[21px]">
+                  <p className="text-sm text-[#4F7D96] font-manrope leading-[21px]">
                     Short real-world scenarios
                   </p>
                 </div>
@@ -72,10 +72,10 @@ export default function Lesson1Page() {
                   />
                 </div>
                 <div className="w-full">
-                  <h3 className="text-base font-medium text-[#0D171C] font-[Manrope] mb-1">
+                  <h3 className="text-base font-medium text-[#0D171C] font-manrope mb-1">
                     Play
                   </h3>
-                  <p className="text-sm text-[#4F7D96] font-[Manrope] leading-[21px]">
+                  <p className="text-sm text-[#4F7D96] font-manrope leading-[21px]">
                     Use interactive sliders and tools
                   </p>
                 </div>
@@ -91,10 +91,10 @@ export default function Lesson1Page() {
                   />
                 </div>
                 <div className="w-full">
-                  <h3 className="text-base font-medium text-[#0D171C] font-[Manrope] mb-1">
+                  <h3 className="text-base font-medium text-[#0D171C] font-manrope mb-1">
                     Grow
                   </h3>
-                  <p className="text-sm text-[#4F7D96] font-[Manrope] leading-[21px]">
+                  <p className="text-sm text-[#4F7D96] font-manrope leading-[21px]">
                     Track your financial progress
                   </p>
                 </div>
@@ -104,7 +104,7 @@ export default function Lesson1Page() {
 
           {/* Description Paragraph */}
           <div className="w-full text-center mb-8">
-            <p className="text-base text-[#0D171C] font-[Manrope] leading-6 max-w-4xl mx-auto">
+            <p className="text-base text-[#0D171C] font-manrope leading-6 max-w-4xl mx-auto">
               Each module is a real-world story—like getting your first paycheck or saving for school. Make decisions, get instant feedback, and earn Finance XP to unlock the next challenge.
             </p>
           </div>
@@ -113,7 +113,7 @@ export default function Lesson1Page() {
           <div className="w-full flex justify-center">
             <Link 
               href="/lesson/1/scenario"
-              className="inline-flex items-center justify-center h-10 px-4 bg-[#04456D] text-white font-bold text-sm rounded-[20px] hover:bg-[#03374f] transition-colors focus:outline-none focus:ring-2 focus:ring-[#04456d] focus:ring-offset-2 font-[Manrope]"
+              className="inline-flex items-center justify-center h-10 px-4 bg-[#04456D] text-white font-bold text-sm rounded-[20px] hover:bg-[#03374f] transition-colors focus:outline-none focus:ring-2 focus:ring-[#04456d] focus:ring-offset-2 font-manrope"
             >
               Show Me the First Scenario
             </Link>
