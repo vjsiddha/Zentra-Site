@@ -53,8 +53,8 @@ export default function Lesson1Page() {
           </p>
 
           {/* CTA Button */}
-          <Link 
-            href="/lesson/1/start"
+          <Link
+            href="/lesson/lesson1/lesson1.1"
             className="inline-flex items-center justify-center h-12 px-5 bg-[#04456D] text-white font-bold text-base rounded-3xl hover:bg-[#03374f] transition-colors focus:outline-none focus:ring-2 focus:ring-[#04456d] focus:ring-offset-2"
           >
             Let's Get Started
