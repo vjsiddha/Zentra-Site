@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const nextConfig = {
   experimental: { tsconfigPaths: true },
 
-  // Prove webpack hook runs & force the @ alias
+  // keep the @ alias
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
@@ -22,6 +22,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "source.unsplash.com" }, // needed for this option
     ],
   },
 };

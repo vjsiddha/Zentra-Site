@@ -1,9 +1,11 @@
 // app/lesson/lesson1/lesson1.3/page.tsx
 import Image from "next/image";
-import Link from "next/link";
+import ButtonGroup from "@/components/ButtonGroup";
 
-const IMG_URL =
-  "https://images.unsplash.com/photo-1544717305-996b815c338c?auto=format&fit=crop&w=1600&q=80"; // debit card + POS
+const COINS_STACK =
+  "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80";
+
+const IMG_URL = COINS_STACK;
 
 export default function Lesson1_3Page() {
   return (
@@ -25,49 +27,41 @@ export default function Lesson1_3Page() {
           <div className="relative w-full max-w-[520px] aspect-[4/3] overflow-hidden rounded-2xl shadow-sm">
             <Image
               src={IMG_URL}
-              alt="Paying with a debit card — everyday checking account spending"
+              alt="Illustration representing budgeting and saving"
               fill
               className="object-cover"
               sizes="(min-width: 768px) 520px, 100vw"
               priority
-              unoptimized   // <-- serve image directly to avoid optimizer hiccups
+              unoptimized
             />
           </div>
 
           {/* Right (text) */}
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col justify-center max-w-[620px]">
             <h2 className="text-2xl font-semibold text-slate-900 font-manrope">
-              Checking Account
+              Budget
             </h2>
             <p className="mt-3 text-slate-700 leading-7 font-manrope">
-              A checking account is designed for everyday spending and transactions. It's where you keep money
-              that you need to access frequently—whether you're paying bills, buying groceries, or getting cash
-              from an ATM. You can use a debit card, write checks, or make electronic transfers. Unlike savings
-              accounts, checking accounts typically earn little to no interest because they're meant for active
-              use rather than long-term saving.
+              A budget is a plan for how you will use your money. It helps you keep track of how
+              much money is coming in (like from a job, allowance, or gifts) and how much is going
+              out (like for food, clothes, fun, or savings). By making a budget, you can make sure
+              you don’t spend more than you have and can save for things you want in the future.
             </p>
             <p className="mt-5 font-medium text-slate-700 font-manrope">
-              Think of it as your daily spending wallet that lives at the bank.
+              A budget = telling your money where to go instead of wondering where it went.
             </p>
           </div>
         </div>
 
-        {/* CTAs (centered) */}
+        {/* Centered pill CTAs to match lesson1.2 */}
         <div className="mt-12 flex justify-center">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <Link
-              href="/lesson/lesson1/lesson1.2"
-              className="inline-flex items-center rounded-full px-6 py-3 font-semibold bg-sky-700 text-white hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-400 transition-colors font-manrope"
-            >
-              Back to Definitions
-            </Link>
-            <Link
-              href="/lesson"
-              className="inline-flex items-center rounded-full px-6 py-3 font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-300 transition-colors font-manrope"
-            >
-              Back to Modules
-            </Link>
-          </div>
+          <ButtonGroup
+            primaryHref="/lesson/lesson1/lesson1.4"
+            primaryLabel="Next Definition"
+            secondaryHref="/lesson"
+            secondaryLabel="Back to Modules"
+            align="center"
+          />
         </div>
       </section>
     </main>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import PageShell from "@/components/PageShell";
 import SidebarNav from "@/components/SidebarNav";
 import RightRail from "@/components/RightRail";
+import "../globals.css";
 
 interface LessonCardProps {
   title: string;
