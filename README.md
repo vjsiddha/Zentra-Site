@@ -10,8 +10,6 @@ The site is being built module-by-module, with a focus on replicating the Figma 
 ### 1. **Home / Landing**
 - ✅ Hero section (headline, subtext, CTA button)
 - ✅ Features / value props grid
-- ✅ Testimonials block
-- ✅ Footer
 - ⚠️ Missing: responsive polish on mobile + animations
 
 ### 2. **Lesson Pages (example: Lesson 1.4)**

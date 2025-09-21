@@ -62,7 +62,7 @@ export default function Lesson1_4Page() {
         <div className="mt-12 flex justify-center">
           <ButtonGroup
             primaryHref="/lesson/lesson1/lesson1.5"
-            primaryLabel="Next Definition"
+            primaryLabel="Next Lesson"
             secondaryHref="/lesson"
             secondaryLabel="Back to Modules"
             align="center"
