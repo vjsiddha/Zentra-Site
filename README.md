@@ -10,13 +10,13 @@ The site is being built module-by-module, with a focus on replicating the Figma 
 ### 1. **Home / Landing**
 - ✅ Hero section (headline, subtext, CTA button)
 - ✅ Features / value props grid
-- ⚠️ Missing: responsive polish on mobile + animations
+- ⚠️ Missing: responsive polish on animations
 
 ### 2. **Lesson Pages (example: Lesson 1.4)**
 - ✅ Layout & content sections
 - ✅ Images integrated via `next/image`
 - ✅ ButtonGroup for navigation actions
-- ⚠️ Missing: interactive quiz / lesson progress, mobile responsive styling
+- ⚠️ Missing: interactive quiz / lesson progress
 
 ### 3. **Dashboard**
 - ⚠️ Skeleton structure drafted (nav + container)
@@ -43,7 +43,6 @@ The site is being built module-by-module, with a focus on replicating the Figma 
 ---
 
 ## What’s Missing / Broken
-- Mobile responsiveness for all pages
 - Dashboard widgets (progress cards, XP tracker, streaks)
 - Lesson interactivity (quizzes, progress bars)
 - Profile page functionality (form, toasts, notifications)
@@ -54,14 +53,13 @@ The site is being built module-by-module, with a focus on replicating the Figma 
 ---
 
 ## Next Steps
-1. **Mobile responsiveness** → finish sm/md breakpoints for Home + Lesson.  
-2. **Lesson interactivity** → add quiz component + progress tracking.  
-3. **Dashboard buildout** → implement cards for progress, next lesson, and streaks.  
-4. **Profile page** → scaffold form with validation and toast notifications.  
-5. **Firebase integration** → set up Auth provider + protect lesson routes.  
-6. **Analytics scaffold** → decide provider (PostHog/GA), add `track()` calls.  
-7. **Accessibility polish** → audit color contrast, keyboard navigation, alt text.  
-8. **Motion system** → add Framer Motion for hero, modals, and section reveals.
+1. **Lesson interactivity** → add quiz component + progress tracking.  
+2. **Dashboard buildout** → implement cards for progress, next lesson, and streaks.  
+3. **Profile page** → scaffold form with validation and toast notifications.  
+4. **Firebase integration** → set up Auth provider + protect lesson routes.  
+5. **Analytics scaffold** → decide provider (PostHog/GA), add `track()` calls.  
+6. **Accessibility polish** → audit color contrast, keyboard navigation, alt text.  
+7. **Motion system** → add Framer Motion for hero, modals, and section reveals.
 
 ---
 
