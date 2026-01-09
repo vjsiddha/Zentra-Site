@@ -9,7 +9,7 @@ interface LessonCardProps {
   category: string;
   imageUrl: string;
   progress: number;
-  /** If provided, the card will navigate to this route. Otherwise it’s inert. */
+  /** If provided, the card will navigate to this route. Otherwise it's inert. */
   href?: string;
 }
 
@@ -110,7 +110,7 @@ function ModuleSection({ moduleNumber, lessons }: ModuleSectionProps) {
 }
 
 export default function LessonPage() {
-  // Add href ONLY for lessons that actually exist (right now: Lesson 1)
+  // Add href ONLY for lessons that actually exist
   const moduleData: { moduleNumber: number; lessons: LessonCardProps[] }[] = [
     {
       moduleNumber: 1,
@@ -136,13 +136,28 @@ export default function LessonPage() {
         },
       ],
     },
-    // ...the rest unchanged
     {
       moduleNumber: 2,
       lessons: [
-        { title: "Lesson 1", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/04f7202d1648aac249b244dd86339d324960dfb6?width=515", progress: 51 },
-        { title: "Lesson 2", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/ec1139cf90eee717dc9fae0659202477cddf756f?width=515", progress: 51 },
-        { title: "Lesson 3", category: "Stocks",  imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fe32e0c322652dccbf43ae1ef3c3c026daa5f169?width=515", progress: 51 },
+        { 
+          title: "Lesson 1", 
+          category: "Savings", 
+          imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/04f7202d1648aac249b244dd86339d324960dfb6?width=515", 
+          progress: 51,
+          href: "lesson/lesson2", 
+        },
+        { 
+          title: "Lesson 2", 
+          category: "Savings", 
+          imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/ec1139cf90eee717dc9fae0659202477cddf756f?width=515", 
+          progress: 51 
+        },
+        { 
+          title: "Lesson 3", 
+          category: "Stocks",  
+          imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fe32e0c322652dccbf43ae1ef3c3c026daa5f169?width=515", 
+          progress: 51 
+        },
       ],
     },
     {
