@@ -4,7 +4,17 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI(title="Mock Investment Simulator API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],    
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 from .schemas import (
     Portfolio, Quote, Bar, NewsItem, TradeResult, AllocationItem, MarkToMarket,
@@ -17,7 +27,6 @@ from .trading import buy as do_buy, sell as do_sell
 from .analytics import mark_to_market, allocation, equity_curve, position_size_by_risk, expected_pl
 from .errors import DomainError
 
-app = FastAPI(title="Mock Investment Simulator API", version="1.0.0")
 
 def ok(data):
     # Convert Pydantic models and datetimes to JSON-safe types
@@ -92,15 +101,32 @@ def post_sell(body: OrderBody):
 @app.get("/metrics/mark-to-market")
 def get_mtm():
     p = load_portfolio()
-    # build price map using quotes
+    # 1. Start with your liquid cash
+    total_market_value = 0.0
     price_map = {}
-    for sym in p.positions.keys():
+    
+    # 2. Calculate the value of every stock you own
+    for sym, pos in p.positions.items():
         try:
-            price_map[sym] = float(get_quote(sym).last or 0.0)
+            # Get the live price from your market module
+            current_price = float(get_quote(sym).last or 0.0)
+            price_map[sym] = current_price
+            # Market Value = Quantity * Current Price
+            total_market_value += (pos.qty * current_price)
         except DomainError:
-            price_map[sym] = 0.0
-    m = mark_to_market(p, price_map)
-    return ok(m.model_dump())
+            price_map[sym] = pos.avg_cost
+            total_market_value += (pos.qty * pos.avg_cost)
+
+    # 3. Equity = Cash + Market Value of Stocks
+    total_equity = p.cash + total_market_value
+    
+    # 4. Return the full breakdown
+    return ok({
+        "total_equity": total_equity,
+        "cash": p.cash,
+        "market_value": total_market_value,
+        "prices": price_map
+    })
 
 @app.get("/metrics/allocation")
 def get_alloc():

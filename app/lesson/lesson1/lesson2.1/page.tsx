@@ -2,17 +2,25 @@
 import Image from "next/image";
 import ButtonGroup from "@/components/ButtonGroup";
 
-const IMG_URL =
-  "/images/rrsp-stacking-coins.jpg"; 
+const IMG_URL = "/images/rrsp-stacking-coins.jpg"; 
 
 export default function Lesson1_4Page() {
   return (
     <main className="min-h-screen bg-[#F7FAFC]">
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-20">
+        {/* Lesson 2 Badge */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center px-4 py-2 bg-[#1B6BA6] text-white rounded-full shadow-sm">
+            <span className="text-sm font-semibold uppercase tracking-wider">
+              Module 1 • Lesson 2
+            </span>
+          </div>
+        </div>
+
         {/* Header (centered, same shell as 1.2/1.3) */}
         <header className="text-center">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-            Let’s start with some definitions…
+            Let's start with some definitions…
           </h1>
           <p className="mt-3 mx-auto max-w-3xl text-slate-500">
             Explore key saving terms with interactive flashcards. Tap or swipe to
@@ -39,17 +47,15 @@ export default function Lesson1_4Page() {
             <h2 className="text-2xl font-semibold text-slate-900">
               Registered Retirement Savings Plan (RRSP)
             </h2>
-
             <p className="mt-3 text-slate-700 leading-7">
               An RRSP (Registered Retirement Savings Plan) is a special type of
               savings account in Canada that helps people set money aside for
               retirement. The money you put into an RRSP is taxed later, which
-              means you can save more while you’re working. Your investments
+              means you can save more while you're working. Your investments
               inside the plan can grow over time through things like stocks or
-              bonds, and you’ll pay taxes when you take it out, usually after you
+              bonds, and you'll pay taxes when you take it out, usually after you
               retire (when your income may be lower).
             </p>
-
             <p className="mt-5 font-medium text-slate-700">
               <span className="font-semibold">Key Idea:</span> An RRSP is a
               government-approved savings plan that lets your money grow
@@ -61,7 +67,7 @@ export default function Lesson1_4Page() {
         {/* CTAs (centered, shared ButtonGroup) */}
         <div className="mt-12 flex justify-center">
           <ButtonGroup
-            primaryHref="/lesson/lesson1/lesson1.5"
+            primaryHref="/lesson/lesson1/lesson2.2"
             primaryLabel="Next Lesson"
             secondaryHref="/lesson"
             secondaryLabel="Back to Modules"

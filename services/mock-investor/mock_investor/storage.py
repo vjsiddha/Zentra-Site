@@ -9,7 +9,7 @@ def _ensure_dirs() -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
 
 def _default_portfolio() -> Portfolio:
-    return Portfolio(cash=0.0, positions={}, history=[])
+    return Portfolio(cash=100000.0, positions={}, history=[])
 
 def load_portfolio() -> Portfolio:
     _ensure_dirs()

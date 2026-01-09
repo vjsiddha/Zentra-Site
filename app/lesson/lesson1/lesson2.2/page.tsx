@@ -31,7 +31,7 @@ export default function Lesson1_5_Page() {
           <ButtonGroup
             // fallback label/href (used if stages not provided)
             primaryLabel="Start your Career"
-          primaryHref="/lesson/lesson1/lesson1.6"
+          primaryHref="/lesson/lesson1/lesson2.3"
           // Stage chips (drives the primary CTA)
           stages={STAGES}
           showArrow
