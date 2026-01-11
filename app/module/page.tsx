@@ -116,23 +116,26 @@ export default function LessonPage() {
       moduleNumber: 1,
       lessons: [
         {
-          title: "Lesson 1",
-          category: "Savings",
+          title: "First Job & Budgeting Basics",
+          category: "Definitions",
           imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/67df7c049ade69e93fe184c707eab2c9f6a57c06?width=515",
-          progress: 51,
-          href: "lesson/lesson1", // existing route
+          progress: 0, // This will update as they play
+          href: "/module/module1?step=1", // The step is the lesson with one added
         },
         {
-          title: "Lesson 2",
-          category: "Savings",
+          title: "First Job & Budgeting Basics",
+          category: "Interactive Games",
           imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/a9a319c689d9bc36c927dee75e4a11cef97354cd?width=515",
-          progress: 51,
+          progress: 0,
+          href: "/module/module1?step=2",
         },
         {
-          title: "Lesson 3",
-          category: "Stocks",
+          title: "First Job & Budgeting Basics",
+          category: "Applying Your Knowledge",
           imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/e052602941af3dd71bfb78096b7e228d2f43b0f5?width=515",
-          progress: 51,
+          progress: 0,
+          href: "/module/module1?step=3", // This points to your new "Brain" page
+
         },
       ],
     },
@@ -203,9 +206,9 @@ export default function LessonPage() {
     {
       moduleNumber: 8,
       lessons: [
-        { title: "Lesson 1", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/3f0ff33d7122ae2536ca66f24a4feff12f41703d?width=515", progress: 51 },
-        { title: "Lesson 2", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2bffdbaaa7066d288d28dec2d792c1460c7ac58e?width=515", progress: 51 },
-        { title: "Lesson 3", category: "Stocks",  imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fd9756af4aeed573522c2e899816ec55c77b1d62?width=515", progress: 51 },
+        { title: "Passive vs Active Investing", category: "Definitions", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/3f0ff33d7122ae2536ca66f24a4feff12f41703d?width=515", progress: 51, href:"/module/module8?step=1"  },
+        { title: "Passive vs Active Investing", category: "Interactive Games", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2bffdbaaa7066d288d28dec2d792c1460c7ac58e?width=515", progress: 51, href:"/module/module8?step=2"  },
+        { title: "Passive vs Active Investing", category: "Applying Your Knowledge", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fd9756af4aeed573522c2e899816ec55c77b1d62?width=515", progress: 51, href:"/module/module8?step=3" },
       ],
     },
   ];
