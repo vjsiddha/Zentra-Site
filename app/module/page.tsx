@@ -140,29 +140,32 @@ export default function LessonPage() {
       ],
     },
     {
-      moduleNumber: 2,
-      lessons: [
-        { 
-          title: "Lesson 1", 
-          category: "Savings", 
-          imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/04f7202d1648aac249b244dd86339d324960dfb6?width=515", 
-          progress: 51,
-          href: "lesson/lesson2", 
-        },
-        { 
-          title: "Lesson 2", 
-          category: "Savings", 
-          imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/ec1139cf90eee717dc9fae0659202477cddf756f?width=515", 
-          progress: 51 
-        },
-        { 
-          title: "Lesson 3", 
-          category: "Stocks",  
-          imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fe32e0c322652dccbf43ae1ef3c3c026daa5f169?width=515", 
-          progress: 51 
-        },
-      ],
+  moduleNumber: 2,
+  lessons: [
+    {
+      title: "Introduction to Investing",
+      category: "Definitions",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/04f7202d1648aac249b244dd86339d324960dfb6?width=515",
+      progress: 0,
+      href: "/module/module2?step=1",
     },
+    {
+      title: "Introduction to Investing",
+      category: "Interactive Games",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/ec1139cf90eee717dc9fae0659202477cddf756f?width=515",
+      progress: 0,
+      href: "/module/module2?step=2",
+    },
+    {
+      title: "Introduction to Investing",
+      category: "Applying Your Knowledge",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fe32e0c322652dccbf43ae1ef3c3c026daa5f169?width=515",
+      progress: 0,
+      href: "/module/module2?step=3",
+    },
+  ],
+},
+
     {
       moduleNumber: 3,
       lessons: [
