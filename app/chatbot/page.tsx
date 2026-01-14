@@ -8,6 +8,10 @@ import {
   ResponsiveContainer, CartesianGrid, Scatter
 } from 'recharts';
 
+// Import services
+import { cleanUserInput, sanitizeResponse, generateFollowUpQuestions } from '@/services/chatbot/utilsService';
+import { extractSimulationParams, calculateSimulation, type SimulationResult } from '@/services/chatbot/simulationService';
+
 // ============================================================================
 // DESIGN TOKENS (Match your app's exact colors)
 // ============================================================================
@@ -28,126 +32,6 @@ const COLORS = {
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-}
-
-interface SimulationResult {
-  data: { month: number; value: number }[];
-  summary: {
-    totalInvested: number;
-    finalValue: number;
-    totalGain: number;
-    gainPercent: number;
-  };
-}
-
-// ============================================================================
-// UTILITY FUNCTIONS (From your Streamlit code)
-// ============================================================================
-
-function cleanUserInput(text: string): string {
-  text = text.replace(/(\d),\s*(\d)/g, '$1$2'); // Fix comma spacing: 1, 000 -> 1000
-  text = text.replace(/nowversus/g, 'now versus ');
-  text = text.replace(/(\d)([a-zA-Z])/g, '$1 $2'); // 100now -> 100 now
-  text = text.replace(/([a-zA-Z])(\d)/g, '$1 $2'); // versus100 -> versus 100
-  return text;
-}
-
-function sanitizeResponse(text: string): string {
-  text = text.replace(/`+/g, '');
-  text = text.replace(/_([^_]+)_/g, '$1');
-  text = text.replace(/\*\*([^*]+)\*\*/g, '$1'); // Remove bold
-  text = text.replace(/\*([^*]+)\*/g, '$1'); // Remove italics
-  text = text.replace(/([a-zA-Z])(\d)/g, '$1 $2');
-  text = text.replace(/(\d)([a-zA-Z])/g, '$1 $2');
-  text = text.replace(/\s*,\s*/g, ', ');
-  return text;
-}
-
-function simulateInvestmentGrowth(
-  monthlyInvestment: number,
-  years: number,
-  annualReturn: number = 0.07
-): number[] {
-  const months = years * 12;
-  let total = 0;
-  const balance: number[] = [];
-  
-  for (let i = 0; i < months; i++) {
-    total += monthlyInvestment;
-    total *= (1 + annualReturn / 12);
-    balance.push(total);
-  }
-  
-  return balance;
-}
-
-function simulateMarketCrash(
-  monthlyInvestment: number,
-  years: number,
-  annualReturn: number = 0.07,
-  crashYear: number = 2,
-  crashPercent: number = 0.3
-): number[] {
-  const months = years * 12;
-  const crashMonth = crashYear * 12;
-  let total = 0;
-  const balance: number[] = [];
-  
-  for (let i = 1; i <= months; i++) {
-    total += monthlyInvestment;
-    total *= (1 + annualReturn / 12);
-    if (i === crashMonth) {
-      total *= (1 - crashPercent);
-    }
-    balance.push(total);
-  }
-  
-  return balance;
-}
-
-function extractSimulationParams(input: string): { amount?: number; years?: number; hasCrash: boolean } {
-  const amountMatch = input.match(/\$?(\d{2,5})/);
-  const timeMatch = input.match(/(\d{1,2})\s*(year|month)/);
-  const hasCrash = input.toLowerCase().includes('crash');
-  
-  let amount: number | undefined;
-  let years: number | undefined;
-  
-  if (amountMatch) {
-    amount = parseInt(amountMatch[1]);
-  }
-  
-  if (timeMatch) {
-    const timeValue = parseInt(timeMatch[1]);
-    const unit = timeMatch[2];
-    years = unit === 'month' ? Math.round(timeValue / 12 * 100) / 100 : timeValue;
-  }
-  
-  return { amount, years, hasCrash };
-}
-
-function generateFollowUpQuestions(userInput: string): string[] {
-  const lowered = userInput.toLowerCase();
-  
-  if (lowered.includes('versus')) {
-    return [
-      "What if I split my investment 50/50 between lump sum and monthly?",
-      "What if I delay my lump sum investment by 6 months?",
-      "What if markets crash right after my lump sum investment?"
-    ];
-  } else if (lowered.includes('stop investing')) {
-    return [
-      "What if I resume investing after 5 years?",
-      "What happens if I withdraw everything at retirement?",
-      "What if I switch to safer assets after stopping?"
-    ];
-  } else {
-    return [
-      "What if I increase my monthly contributions?",
-      "What if returns average only 3 percent instead of 7 percent?",
-      "What if inflation outpaces my investment returns?"
-    ];
-  }
 }
 
 // ============================================================================
@@ -258,24 +142,8 @@ export default function ChatbotPage() {
       // Check if should show simulation
       const params = extractSimulationParams(cleanedInput);
       if (params.amount && params.years) {
-        const growthData = params.hasCrash 
-          ? simulateMarketCrash(params.amount, params.years)
-          : simulateInvestmentGrowth(params.amount, params.years);
-        
-        const chartData = growthData.map((value, index) => ({
-          month: index + 1,
-          value: value
-        }));
-        
-        const totalInvested = params.amount * params.years * 12;
-        const finalValue = growthData[growthData.length - 1];
-        const totalGain = finalValue - totalInvested;
-        const gainPercent = (totalGain / totalInvested) * 100;
-        
-        setSimulation({
-          data: chartData,
-          summary: { totalInvested, finalValue, totalGain, gainPercent }
-        });
+        const simulationResult = calculateSimulation(params.amount, params.years, params.hasCrash);
+        setSimulation(simulationResult);
       } else {
         setSimulation(null);
       }
