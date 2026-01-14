@@ -1,14 +1,15 @@
 // app/simulator/page.tsx
-// Stock Simulator - Fixed version with better error handling
+// Stock Simulator - Complete with Portfolio Analytics
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell, Legend 
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  AreaChart, Area, CartesianGrid
 } from 'recharts';
 import Link from 'next/link';
-
+import AssetDashboard from './components/AssetDashboard';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -32,15 +33,16 @@ const PIE_COLORS = ['#0B5E8E', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4
 // ============================================================================
 // API CONFIG
 // ============================================================================
-const API_BASE = process.env.NEXT_PUBLIC_MOCK_INVESTOR_API || 'http://localhost:8000';
+const MOCK_INVESTOR_API = process.env.NEXT_PUBLIC_MOCK_INVESTOR_API || 'http://localhost:8000';
+const MARKET_DATA_API = process.env.NEXT_PUBLIC_MARKET_API || 'http://localhost:8001';
 
 // ============================================================================
-// API FUNCTIONS (inline for easier debugging)
+// API FUNCTIONS
 // ============================================================================
 
-async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
-  console.log(`API Call: ${url}`);
+async function mockInvestorCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const url = `${MOCK_INVESTOR_API}${endpoint}`;
+  console.log(`Mock Investor API Call: ${url}`);
   
   try {
     const response = await fetch(url, {
@@ -62,69 +64,105 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   }
 }
 
-// Portfolio
+async function marketDataCall<T>(endpoint: string): Promise<T> {
+  const url = `${MARKET_DATA_API}${endpoint}`;
+  console.log(`Market Data API Call: ${url}`);
+  
+  try {
+    const response = await fetch(url);
+    const result = await response.json();
+    
+    if (!result.ok) {
+      throw new Error(result.error || 'API Error');
+    }
+    
+    return result.data;
+  } catch (error) {
+    console.error(`Market Data API Error for ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+// Portfolio functions
 async function getPortfolio() {
-  return apiCall<any>('/portfolio');
+  return mockInvestorCall<any>('/portfolio');
 }
 
 async function resetPortfolio(startingCash = 100000) {
-  return apiCall<any>('/portfolio/reset', {
+  return mockInvestorCall<any>('/portfolio/reset', {
     method: 'POST',
     body: JSON.stringify({ starting_cash: startingCash }),
   });
 }
 
-// Trading
+// Trading functions
 async function buyStock(symbol: string, qty: number, price: number) {
-  return apiCall<any>('/orders/buy', {
+  return mockInvestorCall<any>('/orders/buy', {
     method: 'POST',
     body: JSON.stringify({ symbol, qty, price }),
   });
 }
 
 async function sellStock(symbol: string, qty: number, price: number) {
-  return apiCall<any>('/orders/sell', {
+  return mockInvestorCall<any>('/orders/sell', {
     method: 'POST',
     body: JSON.stringify({ symbol, qty, price }),
   });
 }
 
-// Market Data
+// Market Data functions
 async function getQuote(symbol: string) {
-  return apiCall<any>(`/quote/${symbol}`);
+  return marketDataCall<any>(`/quote/${symbol}`);
 }
 
-async function searchSymbols(query: string, limit = 20) {
-  return apiCall<any[]>(`/symbols?q=${encodeURIComponent(query)}&limit=${limit}`);
+async function searchSymbols(query: string) {
+  return marketDataCall<any[]>(`/search?q=${encodeURIComponent(query)}`);
 }
 
-async function getMarkToMarket() {
-  return apiCall<any>('/metrics/mark-to-market');
+// ============================================================================
+// TYPES
+// ============================================================================
+interface PortfolioSnapshot {
+  timestamp: string;
+  displayTime: string;
+  totalValue: number;
+  cashBalance: number;
+  positionsValue: number;
 }
 
 // ============================================================================
 // SECTOR DATA
 // ============================================================================
-const SECTORS: Record<string, { symbols: string[]; icon: string; description: string }> = {
+const SECTORS: Record<string, { symbols: string[]; icon: string; description: string; color: string }> = {
   Tech: {
-    symbols: ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN"],
+    symbols: ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA"],
     icon: "🧠",
-    description: "Fast-growing tech companies."
+    description: "Fast-growing tech companies.",
+    color: '#0B5E8E'
   },
   ETFs: {
     symbols: ["SPY", "QQQ", "VTI", "VOO"],
     icon: "💼",
-    description: "Diversified funds — safer for beginners."
+    description: "Diversified funds — safer for beginners.",
+    color: '#10b981'
   },
   Banking: {
     symbols: ["JPM", "BAC", "WFC", "GS"],
     icon: "🏦",
-    description: "Major banks with stable dividends."
+    description: "Major banks with stable dividends.",
+    color: '#f59e0b'
   },
   "Green Energy": {
-    symbols: ["TSLA", "ENPH", "NEE"],
+    symbols: ["ENPH", "NEE"],
     icon: "🌱",
-    description: "Clean energy companies."
+    description: "Clean energy companies.",
+    color: '#ef4444'
+  },
+  Crypto: {
+    symbols: ["BTC-USD", "ETH-USD"],
+    icon: "💎",
+    description: "Digital currencies (high risk).",
+    color: '#8b5cf6'
   },
 };
 
@@ -134,47 +172,288 @@ const TIPS = [
   "🏆 Long-term investing beats short-term trading.",
 ];
 
-function PortfolioChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) {
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function getSectorForSymbol(symbol: string): string {
+  for (const [sectorName, sectorData] of Object.entries(SECTORS)) {
+    if (sectorData.symbols.includes(symbol)) {
+      return sectorName;
+    }
+  }
+  return "Other";
+}
+
+function calculatePortfolioHealth(positionsCount: number): { score: string; message: string; color: string } {
+  if (positionsCount === 0) {
+    return { 
+      score: "Poor", 
+      message: "You haven't diversified yet. Try investing in multiple assets.",
+      color: COLORS.danger
+    };
+  } else if (positionsCount === 1) {
+    return { 
+      score: "Average", 
+      message: "Try diversifying across industries or sectors.",
+      color: COLORS.warning
+    };
+  } else if (positionsCount === 2) {
+    return { 
+      score: "Good", 
+      message: "Nice start! Add a few more asset types to reduce risk.",
+      color: COLORS.success
+    };
+  } else {
+    return { 
+      score: "Great", 
+      message: "Well-diversified portfolio. Keep reviewing your positions!",
+      color: COLORS.success
+    };
+  }
+}
+
+function calculateRiskLevel(positions: any, totalValue: number): { level: string; message: string; color: string } {
+  if (totalValue === 0) {
+    return { level: "N/A", message: "No positions", color: COLORS.cardBorder };
+  }
+
+  // Calculate risky asset weight (Crypto)
+  const riskySymbols = SECTORS.Crypto.symbols;
+  let riskyValue = 0;
+
+  Object.keys(positions).forEach(symbol => {
+    if (riskySymbols.includes(symbol)) {
+      const pos = positions[symbol];
+      riskyValue += pos.qty * pos.avg_cost;
+    }
+  });
+
+  const riskyRatio = riskyValue / totalValue;
+
+  if (riskyRatio > 0.5) {
+    return { 
+      level: "High Risk", 
+      message: "Too much in volatile assets",
+      color: COLORS.danger
+    };
+  } else if (riskyRatio > 0.25) {
+    return { 
+      level: "Medium Risk", 
+      message: "Balanced risk profile",
+      color: COLORS.warning
+    };
+  } else {
+    return { 
+      level: "Low Risk", 
+      message: "Conservative allocation",
+      color: COLORS.success
+    };
+  }
+}
+
+// ============================================================================
+// PORTFOLIO VALUE CHART
+// ============================================================================
+function PortfolioValueChart({ snapshots }: { snapshots: PortfolioSnapshot[] }) {
+  if (!snapshots || snapshots.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500">
-        No history data available yet. Make more trades to see your progress!
+        <div className="text-center">
+          <p className="text-4xl mb-3">📊</p>
+          <p className="font-semibold text-slate-700">No data yet</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Buy some stocks and watch your portfolio grow!
+          </p>
+        </div>
       </div>
     );
   }
 
-  const chartData = data.map(item => ({
-    time: new Date(item.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    equity: item.equity
+  const chartData = snapshots.map(snapshot => ({
+    time: snapshot.displayTime,
+    value: snapshot.totalValue,
+    cash: snapshot.cashBalance,
+    stocks: snapshot.positionsValue
   }));
 
+  // Calculate gain/loss
+  const startValue = snapshots[0]?.totalValue || 100000;
+  const currentValue = snapshots[snapshots.length - 1]?.totalValue || 100000;
+  const gain = currentValue - startValue;
+  const gainPercent = ((gain / startValue) * 100).toFixed(2);
+  const isPositive = gain >= 0;
+
   return (
-    <div className="h-[300px] w-full mt-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData}>
-          <defs>
-            <linearGradient id="colorEquity" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#0B5E8E" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#0B5E8E" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-          <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
-          <YAxis hide domain={['auto', 'auto']} />
-          <Tooltip 
-            formatter={(val: number) => [`$${val.toLocaleString()}`, 'Total Equity']}
-            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-          />
-          <Area 
-            type="monotone" 
-            dataKey="equity" 
-            stroke="#0B5E8E" 
-            fillOpacity={1} 
-            fill="url(#colorEquity)" 
-            strokeWidth={3} 
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl bg-slate-50">
+          <p className="text-xs text-slate-500 mb-1">Starting Value</p>
+          <p className="text-lg font-bold text-slate-900">
+            ${startValue.toLocaleString()}
+          </p>
+        </div>
+        <div className="p-4 rounded-xl bg-slate-50">
+          <p className="text-xs text-slate-500 mb-1">Current Value</p>
+          <p className="text-lg font-bold text-slate-900">
+            ${currentValue.toLocaleString()}
+          </p>
+        </div>
+        <div className={`p-4 rounded-xl ${isPositive ? 'bg-emerald-50' : 'bg-red-50'}`}>
+          <p className="text-xs text-slate-500 mb-1">Total Gain</p>
+          <p className={`text-lg font-bold ${isPositive ? 'text-emerald-700' : 'text-red-700'}`}>
+            {isPositive ? '+' : ''}${gain.toLocaleString()} ({isPositive ? '+' : ''}{gainPercent}%)
+          </p>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="h-[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#0B5E8E" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#0B5E8E" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis 
+              dataKey="time" 
+              tick={{fontSize: 10}} 
+              tickLine={false} 
+              axisLine={false}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis 
+              tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+              tick={{fontSize: 10}}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip 
+              formatter={(val: number) => [`$${val.toLocaleString()}`, '']}
+              labelFormatter={(label) => `Time: ${label}`}
+              contentStyle={{ 
+                borderRadius: '12px', 
+                border: 'none', 
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+              }}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              stroke="#0B5E8E" 
+              fillOpacity={1} 
+              fill="url(#colorValue)" 
+              strokeWidth={3}
+              name="Total Value"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Update frequency info */}
+      <div className="text-center">
+        <p className="text-xs text-slate-400">
+          📊 Updates every 2 minutes • {snapshots.length} data points tracked
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// PORTFOLIO ALLOCATION PIE CHART
+// ============================================================================
+function PortfolioAllocationChart({ positions }: { positions: any }) {
+  const positionSymbols = Object.keys(positions);
+  
+  if (positionSymbols.length === 0) {
+    return (
+      <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500">
+        <div className="text-center">
+          <p className="text-4xl mb-3">📊</p>
+          <p className="font-semibold text-slate-700">No positions yet</p>
+          <p className="text-sm text-slate-500 mt-1">Start investing to see allocation</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate sector breakdown
+  const sectorBreakdown: Record<string, number> = {};
+  
+  positionSymbols.forEach(symbol => {
+    const sector = getSectorForSymbol(symbol);
+    const pos = positions[symbol];
+    const value = pos.qty * pos.avg_cost;
+    sectorBreakdown[sector] = (sectorBreakdown[sector] || 0) + value;
+  });
+
+  // Prepare data for pie chart
+  const chartData = Object.entries(sectorBreakdown).map(([sector, value]) => ({
+    name: sector,
+    value: value,
+    color: SECTORS[sector]?.color || '#94a3b8'
+  }));
+
+  const totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="h-[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip 
+              formatter={(value: number) => `$${value.toLocaleString()}`}
+              contentStyle={{ 
+                borderRadius: '12px', 
+                border: 'none', 
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Sector breakdown list */}
+      <div className="space-y-2">
+        {chartData.map((sector) => (
+          <div key={sector.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: sector.color }}
+              />
+              <span className="font-medium text-slate-700">{sector.name}</span>
+            </div>
+            <div className="text-right">
+              <p className="font-semibold text-slate-900">${sector.value.toLocaleString()}</p>
+              <p className="text-xs text-slate-500">
+                {((sector.value / totalValue) * 100).toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -185,17 +464,20 @@ function PortfolioChart({ data }: { data: any[] }) {
 export default function SimulatorPage() {
   // Portfolio state
   const [portfolio, setPortfolio] = useState<any>(null);
-  const [mtm, setMtm] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Portfolio value tracking
+  const [portfolioSnapshots, setPortfolioSnapshots] = useState<PortfolioSnapshot[]>([]);
+  const [lastSnapshotTime, setLastSnapshotTime] = useState<number>(0);
 
   // UI State
-  
   const [activeTab, setActiveTab] = useState("trade");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSector, setExpandedSector] = useState<string | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
-  // Trading form state - NO DEFAULT STOCK
+  // Trading form state
   const [selectedSymbol, setSelectedSymbol] = useState<string>("");
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
@@ -214,36 +496,108 @@ export default function SimulatorPage() {
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [tradeSuccess, setTradeSuccess] = useState<string | null>(null);
 
-  // Debug state
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  // -------------------------------------------------------------------------
+  // CALCULATE CURRENT PORTFOLIO VALUE (with live prices)
+  // -------------------------------------------------------------------------
+  const calculateCurrentPortfolioValue = useCallback(async (portfolioData: any): Promise<number> => {
+    if (!portfolioData || !portfolioData.positions) {
+      return portfolioData?.cash || 100000;
+    }
 
-  const addDebug = (msg: string) => {
-    console.log(msg);
-    setDebugInfo(prev => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${msg}`]);
-  };
+    try {
+      const positionSymbols = Object.keys(portfolioData.positions);
+      
+      if (positionSymbols.length === 0) {
+        return portfolioData.cash;
+      }
 
-  // Graph
-  // 1. Add this state
-const [equityHistory, setEquityHistory] = useState<any[]>([]);
+      // Fetch current prices for all positions
+      const pricePromises = positionSymbols.map(async (symbol) => {
+        try {
+          const quote = await getQuote(symbol);
+          return { symbol, price: quote.last };
+        } catch (err) {
+          console.error(`Failed to get price for ${symbol}:`, err);
+          return { symbol, price: portfolioData.positions[symbol].avg_cost };
+        }
+      });
 
-// 2. Update your loadData function
-const loadData = useCallback(async () => {
-  try {
-    // Fetch portfolio, mark-to-market, and the equity curve data
-    const [p, m, h] = await Promise.all([
-      apiCall<any>('/portfolio'),
-      apiCall<any>('/metrics/mark-to-market').catch(() => null),
-      apiCall<any[]>('/metrics/equity-curve').catch(() => [])
-    ]);
+      const prices = await Promise.all(pricePromises);
 
-    setPortfolio(p);
-    setMtm(m);
-    setEquityHistory(h); // Save the history data for the chart
-  } catch (err) {
-    console.error("Failed to load chart data:", err);
-  }
-}, []);
+      // Calculate total portfolio value
+      let positionsValue = 0;
+      prices.forEach(({ symbol, price }) => {
+        const position = portfolioData.positions[symbol];
+        positionsValue += position.qty * price;
+      });
 
+      const totalValue = portfolioData.cash + positionsValue;
+      
+      return totalValue;
+    } catch (err) {
+      console.error('Error calculating portfolio value:', err);
+      return portfolioData.cash;
+    }
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // TRACK PORTFOLIO VALUE OVER TIME
+  // -------------------------------------------------------------------------
+  const logPortfolioValue = useCallback(async (portfolioData: any) => {
+    // Don't log too frequently (minimum 2 minutes between snapshots to respect API rate limits)
+    const now = Date.now();
+    const MIN_INTERVAL = 120000; // 2 minutes in milliseconds
+    
+    if (now - lastSnapshotTime < MIN_INTERVAL) {
+      return;
+    }
+
+    try {
+      const totalValue = await calculateCurrentPortfolioValue(portfolioData);
+      
+      const positionsValue = Object.keys(portfolioData.positions || {}).reduce((sum, symbol) => {
+        const pos = portfolioData.positions[symbol];
+        return sum + (pos.qty * pos.avg_cost);
+      }, 0);
+
+      const snapshot: PortfolioSnapshot = {
+        timestamp: new Date().toISOString(),
+        displayTime: new Date().toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit'
+        }),
+        totalValue: totalValue,
+        cashBalance: portfolioData.cash,
+        positionsValue: totalValue - portfolioData.cash
+      };
+
+      setPortfolioSnapshots(prev => {
+        const updated = [...prev, snapshot];
+        return updated.slice(-200);
+      });
+
+      setLastSnapshotTime(now);
+    } catch (err) {
+      console.error('Error logging portfolio value:', err);
+    }
+  }, [calculateCurrentPortfolioValue, lastSnapshotTime]);
+
+  // -------------------------------------------------------------------------
+  // AUTO-TRACK PORTFOLIO VALUE EVERY 2 MINUTES
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (!portfolio) return;
+
+    logPortfolioValue(portfolio);
+
+    // Check every 2 minutes (safe for Finnhub free tier: 60 calls/minute)
+    const interval = setInterval(() => {
+      logPortfolioValue(portfolio);
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(interval);
+  }, [portfolio, logPortfolioValue]);
 
   // -------------------------------------------------------------------------
   // LOAD PORTFOLIO
@@ -251,34 +605,24 @@ const loadData = useCallback(async () => {
   const loadPortfolioData = useCallback(async () => {
     try {
       setLoading(true);
-      addDebug('Loading portfolio...');
       
-      const [portfolioData, mtmData] = await Promise.all([
-        getPortfolio(),
-        getMarkToMarket().catch(() => null),
-      ]);
-      
-      addDebug(`Portfolio loaded: cash=${portfolioData.cash}, positions=${Object.keys(portfolioData.positions || {}).length}`);
+      const portfolioData = await getPortfolio();
       
       setPortfolio(portfolioData);
-      setMtm(mtmData);
       setError(null);
+      
+      await logPortfolioValue(portfolioData);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load';
-      addDebug(`Error loading portfolio: ${msg}`);
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [logPortfolioValue]);
 
   useEffect(() => {
     loadPortfolioData();
   }, [loadPortfolioData]);
-
-// add porfolio charts
-
-
 
   // -------------------------------------------------------------------------
   // SEARCH SYMBOLS
@@ -292,12 +636,9 @@ const loadData = useCallback(async () => {
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        addDebug(`Searching for: ${searchQuery}`);
-        const results = await searchSymbols(searchQuery, 20);
-        addDebug(`Found ${results.length} results`);
+        const results = await searchSymbols(searchQuery);
         setSearchResults(results);
       } catch (err) {
-        addDebug(`Search error: ${err}`);
         setSearchResults([]);
       } finally {
         setSearchLoading(false);
@@ -319,12 +660,9 @@ const loadData = useCallback(async () => {
     const fetchPrice = async () => {
       setPriceLoading(true);
       try {
-        addDebug(`Fetching price for ${selectedSymbol}...`);
         const quote = await getQuote(selectedSymbol);
-        addDebug(`Price for ${selectedSymbol}: $${quote.last}`);
         setCurrentPrice(quote.last);
       } catch (err) {
-        addDebug(`Price error for ${selectedSymbol}: ${err}`);
         setCurrentPrice(null);
       } finally {
         setPriceLoading(false);
@@ -332,12 +670,11 @@ const loadData = useCallback(async () => {
     };
 
     fetchPrice();
-    // Refresh price every 30 seconds
     const interval = setInterval(fetchPrice, 30000);
     return () => clearInterval(interval);
   }, [selectedSymbol]);
 
-  // Fetch sell price when sell symbol selected
+  // Fetch sell price
   useEffect(() => {
     if (!sellSymbol) {
       setSellPrice(null);
@@ -378,16 +715,19 @@ const loadData = useCallback(async () => {
     setTradeSuccess(null);
 
     try {
-      addDebug(`Buying ${buyQty} shares of ${selectedSymbol} at $${currentPrice}`);
       const result = await buyStock(selectedSymbol, buyQty, currentPrice);
-      addDebug(`Buy successful: ${JSON.stringify(result)}`);
       
-      setTradeSuccess(`Bought ${buyQty} shares of ${selectedSymbol} at $${currentPrice.toFixed(2)}`);
+      const purchasedSymbol = selectedSymbol;
+      setTradeSuccess(`Bought ${buyQty} shares of ${purchasedSymbol} at $${currentPrice.toFixed(2)}`);
       setBuyQty(0);
-      loadPortfolioData();
+      await loadPortfolioData();
+      
+      // Automatically open Asset Dashboard for the purchased stock
+      setTimeout(() => {
+        setSelectedAsset(purchasedSymbol);
+      }, 500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Trade failed';
-      addDebug(`Buy error: ${msg}`);
       setTradeError(msg);
     } finally {
       setTradeLoading(false);
@@ -405,9 +745,7 @@ const loadData = useCallback(async () => {
     setTradeSuccess(null);
 
     try {
-      addDebug(`Selling ${sellQty} shares of ${sellSymbol} at $${sellPrice}`);
       const result = await sellStock(sellSymbol, sellQty, sellPrice);
-      addDebug(`Sell successful: ${JSON.stringify(result)}`);
       
       setTradeSuccess(`Sold ${sellQty} shares of ${sellSymbol} at $${sellPrice.toFixed(2)}`);
       setSellQty(0);
@@ -415,7 +753,6 @@ const loadData = useCallback(async () => {
       loadPortfolioData();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Trade failed';
-      addDebug(`Sell error: ${msg}`);
       setTradeError(msg);
     } finally {
       setTradeLoading(false);
@@ -427,6 +764,8 @@ const loadData = useCallback(async () => {
     
     try {
       await resetPortfolio(100000);
+      setPortfolioSnapshots([]);
+      setLastSnapshotTime(0);
       loadPortfolioData();
       setTradeSuccess('Portfolio reset to $100,000');
     } catch (err) {
@@ -441,8 +780,9 @@ const loadData = useCallback(async () => {
   const cashBalance = portfolio?.cash ?? 100000;
   const positions = portfolio?.positions ?? {};
   const positionSymbols = Object.keys(positions);
-  const history = portfolio?.history ?? [];
-  const totalEquity = mtm?.total_equity ?? cashBalance;
+  
+  const currentSnapshot = portfolioSnapshots[portfolioSnapshots.length - 1];
+  const totalEquity = currentSnapshot?.totalValue ?? cashBalance;
   const percentageGain = ((totalEquity - 100000) / 100000) * 100;
   const isPositive = percentageGain >= 0;
 
@@ -453,6 +793,10 @@ const loadData = useCallback(async () => {
   const canSell = sellSymbol && sellQty > 0 && sellQty <= maxSellQty && sellPrice;
 
   const currentTip = TIPS[Math.floor(Date.now() / 60000) % TIPS.length];
+
+  // Portfolio analytics
+  const portfolioHealth = calculatePortfolioHealth(positionSymbols.length);
+  const riskLevel = calculateRiskLevel(positions, totalEquity - cashBalance);
 
   // -------------------------------------------------------------------------
   // LOADING STATE
@@ -477,9 +821,12 @@ const loadData = useCallback(async () => {
           <h2 className="text-xl font-bold text-slate-900 mb-2">Connection Error</h2>
           <p className="text-slate-600 mb-4">{error}</p>
           <p className="text-sm text-slate-500 mb-4">
-            Make sure the Python API is running:<br />
-            <code className="bg-slate-100 px-2 py-1 rounded text-xs">
-              cd services/mock-investor && uvicorn mock_investor.api:app --reload --port 8000
+            Make sure both services are running:<br />
+            <code className="bg-slate-100 px-2 py-1 rounded text-xs block mt-2">
+              Terminal 1: cd services/mock-investor && uvicorn mock_investor.api:app --reload --port 8000
+            </code>
+            <code className="bg-slate-100 px-2 py-1 rounded text-xs block mt-2">
+              Terminal 2: cd services/market-data && python market_data_api.py
             </code>
           </p>
           <button onClick={loadPortfolioData} className="px-6 py-2 rounded-full text-white font-semibold" style={{ backgroundColor: COLORS.primary }}>
@@ -535,6 +882,44 @@ const loadData = useCallback(async () => {
 
             <Divider />
 
+            {/* Your Holdings - Quick Access */}
+            {positionSymbols.length > 0 && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-900 mb-3">💼 Your Holdings</h2>
+                  <div className="space-y-2">
+                    {positionSymbols.slice(0, 5).map(sym => {
+                      const pos = positions[sym];
+                      const value = pos.qty * pos.avg_cost;
+                      return (
+                        <button
+                          key={sym}
+                          onClick={() => setSelectedAsset(sym)}
+                          className="w-full flex items-center justify-between p-3 rounded-xl ring-1 hover:bg-slate-50 transition-colors"
+                          style={{ borderColor: COLORS.cardBorder }}
+                        >
+                          <div className="text-left">
+                            <p className="font-semibold" style={{ color: COLORS.primary }}>{sym}</p>
+                            <p className="text-xs text-slate-500">{pos.qty} shares</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-slate-900">${value.toFixed(2)}</p>
+                            <p className="text-xs text-slate-400">View →</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {positionSymbols.length > 5 && (
+                      <p className="text-xs text-slate-400 text-center mt-2">
+                        +{positionSymbols.length - 5} more positions
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Divider />
+              </>
+            )}
+
             {/* Sectors */}
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900 mb-3">📘 Browse Sectors</h2>
@@ -568,21 +953,6 @@ const loadData = useCallback(async () => {
                 </div>
               ))}
             </div>
-
-            {/* Debug Info */}
-            {debugInfo.length > 0 && (
-              <>
-                <Divider />
-                <div>
-                  <h2 className="text-sm font-bold text-slate-500 mb-2">🐛 Debug Log</h2>
-                  <div className="text-xs text-slate-400 space-y-1 max-h-32 overflow-y-auto">
-                    {debugInfo.map((msg, i) => (
-                      <p key={i}>{msg}</p>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </aside>
 
@@ -599,7 +969,7 @@ const loadData = useCallback(async () => {
                 </button>
                 <div>
                   <h1 className="text-2xl font-extrabold text-slate-900">Stock Simulator</h1>
-                  <p className="text-slate-500 text-sm">Practice with $100,000</p>
+                  <p className="text-slate-500 text-sm">Practice with $100,000 • Live Tracking Every 2 Min 📊</p>
                 </div>
               </div>
               
@@ -746,15 +1116,15 @@ const loadData = useCallback(async () => {
                         <p className="font-semibold text-slate-700">No positions</p>
                         <p className="text-sm text-slate-500 mt-1">Buy some stocks first!</p>
                       </div>
-                    ) : (
+                    ) : !sellSymbol ? (
                       <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">Select Position</label>
+                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
+                          <p className="text-sm text-slate-600 mb-3">Select Position</p>
                           <select
                             value={sellSymbol}
                             onChange={(e) => { setSellSymbol(e.target.value); setSellQty(0); }}
-                            className="w-full px-4 py-3 rounded-xl ring-1 bg-white"
-                            style={{ borderColor: COLORS.cardBorder }}
+                            className="w-full px-4 py-2.5 rounded-lg bg-white ring-1 font-medium text-slate-900 cursor-pointer"
+                            style={{ borderColor: COLORS.cardBorder, color: COLORS.primary }}
                           >
                             <option value="">Select a position...</option>
                             {positionSymbols.map(sym => (
@@ -764,52 +1134,83 @@ const loadData = useCallback(async () => {
                             ))}
                           </select>
                         </div>
-
-                        {sellSymbol && (
-                          <>
-                            <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.dangerLight }}>
-                              <div className="flex justify-between">
-                                <span className="text-slate-600">Current Price</span>
-                                <span className="text-2xl font-bold" style={{ color: COLORS.danger }}>
-                                  {sellPrice ? `$${sellPrice.toFixed(2)}` : 'Loading...'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-slate-500">You own</span>
-                                <span className="font-medium">{maxSellQty} shares</span>
-                              </div>
-                            </div>
-
+                        
+                        <div className="p-4 rounded-xl bg-slate-50 border border-dashed" style={{ borderColor: COLORS.cardBorder }}>
+                          <p className="text-center text-slate-500 text-sm">
+                            Choose a position above to start selling
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Selected Position Box */}
+                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
+                          <div className="flex justify-between items-center">
                             <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">Quantity to Sell</label>
-                              <input
-                                type="number"
-                                value={sellQty || ''}
-                                onChange={(e) => setSellQty(parseFloat(e.target.value) || 0)}
-                                min="0"
-                                max={maxSellQty}
-                                step="1"
-                                className="w-full px-4 py-3 rounded-xl ring-1"
-                                style={{ borderColor: COLORS.cardBorder }}
-                              />
-                              <button 
-                                onClick={() => setSellQty(maxSellQty)}
-                                className="text-xs text-slate-500 hover:text-slate-700 mt-1"
-                              >
-                                Sell all ({maxSellQty})
-                              </button>
+                              <p className="text-sm text-slate-600">Selected Position</p>
+                              <p className="text-xl font-bold" style={{ color: COLORS.primary }}>{sellSymbol}</p>
+                              <p className="text-xs text-slate-500 mt-1">
+                                You own {maxSellQty} shares @ ${positions[sellSymbol].avg_cost.toFixed(2)} avg
+                              </p>
                             </div>
-
-                            <button
-                              onClick={handleSell}
-                              disabled={tradeLoading || !canSell}
-                              className="w-full py-3 rounded-full text-white font-semibold disabled:opacity-50"
-                              style={{ backgroundColor: COLORS.danger }}
+                            <button 
+                              onClick={() => { setSellSymbol(""); setSellQty(0); }}
+                              className="text-slate-400 hover:text-slate-600"
                             >
-                              {tradeLoading ? 'Processing...' : `Sell ${sellSymbol}`}
+                              ✕
                             </button>
-                          </>
-                        )}
+                          </div>
+                        </div>
+
+                        {/* Current Price Box */}
+                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.dangerLight }}>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Current Price</span>
+                            <span className="text-2xl font-bold" style={{ color: COLORS.danger }}>
+                              {sellPrice ? `$${sellPrice.toFixed(2)}` : 'Loading...'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Quantity Input */}
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Quantity to Sell</label>
+                          <input
+                            type="number"
+                            value={sellQty || ''}
+                            onChange={(e) => setSellQty(parseFloat(e.target.value) || 0)}
+                            min="0"
+                            max={maxSellQty}
+                            step="1"
+                            placeholder="Enter number of shares"
+                            className="w-full px-4 py-3 rounded-xl ring-1"
+                            style={{ borderColor: COLORS.cardBorder }}
+                          />
+                          <div className="flex justify-between items-center mt-2">
+                            <button 
+                              onClick={() => setSellQty(maxSellQty)}
+                              className="text-xs font-medium hover:underline"
+                              style={{ color: COLORS.primary }}
+                            >
+                              Sell all ({maxSellQty})
+                            </button>
+                            {sellPrice && sellQty > 0 && (
+                              <p className="text-sm text-slate-500">
+                                Total: <span className="font-semibold text-slate-900">${(sellQty * sellPrice).toFixed(2)}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Sell Button */}
+                        <button
+                          onClick={handleSell}
+                          disabled={tradeLoading || !canSell}
+                          className="w-full py-3 rounded-full text-white font-semibold disabled:opacity-50"
+                          style={{ backgroundColor: COLORS.danger }}
+                        >
+                          {tradeLoading ? 'Processing...' : `Sell ${sellSymbol}`}
+                        </button>
                       </div>
                     )}
                   </Card>
@@ -844,35 +1245,148 @@ const loadData = useCallback(async () => {
 
               {/* PORTFOLIO TAB */}
               {activeTab === 'portfolio' && (
-                
-                <Card title="Your Positions" icon="📊">
-                  {positionSymbols.length === 0 ? (
+                <div className="space-y-6">
+                  {/* Portfolio Growth Chart */}
+                  <Card title="Portfolio Value Over Time" icon="📈">
+                    <PortfolioValueChart snapshots={portfolioSnapshots} />
+                  </Card>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Portfolio Allocation */}
+                    <Card title="Portfolio Allocation" icon="📊">
+                      <PortfolioAllocationChart positions={positions} />
+                    </Card>
+
+                    {/* Analytics & Feedback */}
+                    <div className="space-y-6">
+                      {/* Your Positions */}
+                      <Card title="Your Positions" icon="💼">
+                        {positionSymbols.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-4xl mb-3">📭</p>
+                            <p className="font-semibold text-slate-700">No positions yet</p>
+                            <p className="text-sm text-slate-500 mt-1">Start trading!</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {positionSymbols.map(sym => {
+                              const pos = positions[sym];
+                              const value = pos.qty * pos.avg_cost;
+                              return (
+                                <div key={sym} className="flex justify-between items-center p-3 rounded-lg bg-slate-50">
+                                  <div>
+                                    <button 
+                                      onClick={() => setSelectedAsset(sym)}
+                                      className="font-semibold hover:underline cursor-pointer"
+                                      style={{ color: COLORS.primary }}
+                                    >
+                                      {sym}
+                                    </button>
+                                    <p className="text-xs text-slate-500">{pos.qty} shares @ ${pos.avg_cost.toFixed(2)}</p>
+                                  </div>
+                                  <p className="font-bold text-slate-900">${value.toFixed(2)}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </Card>
+
+                      {/* Portfolio Health Score */}
+                      <Card title="Portfolio Health Score" icon="🏥">
+                        <div className="p-4 rounded-xl" style={{ backgroundColor: `${portfolioHealth.color}20` }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-slate-600">Score</span>
+                            <span className="text-lg font-bold" style={{ color: portfolioHealth.color }}>
+                              {portfolioHealth.score}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600">{portfolioHealth.message}</p>
+                        </div>
+                      </Card>
+
+                      {/* Risk Level */}
+                      <Card title="Risk Level" icon="⚠️">
+                        <div className="p-4 rounded-xl" style={{ backgroundColor: `${riskLevel.color}20` }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: riskLevel.color }} />
+                            <span className="text-lg font-bold" style={{ color: riskLevel.color }}>
+                              {riskLevel.level}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600">{riskLevel.message}</p>
+                        </div>
+                      </Card>
+
+                      {/* Estimated Monthly Dividends */}
+                      <Card title="Estimated Monthly Dividends" icon="💰">
+                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
+                          <p className="text-sm text-slate-600 mb-1">Estimated Monthly Dividends</p>
+                          <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>$0.00</p>
+                          <p className="text-xs text-slate-500 mt-2">
+                            Based on current holdings (if applicable)
+                          </p>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* HISTORY TAB */}
+              {activeTab === 'history' && (
+                <Card title="Transaction History" icon="📜">
+                  {!portfolio?.history || portfolio.history.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-5xl mb-4">📭</p>
-                      <p className="font-semibold text-slate-700">No positions yet</p>
-                      <p className="text-sm text-slate-500 mt-1">Start trading to build your portfolio!</p>
+                      <p className="text-5xl mb-4">📝</p>
+                      <p className="font-semibold text-slate-700">No transactions yet</p>
+                      <p className="text-sm text-slate-500 mt-1">Start trading to see your history!</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="text-left text-sm text-slate-500 border-b" style={{ borderColor: COLORS.cardBorder }}>
-                            <th className="pb-3">Symbol</th>
-                            <th className="pb-3">Qty</th>
-                            <th className="pb-3">Avg Cost</th>
-                            <th className="pb-3">Value</th>
+                          <tr className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b" style={{ borderColor: COLORS.cardBorder }}>
+                            <th className="pb-4">Date</th>
+                            <th className="pb-4">Side</th>
+                            <th className="pb-4">Symbol</th>
+                            <th className="pb-4 text-center">Qty</th>
+                            <th className="pb-4 text-right">Total Amount</th>
                           </tr>
                         </thead>
-                        <tbody>
-                          {positionSymbols.map(sym => {
-                            const pos = positions[sym];
-                            const value = pos.qty * pos.avg_cost;
+                        <tbody className="divide-y divide-slate-50">
+                          {[...portfolio.history].reverse().map((txn: any, idx: number) => {
+                            const side = txn.type || txn.side; 
+                            const isBuy = side === 'BUY';
+                            const totalAmount = txn.qty * txn.price;
+
                             return (
-                              <tr key={sym} className="border-b" style={{ borderColor: COLORS.cardBorder }}>
-                                <td className="py-4 font-semibold" style={{ color: COLORS.primary }}>{sym}</td>
-                                <td className="py-4">{pos.qty}</td>
-                                <td className="py-4">${pos.avg_cost.toFixed(2)}</td>
-                                <td className="py-4 font-semibold">${value.toFixed(2)}</td>
+                              <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                <td className="py-4 text-xs text-slate-500 font-medium">
+                                  {new Date(txn.ts).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                </td>
+                                <td className="py-4">
+                                  <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase ${
+                                    isBuy ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                                  }`}>
+                                    {side}
+                                  </span>
+                                </td>
+                                <td className="py-4">
+                                  <button
+                                    onClick={() => setSelectedAsset(txn.ticker)}
+                                    className="font-black text-slate-900 hover:underline cursor-pointer"
+                                    style={{ color: COLORS.primary }}
+                                  >
+                                    {txn.ticker || 'CASH'}
+                                  </button>
+                                </td>
+                                <td className={`py-4 text-center font-bold ${isBuy ? 'text-slate-700' : 'text-rose-600'}`}>
+                                  {isBuy ? `+${txn.qty}` : `-${txn.qty}`}
+                                </td>
+                                <td className="py-4 text-right font-black text-slate-900">
+                                  ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
                               </tr>
                             );
                           })}
@@ -883,68 +1397,19 @@ const loadData = useCallback(async () => {
                 </Card>
               )}
 
-              {/* HISTORY TAB */}
-{activeTab === 'history' && (
-  <Card title="Transaction History" icon="📜">
-    {!portfolio?.history || portfolio.history.length === 0 ? (
-      <div className="text-center py-12">
-        <p className="text-5xl mb-4">📝</p>
-        <p className="font-semibold text-slate-700">No transactions yet</p>
-        <p className="text-sm text-slate-500 mt-1">Start trading to see your history!</p>
-      </div>
-    ) : (
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b" style={{ borderColor: COLORS.cardBorder }}>
-              <th className="pb-4">Date</th>
-              <th className="pb-4">Side</th>
-              <th className="pb-4">Symbol</th>
-              <th className="pb-4 text-center">Qty</th>
-              <th className="pb-4 text-right">Total Amount</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {[...portfolio.history].reverse().map((txn: any, idx: number) => {
-              // Standardizing 'type' vs 'side' from your API
-              const side = txn.type || txn.side; 
-              const isBuy = side === 'BUY';
-              // Calculating Total: Quantity * Price
-              const totalAmount = txn.qty * txn.price;
-
-              return (
-                <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-4 text-xs text-slate-500 font-medium">
-                    {new Date(txn.ts).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                  </td>
-                  <td className="py-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase ${
-                      isBuy ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                    }`}>
-                      {side}
-                    </span>
-                  </td>
-                  <td className="py-4 font-black text-slate-900">{txn.ticker || 'CASH'}</td>
-                  <td className={`py-4 text-center font-bold ${isBuy ? 'text-slate-700' : 'text-rose-600'}`}>
-                    {isBuy ? `+${txn.qty}` : `-${txn.qty}`}
-                  </td>
-                  <td className="py-4 text-right font-black text-slate-900">
-                    ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </Card>
-)}
-
             </div>
           </div>
         </div>
       </div>
+
+      {/* Asset Dashboard Modal */}
+      {selectedAsset && (
+        <AssetDashboard
+          symbol={selectedAsset}
+          portfolio={portfolio}
+          onClose={() => setSelectedAsset(null)}
+        />
+      )}
     </main>
   );
 }
