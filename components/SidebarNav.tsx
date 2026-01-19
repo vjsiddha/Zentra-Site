@@ -1,7 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+interface SidebarNavProps {
+  onProfileClick?: () => void;
+}
 
 function NavItem({
   href,
@@ -19,19 +23,23 @@ function NavItem({
     <Link
       href={href}
       className={[
-        'flex items-center gap-3 px-4 py-3 rounded-lg transition',
+        "flex items-center gap-3 px-4 py-3 rounded-lg transition",
         active
-          ? 'bg-gray-50 text-[#04456d] font-semibold'
-          : 'hover:bg-gray-50 text-gray-700',
-      ].join(' ')}
+          ? "bg-gray-50 text-[#04456d] font-semibold"
+          : "hover:bg-gray-50 text-gray-700",
+      ].join(" ")}
     >
-      <i className={`ti ${icon} text-lg ${active ? 'text-[#04456d]' : 'text-gray-500'}`} />
+      <i
+        className={`ti ${icon} text-lg ${
+          active ? "text-[#04456d]" : "text-gray-500"
+        }`}
+      />
       <span className="text-sm">{label}</span>
     </Link>
   );
 }
 
-export default function SidebarNav() {
+export default function SidebarNav({ onProfileClick }: SidebarNavProps) {
   return (
     <div className="w-full bg-white rounded-2xl shadow-sm p-8 flex flex-col gap-8 h-full">
       {/* Logo */}
@@ -61,9 +69,21 @@ export default function SidebarNav() {
         <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
           SETTINGS
         </div>
+
         <div className="space-y-1">
+          {/* Profile button */}
+          <button
+            type="button"
+            onClick={onProfileClick}
+            className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-gray-700 transition hover:bg-gray-50"
+          >
+            <i className="ti ti-user text-lg text-gray-500" />
+            <span className="text-sm">Profile</span>
+          </button>
+
           <NavItem href="/settings" icon="ti-settings" label="Settings" />
-          {/* you can make this a real sign-out later */}
+
+          {/* Logout placeholder */}
           <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 text-red-500 transition cursor-pointer">
             <i className="ti ti-logout text-lg text-red-500" />
             <span className="text-sm">Logout</span>

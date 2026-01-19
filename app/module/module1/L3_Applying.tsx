@@ -58,7 +58,7 @@ const SCENARIOS: Record<string, Scenario> = {
       occupation: "Software Engineer",
       income: "$75K/year",
       additionalIncome: "$5K side hustle",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&auto=format&fit=crop",
+      image: "https://static.vecteezy.com/system/resources/previews/047/643/782/non_2x/cheerful-guy-cartoon-character-smiling-icon-isolated-vector.jpg",
       description: "He's saving for a condo, paying off student loans, and still wants to enjoy weekend trips—can you help him budget smartly while still having fun?",
     },
     keyAspects: [
@@ -95,7 +95,7 @@ const SCENARIOS: Record<string, Scenario> = {
       occupation: "Marketing Manager",
       income: "$95K/year",
       additionalIncome: "$8K annual bonus",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1200&auto=format&fit=crop",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3jhKXEmq2zlyu0XdUXCYd1idr9EiASXjlQw&s",
       description: "She's been renting for years and finally ready to buy. With $40K saved, she needs to decide between a starter home or waiting for her dream place.",
     },
     keyAspects: [
@@ -132,7 +132,7 @@ const SCENARIOS: Record<string, Scenario> = {
       occupation: "Senior Accountant",
       income: "$120K/year",
       additionalIncome: "Rental income $800/month",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1200&auto=format&fit=crop",
+      image: "https://img.freepik.com/premium-vector/cute-smiling-adult-man-with-beard-mustache-flat-style-vector-illustration_710508-2331.jpg",
       description: "With 13 years until retirement, he needs to maximize savings while supporting his daughter's college education and caring for aging parents.",
     },
     keyAspects: [
@@ -169,7 +169,7 @@ const SCENARIOS: Record<string, Scenario> = {
       occupation: "Registered Nurse",
       income: "$68K/year",
       additionalIncome: "Overtime available",
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1200&auto=format&fit=crop",
+      image: "https://img.icons8.com/bubbles/1200/brown-curly-hair-lady-with-earrings.jpg",
       description: "With $45K in student loans and $12K in credit card debt, she's determined to become debt-free. She needs a strategy that's aggressive but sustainable.",
     },
     keyAspects: [
@@ -206,7 +206,7 @@ const SCENARIOS: Record<string, Scenario> = {
       occupation: "Teacher & IT Specialist",
       income: "$130K combined",
       additionalIncome: "Summer tutoring $3K",
-      image: "https://images.unsplash.com/photo-1591474200742-8e512e6f98f8?q=80&w=1200&auto=format&fit=crop",
+      image: "https://thumbs.dreamstime.com/b/happy-couple-smiling-cartoon-vector-illustration-avatar-icons-400085032.jpg",
       description: "With twins starting high school, they have 4 years to save for college. They want to fund education without sacrificing their own retirement.",
     },
     keyAspects: [

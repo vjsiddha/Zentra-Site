@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 interface LessonCardProps {
@@ -5,7 +7,7 @@ interface LessonCardProps {
   category: string;
   imageUrl: string;
   progress: number;
-  href?: string; // NEW
+  href?: string;
 }
 
 export default function LessonCard({
@@ -13,25 +15,40 @@ export default function LessonCard({
   category,
   imageUrl,
   progress,
-  href, // NEW
+  href,
 }: LessonCardProps) {
-  const card = (
-    <div className="bg-white rounded-2xl shadow overflow-hidden hover:shadow-md transition-all relative">
-      {/* image */}
-      <img src={imageUrl} alt={title} className="w-full h-[160px] object-cover" />
+  const CardContent = (
+    <div
+      className="
+        bg-white rounded-2xl shadow overflow-hidden
+        transition-all hover:shadow-md
+        cursor-pointer
+        h-full
+      "
+    >
+      {/* Image */}
+      <div className="relative">
+        <img
+          src={imageUrl}
+          alt={title}
+          draggable={false}
+          className="w-full h-[160px] object-cover select-none"
+        />
 
-      {/* category pill */}
-      <span className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded-full text-xs font-semibold text-gray-700 uppercase tracking-wider">
-        {category}
-      </span>
+        {/* Category pill */}
+        <span className="absolute top-3 left-3 px-2 py-1 bg-white/90 rounded-full text-xs font-semibold text-gray-700 uppercase tracking-wider">
+          {category}
+        </span>
+      </div>
 
-      {/* content */}
+      {/* Content */}
       <div className="p-4">
         <div className="font-medium text-gray-900">{title}</div>
-        {/* progress */}
-        <div className="mt-3 h-2 bg-gray-100 rounded-full relative">
+
+        {/* Progress bar */}
+        <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="absolute left-0 top-0 h-2 bg-[#04456d] rounded-full"
+            className="h-full bg-[#04456d] rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -39,12 +56,18 @@ export default function LessonCard({
     </div>
   );
 
-  // If href is provided, make the whole card a link
-  return href ? (
-    <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-[#04456d] rounded-2xl">
-      {card}
-    </Link>
-  ) : (
-    card
-  );
+  // If href is provided → wrap entire card in Link
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="block h-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#04456d]"
+        aria-label={`Open ${title}`}
+      >
+        {CardContent}
+      </Link>
+    );
+  }
+
+  return CardContent;
 }

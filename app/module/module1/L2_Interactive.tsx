@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Lottie from "lottie-react";
+
+import walletAnim from "@/public/lottie/wallet.json";
+import chartAnim from "@/public/lottie/chart.json";
+import lightningAnim from "@/public/lottie/lightning.json";
+import targetAnim from "@/public/lottie/target.json";
+import lightbulbAnim from "@/public/lottie/lightbulb.json";
 
 interface L2Props {
   onComplete: (score: number) => void;
@@ -382,29 +389,44 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 w-full">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center">
-              <div className="text-3xl mb-2">💰</div>
+              <div className="mb-3 w-12 h-12 mx-auto">
+              <Lottie animationData={walletAnim} loop />
+              </div>
               <h3 className="text-sm font-bold text-slate-900">Get Paid</h3>
               <p className="text-xs text-[#4F7D96] mt-1">$1,800 paycheck</p>
             </div>
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center">
-              <div className="text-3xl mb-2">📊</div>
+              <div className="mb-3 w-12 h-12 mx-auto">
+              <Lottie animationData={chartAnim} loop />
+              </div>
               <h3 className="text-sm font-bold text-slate-900">Allocate</h3>
               <p className="text-xs text-[#4F7D96] mt-1">Budget your money</p>
             </div>
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center">
-              <div className="text-3xl mb-2">⚡</div>
+              <div className="mb-3 w-12 h-12 mx-auto">
+              <Lottie animationData={lightningAnim} loop />
+              </div>
               <h3 className="text-sm font-bold text-slate-900">Stress Test</h3>
               <p className="text-xs text-[#4F7D96] mt-1">Face the unexpected</p>
             </div>
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center">
-              <div className="text-3xl mb-2">🎯</div>
+              <div className="mb-3 w-12 h-12 mx-auto">
+              <Lottie animationData={targetAnim} loop />
+              </div>
               <h3 className="text-sm font-bold text-slate-900">Score</h3>
               <p className="text-xs text-[#4F7D96] mt-1">60%+ to pass</p>
             </div>
           </div>
 
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-10 max-w-2xl w-full">
-            <h3 className="font-bold text-amber-800 mb-2">💡 Remember the 50/30/20 Rule!</h3>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8">
+              <Lottie animationData={lightbulbAnim} loop />
+            </div>
+            <h3 className="font-bold text-amber-800">
+              Remember the 50/30/20 Rule!
+            </h3>
+          </div>
             <ul className="text-amber-700 text-sm space-y-1">
               <li>• <strong>50%</strong> for Needs (rent, groceries) = $900</li>
               <li>• <strong>30%</strong> for Wants (fun, entertainment) = $540</li>

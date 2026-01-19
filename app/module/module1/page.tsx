@@ -5,27 +5,56 @@ import { useSearchParams, useRouter } from "next/navigation";
 import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
+import { loadLessonProgress, saveLessonProgress } from "@/lib/progress";
 
 function ModuleOneContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
+  const lessonId = "module1"; // ✅ Firestore doc id
+
   // Steps: 1 = Lesson 1, 2 = Lesson 2, 3 = Lesson 3, 4 = Module Complete
   const [activeStep, setActiveStep] = useState(1);
   const [lesson1Score, setLesson1Score] = useState(0);
   const [lesson2Score, setLesson2Score] = useState(0);
   const [lesson3Score, setLesson3Score] = useState(0);
 
-  // Sync step with URL (?step=2)
+  const [hydrated, setHydrated] = useState(false);
+
+  // ✅ Hydrate step from (1) URL, else (2) Firestore, else default 1
   useEffect(() => {
-    const step = searchParams.get("step");
-    if (step) {
-      const stepNum = parseInt(step);
-      if (stepNum >= 1 && stepNum <= 4) {
-        setActiveStep(stepNum);
+    (async () => {
+      // 1) URL wins if present
+      const urlStep = searchParams.get("step");
+      if (urlStep) {
+        const stepNum = parseInt(urlStep, 10);
+        if (stepNum >= 1 && stepNum <= 4) {
+          setActiveStep(stepNum);
+          setHydrated(true);
+          return;
+        }
       }
-    }
-  }, [searchParams]);
+
+      // 2) Otherwise use Firestore saved progress
+      const saved = await loadLessonProgress(lessonId);
+      if (saved?.currentStep && saved.currentStep >= 1 && saved.currentStep <= 4) {
+        setActiveStep(saved.currentStep);
+        // keep URL in sync
+        router.replace(`/module/module1?step=${saved.currentStep}`, { scroll: false });
+      } else {
+        router.replace(`/module/module1?step=1`, { scroll: false });
+      }
+
+      setHydrated(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ Save progress whenever activeStep changes (after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    saveLessonProgress(lessonId, activeStep);
+  }, [activeStep, hydrated]);
 
   // Update URL when step changes
   const goToStep = (step: number) => {
@@ -126,14 +155,16 @@ function ModuleOneContent() {
 
 export default function ModuleOnePage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-[#F7FAFC]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen bg-[#F7FAFC]">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ModuleOneContent />
     </Suspense>
   );

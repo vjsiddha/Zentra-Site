@@ -1,8 +1,8 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore"; // ✅ add
 
-// Use environment variables instead of hardcoding sensitive keys
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -16,10 +16,13 @@ const firebaseConfig = {
 // Avoid re-initializing if Firebase app already exists
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
+// ✅ Firestore instance
+const db = getFirestore(app);
+
 // Optional: analytics only on client
 let analytics: ReturnType<typeof getAnalytics> | null = null;
 if (typeof window !== "undefined") {
   analytics = getAnalytics(app);
 }
 
-export { app, analytics };
+export { app, analytics, db }; // ✅ export db

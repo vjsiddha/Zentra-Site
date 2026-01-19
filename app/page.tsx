@@ -15,14 +15,13 @@ import { signOutUser } from "@/lib/auth";
 
 export default function Dashboard() {
   // ---- Auth guard ----
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth();    
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) router.replace("/signin");
   }, [loading, user, router]);
 
-  // Optionally show nothing while deciding
   if (loading || !user) {
     return (
       <PageShell>
@@ -39,7 +38,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-[240px_1fr_300px] gap-6">
         {/* LEFT: Sidebar (fixed 240px) */}
         <aside className="w-full flex-shrink-0 sticky top-8 h-[calc(100vh-64px)]">
-          <SidebarNav />
+          <SidebarNav onProfileClick={() => router.push("/profile")} />
         </aside>
 
         {/* CENTER: Main (flexible) with subtle hairline separators */}
@@ -69,7 +68,6 @@ export default function Dashboard() {
               <HeroCard />
             </section>
 
-            {/* soft section divider */}
             <div className="h-px bg-[#E9EEF3]" />
 
             {/* Favourites */}
@@ -88,7 +86,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* 3 equal cards */}
               <div className="grid grid-cols-3 gap-6">
                 <LessonCard
                   title="Lesson 1: Your Savings Matter"
@@ -111,7 +108,6 @@ export default function Dashboard() {
               </div>
             </section>
 
-            {/* soft section divider */}
             <div className="h-px bg-[#E9EEF3]" />
 
             {/* Bottom row: Ask Benny + Simulator */}
