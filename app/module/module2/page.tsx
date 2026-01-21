@@ -124,19 +124,19 @@ function ModuleTwoContent() {
   );
 }
 
-export default function ModuleTwoPage() {
+export default function ModuleFivePage() {
   return (
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-screen bg-[#F7FAFC]">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border=-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-slate-600">Loading...</p>
           </div>
         </div>
       }
     >
-      <ModuleTwoContent />
+      <ModuleFiveContent />
     </Suspense>
   );
 }
