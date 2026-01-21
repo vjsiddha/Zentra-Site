@@ -167,13 +167,31 @@ export default function LessonPage() {
 },
 
     {
-      moduleNumber: 3,
-      lessons: [
-        { title: "Lesson 1", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/db1160cd2854f4926a6f8d6262e2929b3868ce57?width=515", progress: 51 },
-        { title: "Lesson 2", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/9782ac4062b1a3ab643fb90c891cfb4af595da22?width=515", progress: 51 },
-        { title: "Lesson 3", category: "Stocks",  imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/bf1f3af404aceee542ac36f303d0520a3847ec29?width=515", progress: 51 },
-      ],
+  moduleNumber: 3,
+  lessons: [
+    {
+      title: "Crypto Foundations: Wallets, Keys & Blockchains",
+      category: "Definitions",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/db1160cd2854f4926a6f8d6262e2929b3868ce57?width=515",
+      progress: 0,
+      href: "/module/module3?step=1",
     },
+    {
+      title: "Crypto In Action: Fees, Swaps & Risk Decisions",
+      category: "Interactive Games",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/9782ac4062b1a3ab643fb90c891cfb4af595da22?width=515",
+      progress: 0,
+      href: "/module/module3?step=2",
+    },
+    {
+      title: "Build Your First Crypto Allocation (Safely)",
+      category: "Applying Your Knowledge",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/bf1f3af404aceee542ac36f303d0520a3847ec29?width=515",
+      progress: 0,
+      href: "/module/module3?step=3",
+    },
+  ],
+},
     {
   moduleNumber: 4,
   lessons: [
