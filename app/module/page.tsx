@@ -196,22 +196,22 @@ export default function LessonPage() {
   moduleNumber: 4,
   lessons: [
       {
-        title: "Lesson 1",
-        category: "Savings",
+        title: "Survive a Bear Market",
+        category: "Definitions",
         imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/682e7ba457ab32f55fd136dd9bea4b2bfc9dfef8?width=515",
         progress: 51,
         href: "/module/module4?step=1",
       },
       {
-        title: "Lesson 2",
-        category: "Savings",
+        title: "Survive a Bear Market",
+        category: "Interactive Games",
         imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/c9a519d462ae7109500af09e881bd5217c4fd2d4?width=515",
         progress: 51,
         href: "/module/module4?step=2",
       },
       {
-        title: "Lesson 3",
-        category: "Stocks",
+        title: "Survive a Bear Market",
+        category: "Applying Your Knowledge",
         imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/9009d02bbca809a3239a04be5fe4bba849f160fc?width=515",
         progress: 51,
         href: "/module/module4?step=3",

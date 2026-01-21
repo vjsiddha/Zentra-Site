@@ -220,8 +220,7 @@ export default function L2_Simulation({ onComplete, onBack }: L2Props) {
         {onBack && <BackButton />}
         <div className="flex flex-col items-center justify-center max-w-[1000px] mx-auto px-6 py-16">
           <div className="inline-flex items-center px-4 py-2 bg-rose-100 text-rose-700 rounded-full mb-6">
-            <span className="text-sm font-bold uppercase tracking-widest">Module 4 • Lesson 2</span>
-          </div>
+<span className="text-sm font-bold uppercase tracking-widest">Lesson 2</span>          </div>
 
           <h1 className="text-[36px] font-bold text-[#0D171C] leading-tight text-center mb-4">
             Survive the Market Crash

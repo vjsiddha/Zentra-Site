@@ -197,8 +197,7 @@ export default function L3_Archetypes({ onComplete }: L3Props) {
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center px-6 py-16">
         <div className="max-w-3xl">
           <div className="inline-flex items-center px-4 py-2 bg-violet-100 text-violet-700 rounded-full mb-6">
-            <span className="text-sm font-bold uppercase tracking-widest">Module 4 • Lesson 3</span>
-          </div>
+<span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>          </div>
 
           <h1 className="text-[36px] font-bold text-[#0D171C] leading-tight mb-4">
             Which Investor Are You?

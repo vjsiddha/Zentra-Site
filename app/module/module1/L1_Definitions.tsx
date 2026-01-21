@@ -324,7 +324,7 @@ export default function L1_Definitions({ onComplete }: { onComplete: (score: num
         {showBackButton && <BackButton />}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-12">
           <header className="text-center mb-10">
-            <p className="text-sky-600 font-bold uppercase tracking-widest text-xs">Lesson 1: The Foundation</p>
+            <span className="text-sm font-bold uppercase tracking-widest">Lesson 1</span>
             <h2 className="text-3xl font-extrabold text-slate-900 mt-2">{DEFINITIONS[currentIndex].term}</h2>
             <p className="text-slate-400 text-sm mt-2">Definition {currentIndex + 1} of {DEFINITIONS.length}</p>
           </header>

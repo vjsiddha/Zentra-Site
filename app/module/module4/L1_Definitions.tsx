@@ -290,8 +290,7 @@ export default function L1_Definitions({ onComplete }: { onComplete: (score: num
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 py-16 animate-in fade-in slide-in-from-bottom-4">
         <div className="inline-flex items-center px-4 py-2 bg-rose-100 text-rose-700 rounded-full mb-6">
-          <span className="text-sm font-bold uppercase tracking-widest">Module 4 • Lesson 1</span>
-        </div>
+<span className="text-sm font-bold uppercase tracking-widest">Lesson 1</span>        </div>
         
         <h1 className="text-[32px] font-bold text-[#0D171C] leading-[40px] text-center mb-4">
           Understanding Market Cycles

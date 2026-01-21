@@ -454,7 +454,7 @@ export default function L3_Applying({ onComplete }: L3Props) {
         <section className="w-full mx-auto max-w-4xl px-4 sm:px-6">
           <header className="mb-10 text-center">
             <div className="inline-flex items-center px-4 py-2 bg-violet-100 text-violet-700 rounded-full mb-4">
-              <span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>
+            <span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>
             </div>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
               Apply Your Knowledge
