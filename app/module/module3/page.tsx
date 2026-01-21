@@ -2,11 +2,13 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+
+
 import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
 
-function ModuleFiveContent() {
+function ModuleThreeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -20,20 +22,22 @@ function ModuleFiveContent() {
   useEffect(() => {
     const step = searchParams.get("step");
     if (step) {
-      const stepNum = parseInt(step);
-      if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
+      const stepNum = parseInt(step, 10);
+      if (stepNum >= 1 && stepNum <= 4) {
+        setActiveStep(stepNum);
+      }
     }
   }, [searchParams]);
 
   // Update URL when step changes
   const goToStep = (step: number) => {
     setActiveStep(step);
-    router.push(`/module/module5?step=${step}`, { scroll: false });
+    router.push(`/module/module3?step=${step}`, { scroll: false });
   };
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
-      {/* LESSON 1: Definitions & Quiz */}
+      {/* LESSON 1: Definitions */}
       {activeStep === 1 && (
         <L1_Definitions
           onComplete={(score) => {
@@ -55,7 +59,7 @@ function ModuleFiveContent() {
         />
       )}
 
-      {/* LESSON 3: Apply & Reflect */}
+      {/* LESSON 3: Applying */}
       {activeStep === 3 && (
         <L3_Applying
           onComplete={(score) => {
@@ -71,20 +75,21 @@ function ModuleFiveContent() {
         <section className="min-h-screen flex items-center justify-center px-6">
           <div className="max-w-xl w-full bg-white p-12 rounded-[40px] shadow-xl border border-slate-100 text-center animate-in zoom-in duration-500">
             <div className="text-7xl mb-6">🏁</div>
+
             <h2 className="text-4xl font-black mb-4 text-slate-900">
-              Module 5 Complete!
+              Module 3 Complete!
             </h2>
+
             <p className="text-lg text-[#4F7D96] mb-8 leading-relaxed">
-              You’ve built the foundations of investing: portfolios, asset types,
-              risk vs return, time horizon, diversification, and fees.
+              You’ve built real crypto instincts — understanding wallets,
+              security, scams, gas fees, volatility, and how to design a crypto
+              plan that fits your goals and time horizon.
             </p>
 
             {/* Score Summary */}
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="bg-sky-50 rounded-xl p-4">
-                <p className="text-xs text-sky-600 uppercase font-bold">
-                  Lesson 1
-                </p>
+                <p className="text-xs text-sky-600 uppercase font-bold">Lesson 1</p>
                 <p className="text-2xl font-black text-sky-700">
                   {lesson1Score}%
                 </p>
@@ -111,7 +116,7 @@ function ModuleFiveContent() {
             <div className="mb-8">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-bold text-slate-700">
-                  Module 5 Progress
+                  Module 3 Progress
                 </span>
                 <span className="text-slate-500">100%</span>
               </div>
@@ -121,17 +126,21 @@ function ModuleFiveContent() {
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => router.push("/lesson")}
-                className="w-full py-5 bg-[#0D171C] text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
-              >
-                Back to All Modules
-              </button>
+            <button
+              type="button"
+              onClick={() => router.push("/lesson")}
+              className="w-full py-5 bg-[#0D171C] text-white rounded-2xl
+                        font-bold text-lg hover:opacity-90
+                        transition-all shadow-lg"
+            >
+              Back to All Modules
+            </button>
+
               <button
                 onClick={() => goToStep(1)}
                 className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
               >
-                Redo Module 5
+                Redo Module 3
               </button>
             </div>
           </div>
@@ -141,7 +150,7 @@ function ModuleFiveContent() {
   );
 }
 
-export default function ModuleFivePage() {
+export default function ModuleThreePage() {
   return (
     <Suspense
       fallback={
@@ -153,7 +162,7 @@ export default function ModuleFivePage() {
         </div>
       }
     >
-      <ModuleFiveContent />
+      <ModuleThreeContent />
     </Suspense>
   );
 }

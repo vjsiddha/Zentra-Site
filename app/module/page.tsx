@@ -167,13 +167,31 @@ export default function LessonPage() {
 },
 
     {
-      moduleNumber: 3,
-      lessons: [
-        { title: "Lesson 1", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/db1160cd2854f4926a6f8d6262e2929b3868ce57?width=515", progress: 51 },
-        { title: "Lesson 2", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/9782ac4062b1a3ab643fb90c891cfb4af595da22?width=515", progress: 51 },
-        { title: "Lesson 3", category: "Stocks",  imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/bf1f3af404aceee542ac36f303d0520a3847ec29?width=515", progress: 51 },
-      ],
+  moduleNumber: 3,
+  lessons: [
+    {
+      title: "Crypto Foundations: Wallets, Keys & Blockchains",
+      category: "Definitions",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/db1160cd2854f4926a6f8d6262e2929b3868ce57?width=515",
+      progress: 0,
+      href: "/module/module3?step=1",
     },
+    {
+      title: "Crypto In Action: Fees, Swaps & Risk Decisions",
+      category: "Interactive Games",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/9782ac4062b1a3ab643fb90c891cfb4af595da22?width=515",
+      progress: 0,
+      href: "/module/module3?step=2",
+    },
+    {
+      title: "Build Your First Crypto Allocation (Safely)",
+      category: "Applying Your Knowledge",
+      imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/bf1f3af404aceee542ac36f303d0520a3847ec29?width=515",
+      progress: 0,
+      href: "/module/module3?step=3",
+    },
+  ],
+},
     {
   moduleNumber: 4,
   lessons: [
@@ -203,9 +221,9 @@ export default function LessonPage() {
     {
       moduleNumber: 5,
       lessons: [
-        { title: "Lesson 1", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/f221e6d99cd3158d8054c9605d8f732f07fe4c26?width=515", progress: 51 },
-        { title: "Lesson 2", category: "Savings", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/414987ec755eaaa272fc75ca4e23a57b4a83f610?width=515", progress: 51 },
-        { title: "Lesson 3", category: "Stocks",  imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/c51f22ead4ee69af5fd0b30b6e204a61a3fffc00?width=515", progress: 51 },
+        { title: "Passive vs Active Investing", category: "Definitions", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/3f0ff33d7122ae2536ca66f24a4feff12f41703d?width=515", progress: 51, href:"/module/module5?step=1"  },
+        { title: "Passive vs Active Investing", category: "Interactive Games", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2bffdbaaa7066d288d28dec2d792c1460c7ac58e?width=515", progress: 51, href:"/module/module5?step=2"  },
+        { title: "Passive vs Active Investing", category: "Applying Your Knowledge", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/fd9756af4aeed573522c2e899816ec55c77b1d62?width=515", progress: 51, href:"/module/module5?step=3" },
       ],
     },
     {
