@@ -432,8 +432,7 @@ export default function L2_Interactive({
         <BackButton />
 
         <div className="w-full text-center mb-8">
-          <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs mb-2">Lesson 2: Interactive</p>
-          <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Make Smart Investing Decisions</h1>
+        <span className="text-sm font-bold uppercase tracking-widest">Lesson 2</span>          <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Make Smart Investing Decisions</h1>
           <p className="text-[#4F7D96] mt-2">Answer scenarios → then build a portfolio that matches your timeline</p>
         </div>
 

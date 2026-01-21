@@ -298,8 +298,7 @@ export default function L1_Definitions({
         <div className="w-full text-center mb-6">
           <p className="text-sky-600 font-bold uppercase tracking-widest text-xs mb-2">Module 2</p>
           <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Introduction to Investing</h1>
-          <p className="text-slate-500 text-sm mt-2">Lesson 1: Definitions + real-world misconceptions</p>
-        </div>
+          <span className="text-sm font-bold uppercase tracking-widest">Lesson 1</span>        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="flex flex-col items-start">
