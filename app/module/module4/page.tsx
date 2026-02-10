@@ -63,6 +63,21 @@ function ModuleFourContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 to-orange-50 font-manrope text-[#0D171C]">
+      {/* Fixed Top Navigation - Only show during lessons, not on completion */}
+      {activeStep !== 4 && (
+        <div className="fixed top-0 right-0 z-50 p-6">
+          <button
+            onClick={() => router.push("/module")}
+            className="px-6 py-3 bg-white text-[#0B5E8E] rounded-full font-bold text-sm hover:bg-slate-50 transition-all shadow-lg border border-slate-200 flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Back to Modules
+          </button>
+        </div>
+      )}
+
       {/* LESSON 1: Market Fundamentals */}
       {activeStep === 1 && (
         <L1_Definitions
@@ -150,7 +165,7 @@ function ModuleFourContent() {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push("/lesson")}
+                onClick={() => router.push("/module")}
                 className="w-full py-5 bg-gradient-to-r from-rose-600 to-violet-600 text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
               >
                 Back to All Modules
@@ -161,13 +176,6 @@ function ModuleFourContent() {
               >
                 Review Module 4
               </button>
-            </div>
-
-            {/* Next Module Teaser */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-sm text-slate-500">
-                Ready for the next challenge? Module 5 teaches you about real estate investing!
-              </p>
             </div>
           </div>
         </section>

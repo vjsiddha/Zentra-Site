@@ -3,13 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 
-/**
- * Module 3 — Lesson 1 (Definitions + Misconception Challenge)
- * Flow: intro → study → challenge → results
- * UI: matches your Module 8 styling (cards, images, back button, polished feedback)
- */
 
-// -------------------- DATA --------------------
 
 type Definition = {
   id: number;

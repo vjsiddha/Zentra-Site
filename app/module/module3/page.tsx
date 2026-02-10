@@ -128,7 +128,7 @@ function ModuleThreeContent() {
             <div className="space-y-3">
             <button
               type="button"
-              onClick={() => router.push("/lesson")}
+              onClick={() => router.push("/module")}
               className="w-full py-5 bg-[#0D171C] text-white rounded-2xl
                         font-bold text-lg hover:opacity-90
                         transition-all shadow-lg"
