@@ -65,12 +65,12 @@ function InvestmentChart({
               tick={{ fontSize: 11 }}
             />
             <Tooltip 
-              formatter={(value: number) => [`$${value.toLocaleString()}`, 'Portfolio Value']}
-              contentStyle={{ 
-                borderRadius: '12px', 
-                border: 'none', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-              }}
+              formatter={(value: number | undefined) => {
+  if (typeof value === 'number') {
+    return [`$${value.toLocaleString()}`, 'Portfolio Value'];
+  }
+  return ['', 'Portfolio Value'];
+}}
             />
             <Line 
               type="monotone" 
