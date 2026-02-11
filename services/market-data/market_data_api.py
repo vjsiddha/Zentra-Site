@@ -1,7 +1,7 @@
 # services/market-data/market_data_api.py
 """
 Market Data Service using Finnhub API
-Replaces Yahoo Finance with a commercial-friendly alternative
+FIXED: /history endpoint now returns proper format for equity curve
 """
 
 from fastapi import FastAPI, HTTPException, Query
@@ -68,15 +68,6 @@ async def root():
 async def get_quote(symbol: str):
     """
     Get real-time quote for a stock symbol
-    
-    Returns:
-        - c: Current price
-        - d: Change
-        - dp: Percent change
-        - h: High price of the day
-        - l: Low price of the day
-        - o: Open price of the day
-        - pc: Previous close price
     """
     try:
         symbol = symbol.upper()
@@ -96,11 +87,13 @@ async def get_quote(symbol: str):
                 "symbol": symbol,
                 "last": quote['c'],
                 "change": quote['d'],
-                "change_percent": quote['dp'],
+                "change_pct": quote['dp'],
                 "high": quote['h'],
                 "low": quote['l'],
                 "open": quote['o'],
-                "previous_close": quote['pc'],
+                "prev_close": quote['pc'],
+                "high_52w": quote.get('h', 0),  # Approximation
+                "low_52w": quote.get('l', 0),   # Approximation
                 "timestamp": datetime.now().isoformat()
             }
         }
@@ -109,48 +102,95 @@ async def get_quote(symbol: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/candles/{symbol}")
-async def get_candles(
+@app.get("/history/{symbol}")
+async def get_price_history(
     symbol: str,
-    days: int = Query(default=30, ge=1, le=365, description="Number of days of history")
+    period: str = Query(default="1y"),
+    interval: str = Query(default="1d")
 ):
     """
-    Get historical candlestick data for a symbol
+    Get historical price data for equity curve calculations
     
-    Returns arrays of:
-        - c: Close prices
-        - h: High prices
-        - l: Low prices
-        - o: Open prices
-        - v: Volume
-        - t: Timestamps
+    Args:
+        symbol: Stock symbol
+        period: Time period - '1d', '5d', '1m', '3m', '6m', '1y', '2y', '5y'
+        interval: Data interval (currently only 'D' daily is supported)
+    
+    Returns:
+        Array of {date, open, high, low, close, volume, ts} objects
     """
     try:
         symbol = symbol.upper()
+        
+        # Map period to days (expanded to support more periods)
+        period_days = {
+            "1d": 1,
+            "5d": 5,
+            "7d": 7,
+            "1m": 30,
+            "1mo": 30,
+            "3m": 90,
+            "3mo": 90,
+            "6m": 180,
+            "6mo": 180,
+            "1y": 365,
+            "2y": 730,
+            "5y": 1825
+        }
+        days = period_days.get(period, 365)
+        
+        # Get candles data from Finnhub
         to_timestamp = int(datetime.now().timestamp())
         from_timestamp = int((datetime.now() - timedelta(days=days)).timestamp())
         
-        cache_key = f"candles_{symbol}_{days}"
+        cache_key = f"history_{symbol}_{period}"
         
         def fetch():
             return finnhub_client.stock_candles(symbol, 'D', from_timestamp, to_timestamp)
         
         candles = get_cached_or_fetch(cache_key, fetch)
         
-        if candles.get('s') != 'ok':
-            raise HTTPException(status_code=404, detail=f"No data found for {symbol}")
+        if candles.get('s') != 'ok' or not candles.get('c'):
+            logger.warning(f"No candle data returned for {symbol} (period={period})")
+            return {
+                "ok": True,
+                "data": []  # Return empty array instead of error
+            }
+        
+        # Format data for mock investor (needs ts, date, open, high, low, close, volume)
+        history_data = []
+        timestamps = candles.get('t', [])
+        opens = candles.get('o', [])
+        highs = candles.get('h', [])
+        lows = candles.get('l', [])
+        closes = candles.get('c', [])
+        volumes = candles.get('v', [])
+        
+        for i, timestamp in enumerate(timestamps):
+            date_obj = datetime.fromtimestamp(timestamp)
+            
+            history_data.append({
+                "ts": date_obj.isoformat(),  # ISO format for backend
+                "date": date_obj.isoformat(),  # ISO format
+                "open": round(opens[i], 2) if i < len(opens) else closes[i],
+                "high": round(highs[i], 2) if i < len(highs) else closes[i],
+                "low": round(lows[i], 2) if i < len(lows) else closes[i],
+                "close": round(closes[i], 2),
+                "volume": int(volumes[i]) if i < len(volumes) else 0
+            })
+        
+        logger.info(f"✅ Returning {len(history_data)} historical bars for {symbol}")
         
         return {
             "ok": True,
-            "data": {
-                "symbol": symbol,
-                "resolution": "daily",
-                "candles": candles
-            }
+            "data": history_data
         }
     except Exception as e:
-        logger.error(f"Error fetching candles for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching price history for {symbol}: {str(e)}")
+        return {
+            "ok": True,
+            "data": []  # Return empty array on error
+        }
 
 
 @app.get("/news/{symbol}")
@@ -160,15 +200,6 @@ async def get_company_news(
 ):
     """
     Get recent news articles for a company
-    
-    Returns array of news articles with:
-        - headline: Article title
-        - summary: Brief description
-        - source: News source
-        - url: Link to article
-        - image: Article image URL
-        - datetime: Unix timestamp
-        - sentiment: Sentiment score (if available)
     """
     try:
         symbol = symbol.upper()
@@ -207,107 +238,10 @@ async def get_company_news(
         }
 
 
-@app.get("/search")
-async def search_symbols(
-    q: str = Query(..., min_length=1, description="Search query")
-):
-    """
-    Search for stock symbols by company name or ticker
-    
-    Returns array of matching symbols with:
-        - description: Company name
-        - displaySymbol: Trading symbol
-        - symbol: Base symbol
-        - type: Security type
-    """
-    try:
-        cache_key = f"search_{q.lower()}"
-        
-        def fetch():
-            result = finnhub_client.symbol_lookup(q)
-            return result.get('result', [])
-        
-        results = get_cached_or_fetch(cache_key, fetch)
-        
-        # Format for easier frontend consumption
-        formatted = [
-            {
-                "symbol": r.get('displaySymbol', r.get('symbol')),
-                "name": r.get('description', ''),
-                "type": r.get('type', 'Stock')
-            }
-            for r in results
-        ]
-        
-        return {
-            "ok": True,
-            "data": formatted[:20]  # Limit to 20 results
-        }
-    except Exception as e:
-        logger.error(f"Error searching symbols: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/company/{symbol}")
-async def get_company_profile(symbol: str):
-    """
-    Get company profile information
-    
-    Returns:
-        - name: Company name
-        - country: Country of incorporation
-        - currency: Trading currency
-        - exchange: Stock exchange
-        - ipo: IPO date
-        - marketCapitalization: Market cap
-        - shareOutstanding: Shares outstanding
-        - logo: Company logo URL
-        - phone: Contact phone
-        - weburl: Company website
-        - finnhubIndustry: Industry classification
-    """
-    try:
-        symbol = symbol.upper()
-        cache_key = f"profile_{symbol}"
-        
-        # Cache profile data for 1 hour
-        if cache_key in cache:
-            data, timestamp = cache[cache_key]
-            if datetime.now() - timestamp < timedelta(hours=1):
-                return {"ok": True, "data": data}
-        
-        profile = finnhub_client.company_profile2(symbol=symbol)
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail=f"Company profile not found for {symbol}")
-        
-        cache[cache_key] = (profile, datetime.now())
-        
-        return {
-            "ok": True,
-            "data": profile
-        }
-    except Exception as e:
-        logger.error(f"Error fetching company profile for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============================================================================
-# NEW ENDPOINTS FOR ASSET DASHBOARD
-# ============================================================================
-
 @app.get("/company-info/{symbol}")
 async def get_company_info(symbol: str):
     """
     Get formatted company information for Asset Dashboard
-    
-    Returns:
-        - name: Company name
-        - industry: Industry classification
-        - sector: Sector (derived from industry)
-        - market_cap: Market capitalization
-        - pe_ratio: P/E ratio (from basic financials)
-        - dividend_yield: Dividend yield
     """
     try:
         symbol = symbol.upper()
@@ -340,8 +274,8 @@ async def get_company_info(symbol: str):
         company_info = {
             "name": profile.get('name', symbol),
             "industry": profile.get('finnhubIndustry', 'N/A'),
-            "sector": profile.get('finnhubIndustry', 'N/A'),  # Finnhub uses industry, we'll use it as sector too
-            "market_cap": profile.get('marketCapitalization', 0) * 1_000_000 if profile.get('marketCapitalization') else 0,  # Convert from millions
+            "sector": profile.get('finnhubIndustry', 'N/A'),
+            "market_cap": profile.get('marketCapitalization', 0) * 1_000_000 if profile.get('marketCapitalization') else 0,
             "pe_ratio": pe_ratio,
             "dividend_yield": dividend_yield
         }
@@ -357,145 +291,40 @@ async def get_company_info(symbol: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/history/{symbol}")
-async def get_price_history(
-    symbol: str,
-    period: str = Query(default="7d", regex="^(7d|1m|1y)$")
+@app.get("/search")
+async def search_symbols(
+    q: str = Query(..., min_length=1, description="Search query")
 ):
     """
-    Get historical price data formatted for price chart
+    Search for stock symbols by company name or ticker
     
-    Args:
-        symbol: Stock symbol
-        period: Time period - '7d', '1m', or '1y'
-    
-    Returns:
-        Array of {date, close} objects for charting
+    Returns array of matching symbols
     """
     try:
-        symbol = symbol.upper()
-        
-        # Map period to days
-        period_days = {
-            "7d": 7,
-            "1m": 30,
-            "1y": 365
-        }
-        days = period_days.get(period, 7)
-        
-        # Get candles data
-        to_timestamp = int(datetime.now().timestamp())
-        from_timestamp = int((datetime.now() - timedelta(days=days)).timestamp())
-        
-        cache_key = f"history_{symbol}_{period}"
+        cache_key = f"search_{q.lower()}"
         
         def fetch():
-            return finnhub_client.stock_candles(symbol, 'D', from_timestamp, to_timestamp)
+            result = finnhub_client.symbol_lookup(q)
+            return result.get('result', [])
         
-        candles = get_cached_or_fetch(cache_key, fetch)
+        results = get_cached_or_fetch(cache_key, fetch)
         
-        if candles.get('s') != 'ok' or not candles.get('c'):
-            return {
-                "ok": True,
-                "data": []  # Return empty array instead of error
+        # Format for easier frontend consumption
+        formatted = [
+            {
+                "symbol": r.get('displaySymbol', r.get('symbol')),
+                "name": r.get('description', ''),
+                "type": r.get('type', 'Stock')
             }
-        
-        # Format data for chart
-        history_data = []
-        timestamps = candles.get('t', [])
-        closes = candles.get('c', [])
-        
-        for timestamp, close in zip(timestamps, closes):
-            date_obj = datetime.fromtimestamp(timestamp)
-            
-            # Format date based on period
-            if period == "7d":
-                date_str = date_obj.strftime("%b %d")
-            elif period == "1m":
-                date_str = date_obj.strftime("%b %d")
-            else:  # 1y
-                date_str = date_obj.strftime("%b '%y")
-            
-            history_data.append({
-                "date": date_str,
-                "close": round(close, 2)
-            })
+            for r in results
+        ]
         
         return {
             "ok": True,
-            "data": history_data
+            "data": formatted[:20]  # Limit to 20 results
         }
     except Exception as e:
-        logger.error(f"Error fetching price history for {symbol}: {str(e)}")
-        return {
-            "ok": True,
-            "data": []  # Return empty array on error
-        }
-
-
-@app.get("/market-status")
-async def get_market_status():
-    """
-    Check if US markets are currently open
-    """
-    try:
-        now = datetime.now()
-        
-        # Simple check: Monday-Friday, 9:30 AM - 4:00 PM ET
-        is_weekday = now.weekday() < 5
-        hour = now.hour
-        minute = now.minute
-        
-        market_open = is_weekday and (
-            (hour == 9 and minute >= 30) or 
-            (10 <= hour < 16)
-        )
-        
-        return {
-            "ok": True,
-            "data": {
-                "is_open": market_open,
-                "timestamp": now.isoformat(),
-                "message": "Markets are open" if market_open else "Markets are closed"
-            }
-        }
-    except Exception as e:
-        logger.error(f"Error checking market status: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/trending")
-async def get_trending():
-    """
-    Get trending stocks (most active)
-    Note: This uses Finnhub's market news as a proxy for trending
-    """
-    try:
-        cache_key = "trending"
-        
-        def fetch():
-            # Get general market news
-            news = finnhub_client.general_news('general', min_id=0)
-            
-            # Extract symbols mentioned in news (simplified)
-            symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA']
-            return symbols[:10]
-        
-        # Cache trending for 15 minutes
-        if cache_key in cache:
-            data, timestamp = cache[cache_key]
-            if datetime.now() - timestamp < timedelta(minutes=15):
-                return {"ok": True, "data": data}
-        
-        symbols = fetch()
-        cache[cache_key] = (symbols, datetime.now())
-        
-        return {
-            "ok": True,
-            "data": symbols
-        }
-    except Exception as e:
-        logger.error(f"Error fetching trending: {str(e)}")
+        logger.error(f"Error searching symbols: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -32,14 +32,15 @@ def equity_curve(history: List[Txn], closes: Dict[str, pd.Series]) -> pd.Series:
     Daily equity from cash + positions valued at daily close.
     - 'history' is chronological or not; we sort by ts.
     - 'closes' maps symbol -> pd.Series(date->close).
+    - FIXED: Returns equity curve from first transaction to TODAY (not last transaction).
     """
     if not history:
         return pd.Series(dtype=float)
 
-    # Build a daily index covering the span
+    # Build a daily index covering the span from first transaction to TODAY
     ts_sorted = sorted(history, key=lambda x: x.ts)
     start = pd.Timestamp(ts_sorted[0].ts).normalize()
-    end = pd.Timestamp(ts_sorted[-1].ts).normalize()
+    end = pd.Timestamp.now().normalize()  # ← FIXED: Go to today, not last transaction
     days = pd.date_range(start, end, freq="D")
 
     # Replay ledger day by day

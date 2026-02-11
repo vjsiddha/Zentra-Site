@@ -1,130 +1,52 @@
-"use client";
+'landin page'
+'use client';
 
-import PageShell from "@/components/PageShell";
-import SidebarNav from "@/components/SidebarNav";
-import HeroCard from "@/components/HeroCard";
-import LessonCard from "@/components/LessonCard";
-import AskBennyCard from "@/components/AskBennyCard";
-import SimulatorCard from "@/components/SimulatorCard";
-import RightRail from "@/components/RightRail";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
+import LandingPageContent from '@/components/LandingPageContent';
+import PageShell from '@/components/PageShell';
 
-import { useAuth } from "@/components/providers/AuthProvider";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { signOutUser } from "@/lib/auth";
-
-export default function Dashboard() {
-  // ---- Auth guard ----
-  const { user, loading } = useAuth();    
+export default function HomePage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const [isPreview, setIsPreview] = useState(false);
+  const [showLanding, setShowLanding] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/signin");
+    // Check for preview parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const preview = urlParams.get('preview') === 'true';
+    setIsPreview(preview);
+
+    if (loading) return;
+
+    // If user is authenticated and NOT previewing, redirect to dashboard
+    if (user && !preview) {
+      router.replace('/dashboard');
+    } else {
+      setShowLanding(true);
+    }
   }, [loading, user, router]);
 
-  if (loading || !user) {
+  // Show loading state while checking auth
+  if (loading || (!showLanding && user && !isPreview)) {
     return (
       <PageShell>
-        <div className="flex items-center justify-center py-24 text-gray-500">
-          Loading…
+        <div className="flex items-center justify-center min-h-screen py-24">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-[#0B5E8E] rounded-lg flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="4" width="16" height="16" rx="2" fill="white"/>
+              </svg>
+            </div>
+            <div className="text-[#4F7D96] font-semibold">Loading...</div>
+          </div>
         </div>
       </PageShell>
     );
   }
 
-  return (
-    <PageShell>
-      {/* Desktop-only 3-column grid */}
-      <div className="grid grid-cols-[240px_1fr_300px] gap-6">
-        {/* LEFT: Sidebar (fixed 240px) */}
-        <aside className="w-full flex-shrink-0 sticky top-8 h-[calc(100vh-64px)]">
-          <SidebarNav onProfileClick={() => router.push("/profile")} />
-        </aside>
-
-        {/* CENTER: Main (flexible) with subtle hairline separators */}
-        <main
-          className="
-            relative w-full min-w-0
-            before:absolute before:top-0 before:bottom-0 before:left-[-12px] before:w-px before:bg-[#E9EEF3]
-            after:absolute  after:top-0  after:bottom-0  after:right-[-12px]  after:w-px  after:bg-[#E9EEF3]
-          "
-        >
-          {/* Top actions row (Sign out, user email) */}
-          <div className="mb-2 flex items-center justify-end gap-3 text-sm text-gray-600">
-            <span className="hidden md:block truncate max-w-[240px]">
-              {user?.email}
-            </span>
-            <button
-              onClick={signOutUser}
-              className="rounded-full bg-gray-100 px-4 py-2 font-medium hover:bg-gray-200 transition"
-            >
-              Sign out
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-8">
-            {/* Hero */}
-            <section className="pt-0">
-              <HeroCard />
-            </section>
-
-            <div className="h-px bg-[#E9EEF3]" />
-
-            {/* Favourites */}
-            <section>
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-lg font-semibold uppercase tracking-wider text-gray-900">
-                  Go Back To Your Favourites
-                </h2>
-                <div className="flex gap-2">
-                  <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition hover:bg-gray-200">
-                    <i className="ti ti-chevron-left text-sm text-gray-600" />
-                  </button>
-                  <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition hover:bg-gray-200">
-                    <i className="ti ti-chevron-right text-sm text-gray-600" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-6">
-                <LessonCard
-                  title="Lesson 1: Your Savings Matter"
-                  category="SAVINGS"
-                  imageUrl="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=280&h=160&fit=crop"
-                  progress={75}
-                />
-                <LessonCard
-                  title="Lesson 7: Count Your Pennies"
-                  category="SAVINGS"
-                  imageUrl="https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?w=280&h=160&fit=crop"
-                  progress={50}
-                />
-                <LessonCard
-                  title="Lesson 4: Meme Or Money-Maker?"
-                  category="STOCKS"
-                  imageUrl="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=280&h=160&fit=crop"
-                  progress={65}
-                />
-              </div>
-            </section>
-
-            <div className="h-px bg-[#E9EEF3]" />
-
-            {/* Bottom row: Ask Benny + Simulator */}
-            <section>
-              <div className="grid grid-cols-2 gap-6">
-                <AskBennyCard />
-                <SimulatorCard />
-              </div>
-            </section>
-          </div>
-        </main>
-
-        {/* RIGHT: Rail (fixed 300px) */}
-        <aside className="w-full flex-shrink-0 sticky top-8 h-fit">
-          <RightRail />
-        </aside>
-      </div>
-    </PageShell>
-  );
+  // Show landing page
+  return <LandingPageContent isPreview={isPreview} />;
 }

@@ -142,20 +142,52 @@ def get_alloc():
 
 @app.get("/metrics/equity-curve")
 def get_equity_curve(period: str = "1y", interval: str = "1d"):
+    """
+    Get portfolio equity curve over time.
+    FIXED: Now properly fetches historical prices and calculates daily equity.
+    """
     p = load_portfolio()
-    # Pull history per symbol seen in txn history
+    
+    # Get all symbols from transaction history
     symbols = sorted(set([t.ticker for t in p.history if t.ticker]))
+    
+    if not symbols:
+        # No transactions yet, return starting cash
+        from datetime import datetime
+        return ok([{"ts": datetime.now().isoformat(), "equity": p.cash}])
+    
+    # Fetch historical prices for each symbol
     closes = {}
     for sym in symbols:
         try:
+            print(f"📊 Fetching history for {sym}...")
             bars = get_history(sym, period=period, interval=interval)
-            idx = [b.ts for b in bars]
-            ser = pd.Series([b.close for b in bars], index=pd.to_datetime(idx))
-            closes[sym] = ser
-        except DomainError:
+            
+            if bars and len(bars) > 0:
+                # Convert to pandas Series with date index
+                dates = [pd.Timestamp(b.ts) for b in bars]
+                prices = [b.close for b in bars]
+                ser = pd.Series(prices, index=dates)
+                closes[sym] = ser
+                print(f"✅ Got {len(bars)} price points for {sym}")
+            else:
+                print(f"⚠️ No price data for {sym}")
+        except DomainError as e:
+            print(f"❌ Error fetching {sym}: {e}")
             continue
+    
+    # Calculate equity curve
+    print(f"📈 Calculating equity curve with {len(closes)} symbols...")
     series = equity_curve(p.history, closes)
+    
+    # Convert to JSON format
     data = [{"ts": ts.isoformat(), "equity": float(val)} for ts, val in series.items()]
+    
+    print(f"✅ Returning {len(data)} equity data points")
+    if len(data) > 0:
+        print(f"   First point: {data[0]}")
+        print(f"   Last point: {data[-1]}")
+    
     return ok(data)
 
 @app.post("/risk/position-size")
