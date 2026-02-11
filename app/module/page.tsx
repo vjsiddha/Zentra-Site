@@ -75,7 +75,28 @@ function makeLessonId(moduleNumber: number, href?: string) {
   const step = extractStepFromHref(href);
   return `module${moduleNumber}_step${step}`;
 }
+interface ModuleSectionProps {
+  moduleNumber: number;
+  lessons: LessonCardProps[];
+}
 
+function ModuleSection({ moduleNumber, lessons }: ModuleSectionProps) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-base font-bold text-gray-900">
+          Module {moduleNumber}
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        {lessons.map((lesson, i) => (
+          <LessonCard key={`${moduleNumber}-${i}`} {...lesson} />
+        ))}
+      </div>
+    </section>
+  );
+}
 export default function LessonPage() {
   const [progressMap, setProgressMap] = useState<Record<string, LessonProgress>>({});
 
