@@ -5,12 +5,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
+import { saveLessonProgress } from "@/lib/progress";
 
 function ModuleTwoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Steps: 1 = Lesson 1, 2 = Lesson 2, 3 = Lesson 3, 4 = Complete
+  // Steps: 1 = Definitions, 2 = Interactive, 3 = Applying, 4 = Complete
   const [activeStep, setActiveStep] = useState(1);
   const [lesson1Score, setLesson1Score] = useState(0);
   const [lesson2Score, setLesson2Score] = useState(0);
@@ -20,10 +21,26 @@ function ModuleTwoContent() {
   useEffect(() => {
     const step = searchParams.get("step");
     if (step) {
-      const stepNum = parseInt(step);
+      const stepNum = parseInt(step, 10);
       if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
     }
   }, [searchParams]);
+
+  // ✅ SAVE PROGRESS whenever activeStep changes
+  useEffect(() => {
+    // We want the 3 lesson cards to show progress, so we save per step (1..3)
+    // If user is on completion screen (4), we mark step3 as complete.
+    const stepForCard = Math.min(activeStep, 3); // 1..3
+    const lessonId = `module2_step${stepForCard}`;
+    const lastPath = `/module/module2?step=${activeStep}`;
+    const totalSteps = 4;
+
+    saveLessonProgress(lessonId, activeStep, {
+      totalSteps,
+      lastPath,
+      isComplete: activeStep >= 4,
+    });
+  }, [activeStep]);
 
   // Update URL when step changes
   const goToStep = (step: number) => {
@@ -73,7 +90,8 @@ function ModuleTwoContent() {
             <div className="text-7xl mb-6">🏁</div>
             <h2 className="text-4xl font-black mb-4 text-slate-900">Module 2 Complete!</h2>
             <p className="text-lg text-[#4F7D96] mb-8 leading-relaxed">
-              You’ve built the foundations of investing: portfolios, asset types, risk vs return, time horizon, diversification, and fees.
+              You’ve built the foundations of investing: portfolios, asset types, risk vs return, time horizon,
+              diversification, and fees.
             </p>
 
             {/* Score Summary */}
@@ -124,19 +142,19 @@ function ModuleTwoContent() {
   );
 }
 
-export default function ModuleFivePage() {
+export default function ModuleTwoPage() {
   return (
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-screen bg-[#F7FAFC]">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border=-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-slate-600">Loading...</p>
           </div>
         </div>
       }
     >
-      <ModuleFiveContent />
+      <ModuleTwoContent />
     </Suspense>
   );
 }

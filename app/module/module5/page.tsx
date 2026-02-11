@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
+import { saveLessonProgress } from "@/lib/progress";
 
 function ModuleFiveContent() {
   const searchParams = useSearchParams();
@@ -24,6 +25,20 @@ function ModuleFiveContent() {
       if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+  // We save progress per lesson card (step 1–3)
+  const stepForCard = Math.min(activeStep, 3); // keeps it within 1–3
+  const lessonId = `module5_step${stepForCard}`;
+  const lastPath = `/module/module5?step=${activeStep}`;
+  const totalSteps = 4;
+
+  saveLessonProgress(lessonId, activeStep, {
+    totalSteps,
+    lastPath,
+    isComplete: activeStep >= 4,
+  });
+}, [activeStep]);
 
   // Update URL when step changes
   const goToStep = (step: number) => {

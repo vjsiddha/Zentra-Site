@@ -7,6 +7,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { signOutUser } from "@/lib/auth";
+import { updateProfile } from "firebase/auth";
+import { setDoc, serverTimestamp } from "firebase/firestore";
 
 import {
   doc,
@@ -18,8 +20,8 @@ import {
 import { db } from "@/lib/firebase";
 
 type LessonProgressDoc = {
-  lessonId: string; // e.g. "module1"
-  currentStep?: number; // 1-4
+  lessonId: string;
+  currentStep?: number;
   isComplete?: boolean;
   lastVisitedAt?: Timestamp | any;
 };
@@ -29,14 +31,10 @@ type UserDoc = {
   displayName?: string;
   email?: string;
   photoURL?: string;
-
-  // optional “gamification” fields (if you store them later)
   level?: number;
   xp?: number;
   xpToNextLevel?: number;
   streak?: number;
-
-  // vocab/avatars (if you store them later)
   termsLearned?: number;
   recentTerms?: string[];
   unlockedAvatars?: { name: string; color: string; unlocked: boolean }[];
@@ -50,12 +48,24 @@ export default function ProfilePage() {
   const [lessonProgress, setLessonProgress] = useState<LessonProgressDoc[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
-  // Auth guard (safe)
+  // Edit profile state
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Auth guard
   useEffect(() => {
     if (!loading && !user) router.replace("/signin");
   }, [loading, user, router]);
 
-  // ✅ REALTIME listeners so Profile updates when progress changes
+  // Update editName when user loads
+  useEffect(() => {
+    if (user?.displayName) {
+      setEditName(user.displayName);
+    }
+  }, [user]);
+
+  // Realtime listeners
   useEffect(() => {
     if (!user) {
       setUserData(null);
@@ -98,7 +108,46 @@ export default function ProfilePage() {
     };
   }, [user]);
 
-  // ---------- Derived values ----------
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!user) return;
+
+  const trimmedName = editName.trim();
+  if (!trimmedName) {
+    alert("Display name cannot be empty.");
+    return;
+  }
+
+  setSaving(true);
+  try {
+    // 1) Update Firebase Auth profile
+    await updateProfile(user, { displayName: trimmedName });
+
+    // 2) Update Firestore user profile doc
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(
+      userRef,
+      {
+        displayName: trimmedName,
+        email: user.email ?? "",
+        photoURL: user.photoURL ?? "",
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    alert("Profile updated successfully!");
+    setShowEditProfile(false);
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    alert("Failed to update profile. Please try again.");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  // Derived values
   const totalModules = 8;
 
   const modulesCompleted = useMemo(() => {
@@ -122,7 +171,6 @@ export default function ProfilePage() {
     return "—";
   }, [userData]);
 
-  // Build a simple “module progress list” from docs you already store
   const moduleProgressList = useMemo(() => {
     const ids = Array.from({ length: totalModules }, (_, i) => `module${i + 1}`);
 
@@ -142,13 +190,11 @@ export default function ProfilePage() {
     });
   }, [lessonProgress]);
 
-  // Gamification defaults (until you start storing them)
   const userLevel = userData?.level ?? 1;
   const userXP = userData?.xp ?? 0;
   const xpToNextLevel = userData?.xpToNextLevel ?? 3000;
   const streak = userData?.streak ?? 0;
 
-  // Avatars + vocab defaults (until stored)
   const unlockedAvatars =
     userData?.unlockedAvatars ??
     [
@@ -161,7 +207,6 @@ export default function ProfilePage() {
   const termsLearned = userData?.termsLearned ?? 0;
   const recentTerms = userData?.recentTerms ?? ["—", "—", "—", "—"];
 
-  // ✅ IMPORTANT: hooks are done; now conditional UI return is safe
   if (loading || !user) {
     return (
       <PageShell>
@@ -205,13 +250,13 @@ export default function ProfilePage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span>{(user.displayName || user.email || "U")[0].toUpperCase()}</span>
+                    <span>{(userData?.displayName || user.displayName || user.email || "U")[0].toUpperCase()}</span>
                   )}
                 </div>
 
                 <div className="flex-1">
                   <h2 className="text-3xl font-bold mb-2">
-                    {user.displayName || "Student"}
+                    {userData?.displayName || user.displayName || "Student"}
                   </h2>
                   <p className="text-blue-100 mb-1">{user.email}</p>
                   <p className="text-sm text-blue-200">Member since {joinDate}</p>
@@ -259,14 +304,13 @@ export default function ProfilePage() {
                       </button>
 
                       <button
-                        onClick={() => router.push("/module")}
+                        onClick={() => router.push("/lesson")}
                         className="rounded-full bg-gray-100 px-6 py-3 font-medium text-gray-800 hover:bg-gray-200 transition"
                       >
                         All Modules
                       </button>
                     </div>
 
-                    {/* Module progress bars (driven by Firestore) */}
                     <div className="space-y-4">
                       {moduleProgressList.map((m) => (
                         <div key={m.id}>
@@ -329,7 +373,7 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            {/* ✅ Unlocked Avatars (BACK) */}
+            {/* Unlocked Avatars */}
             <section>
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Unlocked Avatars
@@ -364,7 +408,7 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            {/* ✅ Vocab & Knowledge (BACK) */}
+            {/* Vocab & Knowledge */}
             <section>
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Vocabulary & Knowledge
@@ -408,7 +452,7 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            {/* ✅ Account Settings (BACK) */}
+            {/* Account Settings */}
             <section>
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Account Settings
@@ -416,6 +460,72 @@ export default function ProfilePage() {
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="space-y-3">
+                  {/* Personal Information */}
+                  <button
+                    onClick={() => setShowEditProfile(!showEditProfile)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <i className="ti ti-user-edit text-gray-600 text-xl" />
+                      <span className="font-medium text-gray-700">Personal Information</span>
+                    </div>
+                    <i className={`ti ti-chevron-${showEditProfile ? 'down' : 'right'} text-gray-400`} />
+                  </button>
+
+                  {/* Expandable Edit Form */}
+                  {showEditProfile && (
+                    <div className="px-4 py-4 bg-gray-50 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                      <form onSubmit={handleUpdateProfile} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Display Name
+                          </label>
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder="Enter your name"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email
+                          </label>
+                          <input
+                            type="email"
+                            value={user?.email || ''}
+                            disabled
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            type="submit"
+                            disabled={saving}
+                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {saving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowEditProfile(false);
+                              setEditName(user?.displayName || '');
+                            }}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Sign Out */}
                   <button
                     onClick={signOutUser}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition text-left"
@@ -427,6 +537,7 @@ export default function ProfilePage() {
                     <i className="ti ti-chevron-right text-gray-400" />
                   </button>
 
+                  {/* Delete Account */}
                   <button
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-red-50 transition text-left"
                     onClick={() => {
@@ -451,7 +562,7 @@ export default function ProfilePage() {
               </div>
             </section>
           </div>
-        </main>   
+        </main>
 
         {/* RIGHT */}
         <aside className="w-full flex-shrink-0 sticky top-8 h-fit">

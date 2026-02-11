@@ -1,16 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import PageShell from "@/components/PageShell";
 import SidebarNav from "@/components/SidebarNav";
 import RightRail from "@/components/RightRail";
 import "../globals.css";
 
+import { loadAllLessonProgress } from "@/lib/progress";
+import type { LessonProgress } from "@/lib/progress"; // add this with your imports
+
+type ModuleData = { moduleNumber: number; lessons: LessonCardProps[] };
+
+
 interface LessonCardProps {
   title: string;
   category: string;
   imageUrl: string;
-  progress: number;
-  /** If provided, the card will navigate to this route. Otherwise it's inert. */
+  progress: number; // 0..100
   href?: string;
+  lessonId?: string; // ✅ add this (internal key)
 }
 
 function LessonCard({ title, category, imageUrl, progress, href }: LessonCardProps) {
@@ -26,10 +35,8 @@ function LessonCard({ title, category, imageUrl, progress, href }: LessonCardPro
       aria-disabled={!clickable}
       role={clickable ? "link" : "group"}
     >
-      {/* Image */}
       <div className="relative h-28 bg-gray-100">
         <img src={imageUrl} alt={title} className="w-full h-full object-cover rounded-t-xl" />
-        {/* Heart */}
         <button
           type="button"
           aria-label="Save lesson"
@@ -46,7 +53,6 @@ function LessonCard({ title, category, imageUrl, progress, href }: LessonCardPro
         </button>
       </div>
 
-      {/* Content */}
       <div className="p-3">
         <div className="inline-flex items-center px-3 py-1 bg-[#04456d]/10 rounded-lg mb-2">
           <span className="text-[#04456d] text-xs font-normal uppercase tracking-wider">{category}</span>
@@ -57,16 +63,19 @@ function LessonCard({ title, category, imageUrl, progress, href }: LessonCardPro
         <div className="h-1.5 bg-gray-200 rounded-full relative">
           <div
             className="absolute top-0 left-0 h-full bg-[#04456d] rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
           />
         </div>
       </div>
     </div>
   );
 
-  // Only wrap with <Link> when we have a real route
   return clickable ? (
-    <Link href={href!} className="block focus:outline-none focus:ring-2 focus:ring-[#04456d] rounded-2xl" aria-label={`Open ${title}`}>
+    <Link
+      href={href!}
+      className="block focus:outline-none focus:ring-2 focus:ring-[#04456d] rounded-2xl"
+      aria-label={`Open ${title}`}
+    >
       {card}
     </Link>
   ) : (
@@ -82,7 +91,6 @@ interface ModuleSectionProps {
 function ModuleSection({ moduleNumber, lessons }: ModuleSectionProps) {
   return (
     <section>
-      {/* Module header */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-base font-bold text-gray-900 capitalize">Module {moduleNumber}</h2>
         <div className="flex gap-3">
@@ -99,7 +107,6 @@ function ModuleSection({ moduleNumber, lessons }: ModuleSectionProps) {
         </div>
       </div>
 
-      {/* Lessons grid */}
       <div className="grid grid-cols-3 gap-4">
         {lessons.map((lesson, i) => (
           <LessonCard key={`${moduleNumber}-${i}`} {...lesson} />
@@ -109,7 +116,33 @@ function ModuleSection({ moduleNumber, lessons }: ModuleSectionProps) {
   );
 }
 
+// --- helpers ---
+function extractStepFromHref(href?: string) {
+  if (!href) return 1;
+  try {
+    const url = new URL(href, "http://dummy");
+    return Number(url.searchParams.get("step") ?? 1);
+  } catch {
+    return 1;
+  }
+}
+
+function makeLessonId(moduleNumber: number, href?: string) {
+  const step = extractStepFromHref(href);
+  return `module${moduleNumber}_step${step}`;
+}
+
 export default function LessonPage() {
+
+  const [progressMap, setProgressMap] = useState<Record<string, LessonProgress>>({});
+
+useEffect(() => {
+  (async () => {
+    const map = await loadAllLessonProgress();
+    setProgressMap(map);
+  })();
+}, []);
+
   // Add href ONLY for lessons that actually exist
   const moduleData: { moduleNumber: number; lessons: LessonCardProps[] }[] = [
     {
@@ -252,16 +285,30 @@ export default function LessonPage() {
     },
   ];
 
+   const mergedModuleData = useMemo<ModuleData[]>(() => {
+    return moduleData.map((m: ModuleData) => ({
+      ...m,
+      lessons: m.lessons.map((lesson: LessonCardProps) => {
+        const lessonId = makeLessonId(m.moduleNumber, lesson.href);
+        const saved = progressMap[lessonId];
+
+        return {
+          ...lesson,
+          lessonId,
+          progress: saved?.progressPercent ?? lesson.progress ?? 0,
+          href: saved?.lastPath ?? lesson.href,
+        };
+      }),
+    }));
+  }, [moduleData, progressMap]);
+
   return (
     <PageShell>
-      {/* 3-column layout */}
       <div className="grid grid-cols-[240px_1fr_300px] gap-6">
-        {/* Left: sidebar */}
         <aside className="w-full flex-shrink-0 sticky top-8 h-[calc(100vh-64px)]">
           <SidebarNav />
         </aside>
 
-        {/* Center */}
         <main
           className="
             relative w-full min-w-0
@@ -270,16 +317,15 @@ export default function LessonPage() {
           "
         >
           <div className="flex flex-col gap-6 pt-5">
-            {moduleData.map((m, i) => (
+            {mergedModuleData.map((m: ModuleData, i: number) => (
               <div key={m.moduleNumber}>
                 <ModuleSection moduleNumber={m.moduleNumber} lessons={m.lessons} />
-                {i < moduleData.length - 1 && <div className="h-px bg-[#E9EEF3] my-6" />}
+                {i < mergedModuleData.length - 1 && <div className="h-px bg-[#E9EEF3] my-6" />}
               </div>
             ))}
           </div>
         </main>
 
-        {/* Right rail */}
         <aside className="w-full flex-shrink-0 sticky top-8 h-fit">
           <RightRail />
         </aside>

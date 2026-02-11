@@ -52,8 +52,18 @@ function ModuleOneContent() {
 
   // ✅ Save progress whenever activeStep changes (after hydration)
   useEffect(() => {
-    if (!hydrated) return;
-    saveLessonProgress(lessonId, activeStep);
+  if (!hydrated) return;
+
+  const lastPath = `/module/module1?step=${activeStep}`;
+
+  saveLessonProgress(
+    `module1_step${activeStep}`,
+      activeStep,
+      {
+        totalSteps: 4,
+        lastPath
+      }
+    );
   }, [activeStep, hydrated]);
 
   // Update URL when step changes
