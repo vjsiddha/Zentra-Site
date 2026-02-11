@@ -42,14 +42,14 @@ const EVENTS: DayEvent[] = [
     badge: "Mindset",
     title: "Day 1: The Trending Coin Trap",
     situation:
-      "Your feed is full of “🚀 10x soon” posts. Everyone’s talking about one coin. You feel FOMO.",
+      "Your feed is full of '🚀 10x soon' posts. Everyone's talking about one coin. You feel FOMO.",
     tip: "Hype is not research. Slow down and size risk small.",
     options: [
       {
         id: "A",
-        label: "Buy immediately — if everyone says it’s a 10x, it must be true",
+        label: "Buy immediately — if everyone says it's a 10x, it must be true",
         scoreDelta: -10,
-        why: "That’s a classic FOMO buy. Beginners get trapped chasing hype.",
+        why: "That's a classic FOMO buy. Beginners get trapped chasing hype.",
       },
       {
         id: "B",
@@ -70,8 +70,8 @@ const EVENTS: DayEvent[] = [
     badge: "Mindset",
     title: "Day 2: Down 18% Overnight",
     situation:
-      "You wake up and your crypto is down hard. Your stomach drops. Your brain screams: “Get out!”",
-    tip: "A plan exists so you don’t decide when emotions are loud.",
+      "You wake up and your crypto is down hard. Your stomach drops. Your brain screams: 'Get out!'",
+    tip: "A plan exists so you don't decide when emotions are loud.",
     options: [
       {
         id: "A",
@@ -87,7 +87,7 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "C",
-        label: "Double your riskiest coin to ‘make it back’",
+        label: "Double your riskiest coin to 'make it back'",
         scoreDelta: -15,
         why: "Revenge trading is how accounts blow up.",
       },
@@ -103,7 +103,7 @@ const EVENTS: DayEvent[] = [
     options: [
       {
         id: "A",
-        label: "Send seed phrase so they can ‘secure’ funds",
+        label: "Send seed phrase so they can 'secure' funds",
         scoreDelta: -20,
         why: "Instant loss. Never share seed phrases.",
       },
@@ -115,7 +115,7 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "C",
-        label: "Reply asking if they’re legit",
+        label: "Reply asking if they're legit",
         scoreDelta: -6,
         why: "Engaging increases risk. Block/report is safer.",
       },
@@ -131,7 +131,7 @@ const EVENTS: DayEvent[] = [
     options: [
       {
         id: "A",
-        label: "Send anyway — fees don’t matter",
+        label: "Send anyway — fees don't matter",
         scoreDelta: -8,
         why: "Fees can eat small transfers. Better options exist.",
       },
@@ -143,9 +143,9 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "C",
-        label: "Click random ‘bridge’ links to save fees fast",
+        label: "Click random 'bridge' links to save fees fast",
         scoreDelta: -10,
-        why: "Random links are phishing bait. Don’t.",
+        why: "Random links are phishing bait. Don't.",
       },
     ],
   },
@@ -182,7 +182,7 @@ const EVENTS: DayEvent[] = [
     badge: "Mindset",
     title: "Day 6: Friend Wants to Invest Rent Money",
     situation:
-      "A friend asks if they should put rent money into meme coins because ‘it’s quick money’.",
+      "A friend asks if they should put rent money into meme coins because 'it's quick money'.",
     tip: "Real advice protects people: money needed soon should not face big volatility.",
     options: [
       {
@@ -210,18 +210,18 @@ const EVENTS: DayEvent[] = [
     badge: "Mindset",
     title: "Day 7: Up 12% — Confidence Spike",
     situation:
-      "You’re up 12% quickly and feel unstoppable. You want to increase risk.",
-    tip: "One good week doesn’t make a strategy. Discipline beats mood-based changes.",
+      "You're up 12% quickly and feel unstoppable. You want to increase risk.",
+    tip: "One good week doesn't make a strategy. Discipline beats mood-based changes.",
     options: [
       {
         id: "A",
-        label: "Stick to plan rules. Don’t change sizing because of one good week",
+        label: "Stick to plan rules. Don't change sizing because of one good week",
         scoreDelta: +10,
         why: "Best: discipline and consistency.",
       },
       {
         id: "B",
-        label: "Go all-in because you’re ‘on a streak’",
+        label: "Go all-in because you're 'on a streak'",
         scoreDelta: -15,
         why: "Streak thinking is dangerous.",
       },
@@ -270,7 +270,7 @@ function badgeStyle(b: DayEvent["badge"]) {
 
 function gradeLabel(score: number) {
   if (score >= 85) return { emoji: "🚀", title: "Crypto-ready instincts", desc: "You stayed calm, avoided traps, and followed a plan." };
-  if (score >= 70) return { emoji: "🧠", title: "Strong foundation", desc: "A few tweaks and you’ll be very solid." };
+  if (score >= 70) return { emoji: "🧠", title: "Strong foundation", desc: "A few tweaks and you'll be very solid." };
   if (score >= 55) return { emoji: "📚", title: "Learning fast", desc: "Good start — review security + sizing and try again." };
   return { emoji: "🔁", title: "Reset and rebuild", desc: "Crypto punishes mistakes. The goal is habits, not hype." };
 }
@@ -317,7 +317,7 @@ export default function L3_Applying({
     Boolean(plan.horizon) &&
     Boolean(plan.goal) &&
     Boolean(plan.custody) &&
-    plan.rule.trim().length >= 8 &&
+    Boolean(plan.rule) &&
     plan.cryptoPct + plan.emergencyCashPct === 100;
 
   // Plan score: small but meaningful
@@ -343,10 +343,7 @@ export default function L3_Applying({
 
     if (plan.horizon === "5y" && (plan.custody === "self" || plan.custody === "hybrid")) s += 8;
 
-    const ruleLen = plan.rule.trim().length;
-    if (ruleLen >= 40) s += 20;
-    else if (ruleLen >= 20) s += 14;
-    else if (ruleLen >= 8) s += 8;
+    if (plan.rule) s += 20;
 
     return clamp(s, 0, 100);
   }, [plan]);
@@ -491,11 +488,15 @@ export default function L3_Applying({
 
     if (selected && !disabled) styles = "border-[#0B5E8E] bg-sky-50";
     if (disabled && selected) {
-      styles = isGood ? "border-emerald-200 bg-emerald-50" : isBad ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50";
+      styles = isGood ? "border-green-300 bg-green-50" : isBad ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50";
     }
 
     return (
-      <button onClick={onClick} disabled={disabled} className={`${base} ${styles}`}>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`${base} ${styles}`}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black">
@@ -530,13 +531,12 @@ export default function L3_Applying({
         <div className="max-w-5xl mx-auto px-4 pt-10 pb-12">
           <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
             <CardShell>
-
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight">
                 Build your first crypto plan — then survive a crypto week 🧩
               </h1>
 
               <p className="text-slate-600 mt-3 leading-relaxed">
-                You’ll create a simple plan (goal, time horizon, custody, sizing), then make choices across a 7-day crypto storyline.
+                You'll create a simple plan (goal, time horizon, custody, sizing), then make choices across a 7-day crypto storyline.
                 Your score rewards <span className="font-bold">habits</span>: security, fees, sizing, and calm decision-making.
               </p>
 
@@ -588,7 +588,7 @@ export default function L3_Applying({
                 </div>
 
                 <div className="mt-4 text-xs text-slate-500 leading-relaxed">
-                  This is for learning — not financial advice. We’re building safe habits: sizing, time horizon, and avoiding scams.
+                  This is for learning — not financial advice. We're building safe habits: sizing, time horizon, and avoiding scams.
                 </div>
               </CardShell>
 
@@ -764,25 +764,43 @@ export default function L3_Applying({
                 </div>
               </div>
 
-              {/* Rule */}
+              {/* Rule - DROPDOWN VERSION */}
               <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <div className="font-black text-slate-900">Your “Volatility Rule”</div>
+                    <div className="font-black text-slate-900">Your "Volatility Rule"</div>
                     <div className="text-sm text-slate-600 mt-1">
-                      Example: “If crypto drops 20%, I wait 24 hours before deciding anything.”
+                      Choose your strategy when crypto prices swing wildly
                     </div>
                   </div>
                   <div className="text-2xl">📜</div>
                 </div>
-                <textarea
+                
+                <select
                   value={plan.rule}
                   onChange={(e) => setPlan((p) => ({ ...p, rule: e.target.value }))}
-                  placeholder="Write your rule here..."
-                  className="mt-4 w-full min-h-[110px] rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
-                />
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-slate-800 font-medium outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400"
+                >
+                  <option value="">-- Select a rule --</option>
+                  <option value="If crypto drops 20%, I wait 24 hours before deciding anything">
+                    Wait 24 hours during drops
+                  </option>
+                  <option value="I never invest money I need within 6 months">
+                    Never invest short-term money
+                  </option>
+                  <option value="If I feel FOMO, I wait 48 hours and research first">
+                    Research during FOMO moments
+                  </option>
+                  <option value="I check prices max once per day to avoid emotional trading">
+                    Limit price checking
+                  </option>
+                  <option value="My crypto position never exceeds 10% of savings">
+                    Keep crypto under 10%
+                  </option>
+                </select>
+                
                 <div className="text-xs text-slate-500 mt-2">
-                  Make it specific (time delay, sizing rule, what you do when emotions spike).
+                  This rule helps you stay calm when emotions run high
                 </div>
               </div>
 
@@ -803,7 +821,7 @@ export default function L3_Applying({
 
               {!ready && (
                 <div className="mt-3 text-xs text-slate-500">
-                  Pick Goal + Horizon + Custody, and write a longer rule (8+ characters).
+                  Pick Goal + Horizon + Custody + Rule to continue.
                 </div>
               )}
             </CardShell>
@@ -849,7 +867,7 @@ export default function L3_Applying({
                 </div>
                 <ul className="mt-3 text-sm text-slate-700 space-y-2 list-disc pl-5">
                   <li>Never share seed phrases or private keys.</li>
-                  <li>Don’t click random “support” DMs.</li>
+                  <li>Don't click random "support" DMs.</li>
                   <li>Small size + time horizon prevents panic.</li>
                   <li>Fees matter: use Layer 2 / timing when possible.</li>
                 </ul>
@@ -875,10 +893,6 @@ export default function L3_Applying({
             <CardShell>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-black tracking-widest uppercase mb-3 {">
-                    {/* keep tailwind happy: */}
-                  </div>
-
                   <div
                     className={[
                       "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-black tracking-widest uppercase mb-3",
@@ -1033,7 +1047,7 @@ export default function L3_Applying({
                 <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Your Rule</div>
                   <div className="text-sm text-slate-800 font-semibold mt-2 leading-relaxed">
-                    “{plan.rule || "—"}”
+                    "{plan.rule || "—"}"
                   </div>
                 </div>
               </CardShell>
@@ -1089,7 +1103,7 @@ export default function L3_Applying({
                 <div>
                   <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Step 4</div>
                   <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2">
-                  Reflect: What habits did you build?
+                    Reflect: What habits did you build?
                   </h2>
                   <p className="text-slate-600 mt-2">
                     Your score is just feedback. The real win is your rules + your decision habits.
@@ -1153,7 +1167,7 @@ export default function L3_Applying({
               <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-black text-slate-900">Write a quick reflection</div>
+                    <div className="font-black text-slate-900">Optional: Write a quick reflection</div>
                     <div className="text-sm text-slate-600 mt-1">
                       2–4 sentences is enough. What will you do differently next time?
                     </div>
@@ -1171,16 +1185,17 @@ export default function L3_Applying({
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Prompt 2</div>
                     <div className="font-semibold text-slate-800 mt-2">
-                      What’s one security habit you’ll never break?
+                      What's one security habit you'll never break?
                     </div>
                   </div>
                 </div>
 
-                <textarea
+                <input
+                  type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Write your reflection here..."
-                  className="mt-4 w-full min-h-[140px] rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
+                  placeholder="Optional: Write your reflection here..."
+                  className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
                 />
 
                 <div className="mt-3 text-xs text-slate-500">
@@ -1250,17 +1265,9 @@ export default function L3_Applying({
                 <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Volatility Rule</div>
                   <div className="text-sm text-slate-800 font-semibold mt-2 leading-relaxed">
-                    “{plan.rule || "—"}”
+                    "{plan.rule || "—"}"
                   </div>
                 </div>
-              </CardShell>
-
-              <CardShell>
-                <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Optional</div>
-                <div className="mt-2 font-black text-slate-900">Save your reflection</div>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                  If you want, copy your reflection into your Notion page / notes for future modules.
-                </p>
               </CardShell>
             </div>
           </div>
@@ -1270,7 +1277,6 @@ export default function L3_Applying({
   }
 
   // ---------------- COMPLETE ----------------
-  // (You likely have a module completion screen elsewhere; this one finishes Lesson 3 only.)
   if (view === "complete") {
     const g = gradeLabel(finalScore);
 
@@ -1300,7 +1306,7 @@ export default function L3_Applying({
                     onClick={() => onComplete(finalScore)}
                     className="w-full py-5 bg-[#0D171C] text-white rounded-2xl font-black text-lg hover:opacity-90 transition-all shadow-lg"
                   >
-                    Back to All Modules
+                    Back to Module Overview
                   </button>
 
                   <button

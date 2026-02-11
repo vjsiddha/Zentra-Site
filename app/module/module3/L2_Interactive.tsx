@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 
-type View = "intro" | "wallet" | "scams" | "fees" | "results";
+type View = "intro" | "wallet" | "trading" | "security" | "results";
 
 type WalletChoice = "custodial" | "self" | "hybrid";
-type ScamChoice = "report" | "click" | "ignore";
-type FeeChoice = "now" | "later" | "layer2";
+type TradingChoice = "buy" | "wait" | "research";
+type SecurityChoice = "report" | "click" | "ignore";
 
 type WalletScenario = {
   id: number;
@@ -19,32 +19,32 @@ type WalletScenario = {
   explain: string;
 };
 
-type ScamCard = {
+type TradingScenario = {
+  id: number;
+  title: string;
+  image: string;
+  prompt: string;
+  currentPrice: number;
+  marketCap: string;
+  options: { id: TradingChoice; label: string; hint: string }[];
+  correct: TradingChoice;
+  explain: string;
+};
+
+type SecurityCard = {
   id: number;
   title: string;
   image: string;
   message: string;
   redFlags: string[];
-  correct: ScamChoice;
-  explain: string;
-};
-
-type FeeScenario = {
-  id: number;
-  title: string;
-  image: string;
-  prompt: string;
-  gasNow: number;
-  gasLater: number;
-  options: { id: FeeChoice; label: string; hint: string }[];
-  correct: FeeChoice;
+  correct: SecurityChoice;
   explain: string;
 };
 
 const WALLET_SCENARIOS: WalletScenario[] = [
   {
     id: 1,
-    title: "You’re brand new — small amount to learn",
+    title: "You're brand new — small amount to learn",
     image: "https://images.unsplash.com/photo-1639322537504-6427a16b0a28?q=80&w=1200",
     prompt:
       "You just bought $50 of crypto to learn. You want it to be easy, but you also want to be safe.",
@@ -59,10 +59,10 @@ const WALLET_SCENARIOS: WalletScenario[] = [
   },
   {
     id: 2,
-    title: "Long-term savings (you won’t touch it for years)",
+    title: "Long-term savings (you won't touch it for years)",
     image: "https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?q=80&w=1200",
     prompt:
-      "You want to hold a long time. Convenience matters, but you don’t want one company’s failure to wipe you out.",
+      "You want to hold a long time. Convenience matters, but you don't want one company's failure to wipe you out.",
     options: [
       { id: "custodial", label: "Leave it all on an exchange forever", hint: "Convenient, but adds platform risk." },
       { id: "self", label: "Self-custody for long-term holdings", hint: "You control keys, but must secure seed phrase." },
@@ -74,10 +74,45 @@ const WALLET_SCENARIOS: WalletScenario[] = [
   },
 ];
 
-const SCAM_CARDS: ScamCard[] = [
+const TRADING_SCENARIOS: TradingScenario[] = [
   {
     id: 1,
-    title: "“Giveaway” Trap",
+    title: "New Meme Coin Going Viral",
+    image: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?q=80&w=1200",
+    prompt: "Everyone's talking about a new meme coin. It's up 300% this week. Your friend just made $2,000. Should you buy?",
+    currentPrice: 0.00045,
+    marketCap: "$12M",
+    options: [
+      { id: "buy", label: "Buy now — don't miss out!", hint: "FOMO can lead to buying at the peak." },
+      { id: "research", label: "Research first, then decide with small amount", hint: "Smart approach: understand before investing." },
+      { id: "wait", label: "Wait for a dip", hint: "Chasing pumps rarely works." },
+    ],
+    correct: "research",
+    explain:
+      "Viral coins often crash as fast as they rise. Research first, understand the risks, and only invest what you can afford to lose. Small market cap means extreme volatility.",
+  },
+  {
+    id: 2,
+    title: "Bitcoin During Market Crash",
+    image: "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?q=80&w=1200",
+    prompt: "Bitcoin dropped 25% overnight. The news is calling it a 'crypto winter.' You have some savings. What do you do?",
+    currentPrice: 42000,
+    marketCap: "$820B",
+    options: [
+      { id: "buy", label: "Buy the dip with a small portion", hint: "Dollar-cost averaging during dips can work long-term." },
+      { id: "wait", label: "Wait for signs of recovery", hint: "Patience can prevent catching a falling knife." },
+      { id: "research", label: "Research why it crashed first", hint: "Understanding the cause is crucial." },
+    ],
+    correct: "research",
+    explain:
+      "Never invest during panic without understanding why the crash happened. Research the cause, check if fundamentals changed, then decide with a clear head and proper position sizing.",
+  },
+];
+
+const SECURITY_CARDS: SecurityCard[] = [
+  {
+    id: 1,
+    title: "Giveaway Trap",
     image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=1200",
     message:
       "🔥 Congrats! You won 0.5 BTC. Click this link and enter your seed phrase to claim in 5 minutes.",
@@ -91,7 +126,7 @@ const SCAM_CARDS: ScamCard[] = [
     title: "Fake Support DM",
     image: "https://images.unsplash.com/photo-1520975958225-915b0a7f2a68?q=80&w=1200",
     message:
-      "Hi, I’m Support. Your wallet is “at risk.” Reply with your seed phrase so I can secure it for you.",
+      "Hi, I'm Support. Your wallet is at risk. Reply with your seed phrase so I can secure it for you.",
     redFlags: ["Unsolicited support", "Fear tactic", "Asks for seed phrase"],
     correct: "report",
     explain:
@@ -102,48 +137,11 @@ const SCAM_CARDS: ScamCard[] = [
     title: "Suspicious Airdrop",
     image: "https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?q=80&w=1200",
     message:
-      "You received free tokens! Connect wallet + approve unlimited spending to ‘unlock’ them.",
+      "You received free tokens! Connect wallet + approve unlimited spending to 'unlock' them.",
     redFlags: ["Unlimited approval", "Random token", "Connect + approve trap"],
     correct: "ignore",
     explain:
       "Some airdrops are real, but random tokens + unlimited approvals are a common way to steal funds. Ignoring is often safest unless you verify from official sources.",
-  },
-];
-
-const FEE_SCENARIOS: FeeScenario[] = [
-  {
-    id: 1,
-    title: "Gas Fee Choice",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200",
-    prompt:
-      "You want to send $20 to a friend on a busy network. Fees are high right now. What’s smartest?",
-    gasNow: 9,
-    gasLater: 2,
-    options: [
-      { id: "now", label: "Send now (fast)", hint: "You’ll pay the high fee." },
-      { id: "later", label: "Send later (wait for cheaper gas)", hint: "Often cheaper when network is quiet." },
-      { id: "layer2", label: "Use a cheaper network / Layer 2", hint: "Good option if both users can receive there." },
-    ],
-    correct: "layer2",
-    explain:
-      "If both sides can use a cheaper network (Layer 2 / alternative chain), it’s usually best. Otherwise, waiting for lower gas can also be smart.",
-  },
-  {
-    id: 2,
-    title: "Tiny Transaction Problem",
-    image: "https://images.unsplash.com/photo-1518544887873-3c3db7866f0b?q=80&w=1200",
-    prompt:
-      "You want to move $10. Fees are $6 right now. What’s the best move?",
-    gasNow: 6,
-    gasLater: 1,
-    options: [
-      { id: "now", label: "Do it anyway", hint: "Fee is most of the amount." },
-      { id: "later", label: "Wait for lower fees", hint: "Makes small transfers reasonable." },
-      { id: "layer2", label: "Use Layer 2 / cheaper chain", hint: "Often the best for small transfers." },
-    ],
-    correct: "layer2",
-    explain:
-      "Small transfers + big gas is a trap. Layer 2 / cheaper networks exist specifically to make small transfers practical.",
   },
 ];
 
@@ -166,17 +164,17 @@ export default function L2_Interactive({
   const [walletLocked, setWalletLocked] = useState(false);
   const [walletScore, setWalletScore] = useState(0);
 
-  // Scam game
-  const [scamIdx, setScamIdx] = useState(0);
-  const [scamPick, setScamPick] = useState<ScamChoice | null>(null);
-  const [scamLocked, setScamLocked] = useState(false);
-  const [scamScore, setScamScore] = useState(0);
+  // Trading scenarios
+  const [tradingIdx, setTradingIdx] = useState(0);
+  const [tradingPick, setTradingPick] = useState<TradingChoice | null>(null);
+  const [tradingLocked, setTradingLocked] = useState(false);
+  const [tradingScore, setTradingScore] = useState(0);
 
-  // Fee game
-  const [feeIdx, setFeeIdx] = useState(0);
-  const [feePick, setFeePick] = useState<FeeChoice | null>(null);
-  const [feeLocked, setFeeLocked] = useState(false);
-  const [feeScore, setFeeScore] = useState(0);
+  // Security game
+  const [securityIdx, setSecurityIdx] = useState(0);
+  const [securityPick, setSecurityPick] = useState<SecurityChoice | null>(null);
+  const [securityLocked, setSecurityLocked] = useState(false);
+  const [securityScore, setSecurityScore] = useState(0);
 
   const BackButton = () => (
     <button
@@ -186,16 +184,15 @@ export default function L2_Interactive({
           if (!walletLocked && walletIdx > 0) return setWalletIdx((v) => v - 1);
           return setView("intro");
         }
-        if (view === "scams") {
-          if (!scamLocked && scamIdx > 0) return setScamIdx((v) => v - 1);
+        if (view === "trading") {
+          if (!tradingLocked && tradingIdx > 0) return setTradingIdx((v) => v - 1);
           return setView("wallet");
         }
-        if (view === "fees") {
-          if (!feeLocked && feeIdx > 0) return setFeeIdx((v) => v - 1);
-          return setView("scams");
+        if (view === "security") {
+          if (!securityLocked && securityIdx > 0) return setSecurityIdx((v) => v - 1);
+          return setView("trading");
         }
-        // results
-        return setView("fees");
+        return setView("security");
       }}
       className="fixed top-4 left-6 z-50 flex items-center gap-2 px-4 py-2 text-[#4F7D96] hover:text-[#0B5E8E] font-bold transition-all hover:bg-slate-100 rounded-lg"
     >
@@ -207,23 +204,23 @@ export default function L2_Interactive({
   );
 
   const wallet = WALLET_SCENARIOS[walletIdx];
-  const scam = SCAM_CARDS[scamIdx];
-  const fee = FEE_SCENARIOS[feeIdx];
+  const trading = TRADING_SCENARIOS[tradingIdx];
+  const security = SECURITY_CARDS[securityIdx];
 
-  const totalQuestions = WALLET_SCENARIOS.length + SCAM_CARDS.length + FEE_SCENARIOS.length;
+  const totalQuestions = WALLET_SCENARIOS.length + TRADING_SCENARIOS.length + SECURITY_CARDS.length;
 
   const finalPercent = useMemo(() => {
-    const correct = walletScore + scamScore + feeScore;
+    const correct = walletScore + tradingScore + securityScore;
     return Math.round((correct / totalQuestions) * 100);
-  }, [walletScore, scamScore, feeScore, totalQuestions]);
+  }, [walletScore, tradingScore, securityScore, totalQuestions]);
 
   const progress = useMemo(() => {
     if (view === "wallet") return ((walletIdx + (walletLocked ? 1 : 0)) / WALLET_SCENARIOS.length) * 33;
-    if (view === "scams") return 33 + ((scamIdx + (scamLocked ? 1 : 0)) / SCAM_CARDS.length) * 33;
-    if (view === "fees") return 66 + ((feeIdx + (feeLocked ? 1 : 0)) / FEE_SCENARIOS.length) * 34;
+    if (view === "trading") return 33 + ((tradingIdx + (tradingLocked ? 1 : 0)) / TRADING_SCENARIOS.length) * 33;
+    if (view === "security") return 66 + ((securityIdx + (securityLocked ? 1 : 0)) / SECURITY_CARDS.length) * 34;
     if (view === "results") return 100;
     return 0;
-  }, [view, walletIdx, scamIdx, feeIdx, walletLocked, scamLocked, feeLocked]);
+  }, [view, walletIdx, tradingIdx, securityIdx, walletLocked, tradingLocked, securityLocked]);
 
   // ---------------- INTRO ----------------
   if (view === "intro") {
@@ -231,10 +228,12 @@ export default function L2_Interactive({
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
         <BackButton />
         <div className="w-full text-center mb-8">
-          <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs mb-2">Lesson 2: Interactive</p>
-          <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Security + Fees = Real Crypto Skills</h1>
+          <div className="inline-flex items-center px-4 py-2 bg-sky-100 text-sky-700 rounded-full mb-4">
+            <span className="text-sm font-bold uppercase tracking-widest">Lesson 2: Interactive</span>
+          </div>
+          <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Make Real Crypto Decisions</h1>
           <p className="text-[#4F7D96] mt-2">
-            Choose the right wallet → spot scams → make smart gas fee decisions
+            Choose wallets → evaluate trades → spot scams
           </p>
         </div>
 
@@ -243,8 +242,16 @@ export default function L2_Interactive({
             <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-4">
               <span className="text-2xl">👛</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Wallet Quest</h3>
-            <p className="text-sm text-[#4F7D96]">Pick custody based on the situation.</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Wallet Decisions</h3>
+            <p className="text-sm text-[#4F7D96]">Custodial vs self-custody choices.</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
+              <span className="text-2xl">📈</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Trading Scenarios</h3>
+            <p className="text-sm text-[#4F7D96]">When to buy, wait, or research.</p>
           </div>
 
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
@@ -252,15 +259,7 @@ export default function L2_Interactive({
               <span className="text-2xl">🚨</span>
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Scam Detector</h3>
-            <p className="text-sm text-[#4F7D96]">Red flags, seed phrases, fake support.</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
-              <span className="text-2xl">⛽</span>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Gas Fee Game</h3>
-            <p className="text-sm text-[#4F7D96]">Timing + chains matter.</p>
+            <p className="text-sm text-[#4F7D96]">Identify phishing and fraud.</p>
           </div>
         </div>
 
@@ -274,10 +273,9 @@ export default function L2_Interactive({
     );
   }
 
-  // Shared progress bar
   const ProgressBar = () => (
     <div className="w-full h-2 bg-slate-100 rounded-full mb-8 overflow-hidden">
-      <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${clamp(progress, 0, 100)}%` }} />
+      <div className="h-full bg-sky-500 transition-all duration-500" style={{ width: `${clamp(progress, 0, 100)}%` }} />
     </div>
   );
 
@@ -290,9 +288,9 @@ export default function L2_Interactive({
         <BackButton />
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
           <header className="text-center mb-6">
-            <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs">Wallet Quest</p>
+            <p className="text-sky-600 font-bold uppercase tracking-widest text-xs">Wallet Decisions</p>
             <h2 className="text-2xl font-bold text-slate-900 mt-2">{wallet.title}</h2>
-            <p className="text-slate-400 text-sm mt-2">Challenge {walletIdx + 1} of {WALLET_SCENARIOS.length}</p>
+            <p className="text-slate-400 text-sm mt-2">Scenario {walletIdx + 1} of {WALLET_SCENARIOS.length}</p>
           </header>
 
           <ProgressBar />
@@ -301,9 +299,6 @@ export default function L2_Interactive({
             <div className="relative h-44 rounded-2xl overflow-hidden mb-6">
               <Image src={wallet.image} alt={wallet.title} fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="text-white text-xl font-black drop-shadow">{wallet.title}</div>
-              </div>
             </div>
 
             <p className="text-slate-700 leading-relaxed mb-6">{wallet.prompt}</p>
@@ -326,10 +321,8 @@ export default function L2_Interactive({
                     disabled={walletLocked}
                     className={`${base} ${styles}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900">{opt.label}</span>
-                      <span className="text-xs text-slate-500">{opt.hint}</span>
-                    </div>
+                    <div className="font-bold text-slate-900 mb-1">{opt.label}</div>
+                    <div className="text-xs text-slate-500">{opt.hint}</div>
                   </button>
                 );
               })}
@@ -342,7 +335,7 @@ export default function L2_Interactive({
                 }`}
               >
                 <div className="font-black text-slate-900 mb-2">
-                  {isCorrect ? "✅ Correct" : "💡 Close"} — why
+                  {isCorrect ? "✅ Correct" : "💡 Better choice"} — why
                 </div>
                 <p className="text-slate-700 text-sm leading-relaxed">{wallet.explain}</p>
               </div>
@@ -366,11 +359,11 @@ export default function L2_Interactive({
                   setWalletPick(null);
                   setWalletLocked(false);
                   if (walletIdx < WALLET_SCENARIOS.length - 1) setWalletIdx((v) => v + 1);
-                  else setView("scams");
+                  else setView("trading");
                 }}
                 className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all"
               >
-                {walletIdx < WALLET_SCENARIOS.length - 1 ? "Next Wallet Challenge" : "Continue to Scam Detector"}
+                {walletIdx < WALLET_SCENARIOS.length - 1 ? "Next Scenario" : "Continue to Trading"}
               </button>
             )}
           </div>
@@ -379,22 +372,124 @@ export default function L2_Interactive({
     );
   }
 
-  // ---------------- SCAMS ----------------
-  if (view === "scams") {
-    const isCorrect = scamPick && scamPick === scam.correct;
+  // ---------------- TRADING ----------------
+  if (view === "trading") {
+    const isCorrect = tradingPick && tradingPick === trading.correct;
 
-    const chooseBtn = (id: ScamChoice, label: string) => {
+    return (
+      <div className="relative max-w-4xl mx-auto px-4 pb-12">
+        <BackButton />
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
+          <header className="text-center mb-6">
+            <p className="text-amber-600 font-bold uppercase tracking-widest text-xs">Trading Scenarios</p>
+            <h2 className="text-2xl font-bold text-slate-900 mt-2">{trading.title}</h2>
+            <p className="text-slate-400 text-sm mt-2">Decision {tradingIdx + 1} of {TRADING_SCENARIOS.length}</p>
+          </header>
+
+          <ProgressBar />
+
+          <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100">
+            <div className="relative h-44 rounded-2xl overflow-hidden mb-6">
+              <Image src={trading.image} alt={trading.title} fill className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Current Price</div>
+                <div className="text-2xl font-black text-slate-900 mt-2">${trading.currentPrice.toLocaleString()}</div>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Market Cap</div>
+                <div className="text-2xl font-black text-slate-900 mt-2">{trading.marketCap}</div>
+              </div>
+            </div>
+
+            <p className="text-slate-700 leading-relaxed mb-6">{trading.prompt}</p>
+
+            <div className="space-y-3 mb-6">
+              {trading.options.map((opt) => {
+                const base = "w-full text-left p-4 rounded-2xl border-2 transition-all";
+                const selected = tradingPick === opt.id;
+
+                let styles = "border-slate-100 hover:bg-slate-50";
+                if (!tradingLocked && selected) styles = "border-[#0B5E8E] bg-sky-50";
+                if (tradingLocked && selected && opt.id === trading.correct) styles = "border-green-300 bg-green-50";
+                if (tradingLocked && selected && opt.id !== trading.correct) styles = "border-red-300 bg-red-50";
+                if (tradingLocked && !selected && opt.id === trading.correct) styles = "border-green-200 bg-green-50/50";
+
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setTradingPick(opt.id)}
+                    disabled={tradingLocked}
+                    className={`${base} ${styles}`}
+                  >
+                    <div className="font-bold text-slate-900 mb-1">{opt.label}</div>
+                    <div className="text-xs text-slate-500">{opt.hint}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {tradingLocked && (
+              <div
+                className={`p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2 duration-300 mb-6 ${
+                  isCorrect ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
+                }`}
+              >
+                <div className="font-black text-slate-900 mb-2">{isCorrect ? "✅ Smart move" : "💡 Better approach"}</div>
+                <p className="text-slate-700 text-sm leading-relaxed">{trading.explain}</p>
+              </div>
+            )}
+
+            {!tradingLocked ? (
+              <button
+                onClick={() => {
+                  if (!tradingPick) return;
+                  setTradingLocked(true);
+                  if (tradingPick === trading.correct) setTradingScore((s) => s + 1);
+                }}
+                disabled={!tradingPick}
+                className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all disabled:bg-slate-200"
+              >
+                Lock Decision
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setTradingPick(null);
+                  setTradingLocked(false);
+                  if (tradingIdx < TRADING_SCENARIOS.length - 1) setTradingIdx((v) => v + 1);
+                  else setView("security");
+                }}
+                className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all"
+              >
+                {tradingIdx < TRADING_SCENARIOS.length - 1 ? "Next Decision" : "Continue to Security"}
+              </button>
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // ---------------- SECURITY ----------------
+  if (view === "security") {
+    const isCorrect = securityPick && securityPick === security.correct;
+
+    const chooseBtn = (id: SecurityChoice, label: string) => {
       const base = "w-full text-left p-4 rounded-2xl border-2 transition-all";
-      const selected = scamPick === id;
+      const selected = securityPick === id;
 
       let styles = "border-slate-100 hover:bg-slate-50";
-      if (!scamLocked && selected) styles = "border-[#0B5E8E] bg-sky-50";
-      if (scamLocked && selected && id === scam.correct) styles = "border-green-300 bg-green-50";
-      if (scamLocked && selected && id !== scam.correct) styles = "border-red-300 bg-red-50";
-      if (scamLocked && !selected && id === scam.correct) styles = "border-green-200 bg-green-50/50";
+      if (!securityLocked && selected) styles = "border-[#0B5E8E] bg-sky-50";
+      if (securityLocked && selected && id === security.correct) styles = "border-green-300 bg-green-50";
+      if (securityLocked && selected && id !== security.correct) styles = "border-red-300 bg-red-50";
+      if (securityLocked && !selected && id === security.correct) styles = "border-green-200 bg-green-50/50";
 
       return (
-        <button key={id} onClick={() => setScamPick(id)} disabled={scamLocked} className={`${base} ${styles}`}>
+        <button key={id} onClick={() => setSecurityPick(id)} disabled={securityLocked} className={`${base} ${styles}`}>
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-900">{label}</span>
             <span className="text-xs text-slate-500">{id.toUpperCase()}</span>
@@ -408,31 +503,28 @@ export default function L2_Interactive({
         <BackButton />
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
           <header className="text-center mb-6">
-            <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs">Scam Detector</p>
-            <h2 className="text-2xl font-bold text-slate-900 mt-2">{scam.title}</h2>
-            <p className="text-slate-400 text-sm mt-2">Message {scamIdx + 1} of {SCAM_CARDS.length}</p>
+            <p className="text-rose-600 font-bold uppercase tracking-widest text-xs">Scam Detector</p>
+            <h2 className="text-2xl font-bold text-slate-900 mt-2">{security.title}</h2>
+            <p className="text-slate-400 text-sm mt-2">Message {securityIdx + 1} of {SECURITY_CARDS.length}</p>
           </header>
 
           <ProgressBar />
 
           <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100">
             <div className="relative h-44 rounded-2xl overflow-hidden mb-6">
-              <Image src={scam.image} alt={scam.title} fill className="object-cover" />
+              <Image src={security.image} alt={security.title} fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="text-white text-xl font-black drop-shadow">{scam.title}</div>
-              </div>
             </div>
 
             <div className="bg-slate-900 text-white rounded-2xl p-5 mb-6">
-              <div className="text-xs uppercase tracking-widest text-white/70 font-black mb-2">Incoming DM</div>
-              <div className="text-lg font-black leading-snug">{scam.message}</div>
+              <div className="text-xs uppercase tracking-widest text-white/70 font-black mb-2">Incoming Message</div>
+              <div className="text-lg font-black leading-snug">{security.message}</div>
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
               <div className="font-bold text-amber-900 mb-2">Red flags you should notice</div>
               <ul className="list-disc pl-5 text-sm text-amber-900 space-y-1">
-                {scam.redFlags.map((f) => (
+                {security.redFlags.map((f) => (
                   <li key={f}>{f}</li>
                 ))}
               </ul>
@@ -444,25 +536,25 @@ export default function L2_Interactive({
               {chooseBtn("click", "Click the link")}
             </div>
 
-            {scamLocked && (
+            {securityLocked && (
               <div
                 className={`p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2 duration-300 mb-6 ${
                   isCorrect ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
                 }`}
               >
                 <div className="font-black text-slate-900 mb-2">{isCorrect ? "✅ Correct" : "💡 Not safe"}</div>
-                <p className="text-slate-700 text-sm leading-relaxed">{scam.explain}</p>
+                <p className="text-slate-700 text-sm leading-relaxed">{security.explain}</p>
               </div>
             )}
 
-            {!scamLocked ? (
+            {!securityLocked ? (
               <button
                 onClick={() => {
-                  if (!scamPick) return;
-                  setScamLocked(true);
-                  if (scamPick === scam.correct) setScamScore((s) => s + 1);
+                  if (!securityPick) return;
+                  setSecurityLocked(true);
+                  if (securityPick === security.correct) setSecurityScore((s) => s + 1);
                 }}
-                disabled={!scamPick}
+                disabled={!securityPick}
                 className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all disabled:bg-slate-200"
               >
                 Lock Choice
@@ -470,121 +562,14 @@ export default function L2_Interactive({
             ) : (
               <button
                 onClick={() => {
-                  setScamPick(null);
-                  setScamLocked(false);
-                  if (scamIdx < SCAM_CARDS.length - 1) setScamIdx((v) => v + 1);
-                  else setView("fees");
-                }}
-                className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all"
-              >
-                {scamIdx < SCAM_CARDS.length - 1 ? "Next Message" : "Continue to Gas Fee Game"}
-              </button>
-            )}
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  // ---------------- FEES ----------------
-  if (view === "fees") {
-    const isCorrect = feePick && feePick === fee.correct;
-
-    return (
-      <div className="relative max-w-4xl mx-auto px-4 pb-12">
-        <BackButton />
-        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
-          <header className="text-center mb-6">
-            <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs">Gas Fee Game</p>
-            <h2 className="text-2xl font-bold text-slate-900 mt-2">{fee.title}</h2>
-            <p className="text-slate-400 text-sm mt-2">Decision {feeIdx + 1} of {FEE_SCENARIOS.length}</p>
-          </header>
-
-          <ProgressBar />
-
-          <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100">
-            <div className="relative h-44 rounded-2xl overflow-hidden mb-6">
-              <Image src={fee.image} alt={fee.title} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="text-white text-xl font-black drop-shadow">{fee.title}</div>
-              </div>
-            </div>
-
-            <p className="text-slate-700 leading-relaxed mb-6">{fee.prompt}</p>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Fee if you send now</div>
-                <div className="text-2xl font-black text-slate-900 mt-2">${fee.gasNow}</div>
-              </div>
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <div className="text-xs uppercase tracking-widest text-slate-500 font-black">Fee if you wait</div>
-                <div className="text-2xl font-black text-slate-900 mt-2">${fee.gasLater}</div>
-              </div>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              {fee.options.map((opt) => {
-                const base = "w-full text-left p-4 rounded-2xl border-2 transition-all";
-                const selected = feePick === opt.id;
-
-                let styles = "border-slate-100 hover:bg-slate-50";
-                if (!feeLocked && selected) styles = "border-[#0B5E8E] bg-sky-50";
-                if (feeLocked && selected && opt.id === fee.correct) styles = "border-green-300 bg-green-50";
-                if (feeLocked && selected && opt.id !== fee.correct) styles = "border-red-300 bg-red-50";
-                if (feeLocked && !selected && opt.id === fee.correct) styles = "border-green-200 bg-green-50/50";
-
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => setFeePick(opt.id)}
-                    disabled={feeLocked}
-                    className={`${base} ${styles}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900">{opt.label}</span>
-                      <span className="text-xs text-slate-500">{opt.hint}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {feeLocked && (
-              <div
-                className={`p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2 duration-300 mb-6 ${
-                  isCorrect ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
-                }`}
-              >
-                <div className="font-black text-slate-900 mb-2">{isCorrect ? "✅ Correct" : "💡 Better option"}</div>
-                <p className="text-slate-700 text-sm leading-relaxed">{fee.explain}</p>
-              </div>
-            )}
-
-            {!feeLocked ? (
-              <button
-                onClick={() => {
-                  if (!feePick) return;
-                  setFeeLocked(true);
-                  if (feePick === fee.correct) setFeeScore((s) => s + 1);
-                }}
-                disabled={!feePick}
-                className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all disabled:bg-slate-200"
-              >
-                Lock Decision
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setFeePick(null);
-                  setFeeLocked(false);
-                  if (feeIdx < FEE_SCENARIOS.length - 1) setFeeIdx((v) => v + 1);
+                  setSecurityPick(null);
+                  setSecurityLocked(false);
+                  if (securityIdx < SECURITY_CARDS.length - 1) setSecurityIdx((v) => v + 1);
                   else setView("results");
                 }}
                 className="w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all"
               >
-                {feeIdx < FEE_SCENARIOS.length - 1 ? "Next Fee Decision" : "See Results"}
+                {securityIdx < SECURITY_CARDS.length - 1 ? "Next Message" : "See Results"}
               </button>
             )}
           </div>
@@ -595,9 +580,9 @@ export default function L2_Interactive({
 
   // ---------------- RESULTS ----------------
   const resultMsg = (() => {
-    if (finalPercent >= 85) return { e: "🚀", t: "Crypto-safe habits unlocked", d: "You made strong custody, scam, and fee decisions." };
-    if (finalPercent >= 70) return { e: "🧠", t: "Strong foundation", d: "Good instincts. Keep practicing security + fees." };
-    if (finalPercent >= 55) return { e: "📚", t: "Learning fast", d: "Review seed phrase safety + gas fee strategies and retry." };
+    if (finalPercent >= 85) return { e: "🚀", t: "Crypto-ready habits unlocked", d: "You made strong wallet, trading, and security decisions." };
+    if (finalPercent >= 70) return { e: "🧠", t: "Strong foundation", d: "Good instincts. Keep practicing security and decision-making." };
+    if (finalPercent >= 55) return { e: "📚", t: "Learning fast", d: "Review wallet custody and scam detection and retry." };
     return { e: "🔁", t: "Reset and try again", d: "Crypto punishes mistakes — the lesson is to build habits, not hype." };
   })();
 
@@ -615,16 +600,16 @@ export default function L2_Interactive({
           <div className="text-left bg-slate-50 rounded-3xl p-6 border border-slate-100 mb-8">
             <div className="text-xs uppercase tracking-widest text-slate-500 font-black mb-4">What you practiced</div>
             <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
-              <li>When to use custodial vs self-custody</li>
-              <li>How scams try to steal seed phrases / approvals</li>
-              <li>How gas fees change — and how to avoid fee traps</li>
+              <li>When to use custodial vs self-custody wallets</li>
+              <li>How to evaluate trading opportunities (research vs FOMO)</li>
+              <li>How scams try to steal seed phrases and access</li>
             </ul>
           </div>
 
           <div className="space-y-3">
             <button
               onClick={() => onComplete(finalPercent)}
-              className="w-full py-5 bg-sky-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-sky-800 transition-all"
+              className="w-full py-5 bg-violet-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-violet-700 transition-all"
             >
               Continue to Lesson 3
             </button>
@@ -637,15 +622,15 @@ export default function L2_Interactive({
                 setWalletLocked(false);
                 setWalletScore(0);
 
-                setScamIdx(0);
-                setScamPick(null);
-                setScamLocked(false);
-                setScamScore(0);
+                setTradingIdx(0);
+                setTradingPick(null);
+                setTradingLocked(false);
+                setTradingScore(0);
 
-                setFeeIdx(0);
-                setFeePick(null);
-                setFeeLocked(false);
-                setFeeScore(0);
+                setSecurityIdx(0);
+                setSecurityPick(null);
+                setSecurityLocked(false);
+                setSecurityScore(0);
               }}
               className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
