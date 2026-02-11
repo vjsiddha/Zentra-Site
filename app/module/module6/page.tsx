@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+
+// ✅ Update these import paths if your folder/file names differ
 import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
-import { saveLessonProgress } from "@/lib/progress";
 
-function ModuleTwoContent() {
+function ModuleSixContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Steps: 1 = Definitions, 2 = Interactive, 3 = Applying, 4 = Complete
+  // Steps: 1 = Lesson 1, 2 = Lesson 2, 3 = Lesson 3, 4 = Complete
   const [activeStep, setActiveStep] = useState(1);
+
   const [lesson1Score, setLesson1Score] = useState(0);
   const [lesson2Score, setLesson2Score] = useState(0);
   const [lesson3Score, setLesson3Score] = useState(0);
@@ -26,31 +28,15 @@ function ModuleTwoContent() {
     }
   }, [searchParams]);
 
-  // ✅ SAVE PROGRESS whenever activeStep changes
-  useEffect(() => {
-    // We want the 3 lesson cards to show progress, so we save per step (1..3)
-    // If user is on completion screen (4), we mark step3 as complete.
-    const stepForCard = Math.min(activeStep, 3); // 1..3
-    const lessonId = `module2_step${stepForCard}`;
-    const lastPath = `/module/module2?step=${activeStep}`;
-    const totalSteps = 4;
-
-    saveLessonProgress(lessonId, activeStep, {
-      totalSteps,
-      lastPath,
-      isComplete: activeStep >= 4,
-    });
-  }, [activeStep]);
-
   // Update URL when step changes
   const goToStep = (step: number) => {
     setActiveStep(step);
-    router.push(`/module/module2?step=${step}`, { scroll: false });
+    router.push(`/module/module6?step=${step}`, { scroll: false });
   };
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
-      {/* LESSON 1: Definitions & Quiz */}
+      {/* LESSON 1: Definitions */}
       {activeStep === 1 && (
         <L1_Definitions
           onComplete={(score) => {
@@ -88,10 +74,14 @@ function ModuleTwoContent() {
         <section className="min-h-screen flex items-center justify-center px-6">
           <div className="max-w-xl w-full bg-white p-12 rounded-[40px] shadow-xl border border-slate-100 text-center animate-in zoom-in duration-500">
             <div className="text-7xl mb-6">🏁</div>
-            <h2 className="text-4xl font-black mb-4 text-slate-900">Module 2 Complete!</h2>
+
+            <h2 className="text-4xl font-black mb-4 text-slate-900">
+              Module 6 Complete!
+            </h2>
+
             <p className="text-lg text-[#4F7D96] mb-8 leading-relaxed">
-              You’ve built the foundations of investing: portfolios, asset types, risk vs return, time horizon,
-              diversification, and fees.
+              You explored sector and thematic investing, learned how cyclicals and defensives behave, and practiced
+              building a balanced sector strategy.
             </p>
 
             {/* Score Summary */}
@@ -100,10 +90,12 @@ function ModuleTwoContent() {
                 <p className="text-xs text-sky-600 uppercase font-bold">Lesson 1</p>
                 <p className="text-2xl font-black text-sky-700">{lesson1Score}%</p>
               </div>
+
               <div className="bg-emerald-50 rounded-xl p-4">
                 <p className="text-xs text-emerald-600 uppercase font-bold">Lesson 2</p>
                 <p className="text-2xl font-black text-emerald-700">{lesson2Score}%</p>
               </div>
+
               <div className="bg-violet-50 rounded-xl p-4">
                 <p className="text-xs text-violet-600 uppercase font-bold">Lesson 3</p>
                 <p className="text-2xl font-black text-violet-700">{lesson3Score}%</p>
@@ -113,7 +105,7 @@ function ModuleTwoContent() {
             {/* Progress */}
             <div className="mb-8">
               <div className="flex justify-between text-sm mb-2">
-                <span className="font-bold text-slate-700">Module 2 Progress</span>
+                <span className="font-bold text-slate-700">Module 6 Progress</span>
                 <span className="text-slate-500">100%</span>
               </div>
               <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
@@ -123,16 +115,17 @@ function ModuleTwoContent() {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push("/module")}
+                onClick={() => router.push("/lesson")}
                 className="w-full py-5 bg-[#0D171C] text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
               >
                 Back to All Modules
               </button>
+
               <button
                 onClick={() => goToStep(1)}
                 className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
               >
-                Redo Module 2
+                Redo Module 6
               </button>
             </div>
           </div>
@@ -142,7 +135,7 @@ function ModuleTwoContent() {
   );
 }
 
-export default function ModuleTwoPage() {
+export default function ModuleSixPage() {
   return (
     <Suspense
       fallback={
@@ -154,7 +147,7 @@ export default function ModuleTwoPage() {
         </div>
       }
     >
-      <ModuleTwoContent />
+      <ModuleSixContent />
     </Suspense>
   );
 }

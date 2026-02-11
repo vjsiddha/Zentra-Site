@@ -1,3 +1,4 @@
+"use client";
 
 import { useMemo, useState } from "react";
 
@@ -274,7 +275,8 @@ export default function L3_Applying({
         {showBackButton && <BackButton />}
 
         <div className="w-full text-center mb-8">
-      <span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>          <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Simulate Investing $2,000</h1>
+          <p className="text-violet-600 font-bold uppercase tracking-widest text-xs mb-2">Lesson 3: Apply</p>
+          <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Simulate Investing $2,000</h1>
           <p className="text-[#4F7D96] mt-2">
             Build a portfolio, run a 6-month mock market, then reflect on whether your choices fit your archetype.
           </p>
