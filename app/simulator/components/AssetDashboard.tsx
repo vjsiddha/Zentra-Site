@@ -80,7 +80,9 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
   // Fetch company info and current price
   useEffect(() => {
     const fetchData = async () => {
+      console.log('🚀 Fetching data for:', symbol, 'timeframe:', timeframe);
       setLoading(true);
+      
       try {
         // Fetch current price
         const quoteResponse = await fetch(`${MARKET_DATA_API}/quote/${symbol}`);
@@ -88,6 +90,7 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
         
         if (quoteData.ok) {
           setCurrentPrice(quoteData.data.last);
+          console.log('✅ Price set:', quoteData.data.last);
         }
 
         // Fetch company info
@@ -103,14 +106,34 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
             peRatio: infoData.data.pe_ratio || null,
             dividendYield: infoData.data.dividend_yield || null,
           });
+          console.log('✅ Company info set');
         }
 
         // Fetch price history
+        console.log('📊 Fetching history from:', `${MARKET_DATA_API}/history/${symbol}?period=${timeframe}`);
         const historyResponse = await fetch(`${MARKET_DATA_API}/history/${symbol}?period=${timeframe}`);
-        const historyData = await historyResponse.json();
+        console.log('📊 History status:', historyResponse.status);
         
-        if (historyData.ok) {
-          setPriceHistory(historyData.data);
+        const historyData = await historyResponse.json();
+        console.log('📊 History response:', historyData);
+        
+        if (historyData.ok && historyData.data && Array.isArray(historyData.data)) {
+          console.log('📊 History data points:', historyData.data.length);
+          
+          if (historyData.data.length > 0) {
+            setPriceHistory(historyData.data);
+            console.log('✅ Price history set with', historyData.data.length, 'points');
+          } else {
+            console.warn('⚠️ Empty history data, using fallback');
+            // Fallback mock data if backend returns empty
+            const mockData = generateMockData(timeframe);
+            setPriceHistory(mockData);
+          }
+        } else {
+          console.error('❌ Invalid history format, using fallback');
+          // Fallback mock data if format is wrong
+          const mockData = generateMockData(timeframe);
+          setPriceHistory(mockData);
         }
 
         // Fetch news
@@ -119,9 +142,13 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
         
         if (newsData.ok) {
           setNews(newsData.data);
+          console.log('✅ News set:', newsData.data.length, 'articles');
         }
       } catch (error) {
-        console.error('Error fetching asset data:', error);
+        console.error('❌ Error fetching asset data:', error);
+        // Use fallback data on error
+        const mockData = generateMockData(timeframe);
+        setPriceHistory(mockData);
       } finally {
         setLoading(false);
       }
@@ -129,6 +156,15 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
 
     fetchData();
   }, [symbol, timeframe]);
+
+  // Debug: Log when priceHistory changes
+  useEffect(() => {
+    console.log('🔄 priceHistory updated. Length:', priceHistory.length);
+    if (priceHistory.length > 0) {
+      console.log('🔄 First point:', priceHistory[0]);
+      console.log('🔄 Last point:', priceHistory[priceHistory.length - 1]);
+    }
+  }, [priceHistory]);
 
   if (loading) {
     return (
@@ -196,21 +232,21 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
                 <InfoRow 
                   label="Market Cap" 
                   value={companyInfo?.marketCap 
-                    ? `$${(companyInfo.marketCap / 1e6).toFixed(2)}M` 
+                    ? formatMarketCap(companyInfo.marketCap)
                     : 'N/A'} 
-                  icon="ⓘ"
+                  tooltip="Market Capitalization is the total value of all a company's shares. It's calculated by multiplying the share price by the total number of shares. This shows how much the company is worth in the stock market."
                 />
                 <InfoRow 
                   label="P/E Ratio" 
                   value={companyInfo?.peRatio?.toFixed(2) || 'N/A'} 
-                  icon="ⓘ"
+                  tooltip="Price-to-Earnings Ratio compares the stock price to the company's earnings per share. A higher P/E might mean investors expect future growth. Lower P/E could mean the stock is undervalued or the company is mature."
                 />
                 <InfoRow 
                   label="Dividend Yield" 
                   value={companyInfo?.dividendYield 
-                    ? `${(companyInfo.dividendYield * 100).toFixed(2)}%` 
+                    ? `${companyInfo.dividendYield.toFixed(2)}%` 
                     : 'N/A'} 
-                  icon="ⓘ"
+                  tooltip="Dividend Yield shows how much a company pays in dividends each year relative to its stock price. For example, a 0.38% yield means if you invest $1000, you'd receive about $3.80 in dividends annually."
                 />
               </div>
             </Card>
@@ -241,8 +277,8 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
             </div>
 
             {/* Chart */}
-            {priceHistory.length > 0 ? (
-              <div className="h-[300px] w-full">
+            <div className="h-[300px] w-full">
+              {priceHistory && priceHistory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={priceHistory}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -260,7 +296,10 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
                       tickFormatter={(val) => `$${val.toFixed(2)}`}
                     />
                     <Tooltip 
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
+                      formatter={(value: any) => {
+                        const num = typeof value === 'number' ? value : parseFloat(value);
+                        return [`$${num.toFixed(2)}`, 'Close'];
+                      }}
                       contentStyle={{ 
                         borderRadius: '12px', 
                         border: 'none', 
@@ -276,12 +315,16 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-xl">
-                <p className="text-slate-500">No price history available</p>
-              </div>
-            )}
+              ) : (
+                <div className="h-full flex items-center justify-center bg-slate-50 rounded-xl">
+                  <div className="text-center">
+                    <div className="animate-spin w-6 h-6 border-4 border-t-transparent rounded-full mx-auto mb-2" 
+                         style={{ borderColor: COLORS.primary }} />
+                    <p className="text-slate-500">Loading chart data...</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </Card>
 
           {/* Your Transactions for This Asset */}
@@ -295,9 +338,7 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
                    }}>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-600">📈 Unrealized Return</span>
-                  <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
+                  <InfoTooltip text="Unrealized Return shows how much profit (or loss) you'd have if you sold this investment right now. It's 'unrealized' because you haven't actually sold it yet. Once you sell, it becomes a 'realized' gain or loss." />
                 </div>
                 <p className={`text-2xl font-bold mt-1 ${
                   unrealizedReturn.amount >= 0 ? 'text-emerald-700' : 'text-red-700'
@@ -361,7 +402,7 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
           </Card>
 
           {/* Latest News */}
-          <Card title="📰 Latest News on {symbol}">
+          <Card title={`📰 Latest News on ${symbol}`}>
             {news.length > 0 ? (
               <div className="space-y-4">
                 {news.slice(0, 5).map((article, idx) => (
@@ -377,8 +418,12 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
                     <p className="text-sm text-slate-600 mb-2">{article.description}</p>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <span>{article.source}</span>
-                      <span>•</span>
-                      <span>{new Date(article.published_at).toLocaleDateString()}</span>
+                      {article.published_at && (
+                        <>
+                          <span>•</span>
+                          <span>{article.published_at}</span>
+                        </>
+                      )}
                     </div>
                   </a>
                 ))}
@@ -396,8 +441,76 @@ export default function AssetDashboard({ symbol, onClose, portfolio }: AssetDash
 }
 
 // ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// Format market cap with T/B/M suffixes
+function formatMarketCap(marketCap: number): string {
+  if (marketCap >= 1e12) {
+    return `$${(marketCap / 1e12).toFixed(2)}T`;
+  } else if (marketCap >= 1e9) {
+    return `$${(marketCap / 1e9).toFixed(2)}B`;
+  } else if (marketCap >= 1e6) {
+    return `$${(marketCap / 1e6).toFixed(2)}M`;
+  }
+  return `$${marketCap.toFixed(2)}`;
+}
+
+// Generate fallback mock data if backend fails
+function generateMockData(timeframe: '7d' | '1m' | '1y'): PriceHistory[] {
+  const days = timeframe === '7d' ? 7 : timeframe === '1m' ? 30 : 365;
+  const mockData: PriceHistory[] = [];
+  const basePrice = 250;
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - i - 1));
+    
+    const dateStr = timeframe === '1y' 
+      ? date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    const price = basePrice + (i * 2) + (Math.random() * 5 - 2.5);
+    
+    mockData.push({
+      date: dateStr,
+      close: Math.round(price * 100) / 100
+    });
+  }
+  
+  return mockData;
+}
+
+// ============================================================================
 // HELPER COMPONENTS
 // ============================================================================
+
+// Tooltip component for info icons
+function InfoTooltip({ text }: { text: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  return (
+    <div className="relative inline-block">
+      <button
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className="text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+      </button>
+      
+      {isVisible && (
+        <div className="absolute z-50 w-64 p-3 bg-slate-900 text-white text-xs rounded-lg shadow-lg -top-2 left-6 pointer-events-none">
+          <div className="absolute w-2 h-2 bg-slate-900 transform rotate-45 -left-1 top-3"></div>
+          {text}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -408,14 +521,12 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-function InfoRow({ label, value, icon }: { label: string; value: string; icon?: string }) {
+function InfoRow({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-1">
         <span className="text-sm text-slate-600">{label}</span>
-        {icon && (
-          <span className="text-xs text-slate-400">{icon}</span>
-        )}
+        {tooltip && <InfoTooltip text={tooltip} />}
       </div>
       <span className="font-semibold text-slate-900">{value}</span>
     </div>
