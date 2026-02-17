@@ -76,20 +76,36 @@ export default function DictionaryPage() {
     setFilteredTerms(filtered);
   }, [selectedCategory, searchQuery, allTerms]);
 
-  const getCategoryColor = (category?: string) => {
-    const colors: Record<string, string> = {
-      "INCOME": "bg-emerald-100 text-emerald-700",
-      "BUDGETING": "bg-blue-100 text-blue-700",
-      "SAVINGS": "bg-purple-100 text-purple-700",
-      "INVESTING": "bg-rose-100 text-rose-700",
-      "WEALTH": "bg-amber-100 text-amber-700"
-    };
-    return colors[category || ""] || "bg-slate-100 text-slate-700";
+const getCategoryColor = (category?: string) => {
+  const colors: Record<string, string> = {
+    INCOME: "bg-emerald-100 text-emerald-700",
+    BUDGETING: "bg-blue-100 text-blue-700",
+    SAVINGS: "bg-purple-100 text-purple-700",
+    INVESTING: "bg-rose-100 text-rose-700",
+    WEALTH: "bg-amber-100 text-amber-700",
+    GENERAL: "bg-slate-100 text-slate-600",
   };
+  return colors[category ?? ""] || colors["GENERAL"];
+};
 
-  const handleMastered = () => {
+const getCategoryLabel = (category?: string) => {
+  return category && category.trim() ? category : "GENERAL";
+};
+
+  const handleMastered = async () => {
     const currentTerm = filteredTerms[currentCardIndex];
-    if (!currentTerm) return;
+    if (!currentTerm || !user) return;
+
+    // ✅ Write mastered status to Firestore so profile reflects it
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+      await updateDoc(doc(db, "users", user.uid, "dictionary", currentTerm.id), {
+        mastered: true,
+      });
+    } catch (e) {
+      console.error("Failed to save mastered status", e);
+    }
 
     setMasteredTerms((prev) => {
       const next = new Set(prev);
@@ -318,7 +334,7 @@ export default function DictionaryPage() {
                       </h3>
                       {term.category && (
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getCategoryColor(term.category)}`}>
-                          {term.category}
+                          {getCategoryLabel(term.category)}
                         </span>
                       )}
                     </div>

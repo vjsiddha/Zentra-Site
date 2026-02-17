@@ -8,6 +8,7 @@ import {
   removeFromDictionary,
   isInDictionary,
 } from "@/lib/dictionary";
+import { awardXP, XP_REWARDS } from "@/lib/progress";
 
 // Data arrays outside the component
 const DEFINITIONS = [
@@ -299,12 +300,14 @@ const toggleSave = async () => {
 
   const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
 
-  const handleNextDefinition = () => {
+    const handleNextDefinition = async () => {
+    // ✅ Award small XP for each definition read
+    await awardXP(20);
     if (currentIndex < DEFINITIONS.length - 1) setCurrentIndex(currentIndex + 1);
     else setView("quiz");
   };
 
-  const handleNextQuestion = () => {
+    const handleNextQuestion = async () => {
     const isCorrect = QUIZ_QUESTIONS[quizIdx].options.find((o) => o.id === selectedOption)?.correct;
     const newScore = isCorrect ? score + 10 : score;
     setScore(newScore);
@@ -314,6 +317,8 @@ const toggleSave = async () => {
       setSelectedOption(null);
       setIsSubmitted(false);
     } else {
+      // ✅ Award XP: 100 per step + 500 bonus for completing the full lesson
+      await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
       setView("results");
     }
   };

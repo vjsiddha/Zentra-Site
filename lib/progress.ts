@@ -8,17 +8,24 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth"; 
 import type { User } from "firebase/auth";
+import { updateDoc, increment } from "firebase/firestore";
+import { computeLevel, computeAvatars, getXpToNextLevel } from "@/lib/upsertUser";
 
 export type LessonProgress = {
   lessonId: string;
   currentStep: number;
   totalSteps?: number;
-  progressPercent?: number; // 0..100 for your progress bar
-  lastPath?: string;        // where to resume
+  progressPercent?: number;
+  lastPath?: string;
   lastVisitedAt?: any;
   isComplete?: boolean;
+  scores?: {
+    lesson1?: number;
+    lesson2?: number;
+    lesson3?: number;
+  };
 };
 
 // ✅ wait for auth to be ready (prevents "currentUser is null" on refresh)
@@ -45,6 +52,12 @@ export async function saveLessonProgress(
     totalSteps?: number; // e.g. 4
     lastPath?: string;   // e.g. "/module/module1?step=2&page=3"
     isComplete?: boolean;
+
+    scores?: {
+      lesson1?: number;
+      lesson2?: number;
+      lesson3?: number;
+    };
   }
 ) {
   const user = await getAuthedUser();
@@ -100,4 +113,44 @@ export async function loadAllLessonProgress(): Promise<Record<string, LessonProg
   });
 
   return map;
+}
+
+export const XP_REWARDS = {
+  COMPLETE_STEP: 100,
+  COMPLETE_MODULE: 500,
+};
+
+/**
+ * Awards XP to the current user, recomputes level & avatars, writes to Firestore.
+ * Call this whenever a step or module is completed.
+ */
+export async function awardXP(amount: number): Promise<void> {
+  const user = await getAuthedUser();
+  if (!user) return;
+
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+  const data = snap.data() ?? {};
+
+  const currentTotalXp: number = data.totalXp ?? data.xp ?? 0;
+  const newTotalXp = currentTotalXp + amount;
+
+  const newLevel = computeLevel(newTotalXp);
+  const xpToNextLevel = getXpToNextLevel(newLevel);
+  const newAvatars = computeAvatars(newTotalXp);
+
+  // xp = progress within current level (display value)
+  let xpIntoCurrentLevel = newTotalXp;
+  const { LEVEL_THRESHOLDS } = await import("@/lib/upsertUser");
+  for (let i = 0; i < newLevel - 1; i++) {
+    xpIntoCurrentLevel -= LEVEL_THRESHOLDS[i];
+  }
+
+  await updateDoc(ref, {
+    xp: Math.max(0, xpIntoCurrentLevel),
+    totalXp: newTotalXp,
+    level: newLevel,
+    xpToNextLevel,
+    unlockedAvatars: newAvatars,
+  });
 }

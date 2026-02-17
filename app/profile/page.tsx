@@ -16,6 +16,7 @@ import {
   onSnapshot,
   query,
   Timestamp,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -52,6 +53,8 @@ export default function ProfilePage() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [dictionaryTerms, setDictionaryTerms] = useState<{id: string; term: string; mastered?: boolean}[]>([]);
 
   // Auth guard
   useEffect(() => {
@@ -102,9 +105,21 @@ export default function ProfilePage() {
       }
     );
 
+    const dictRef = collection(db, "users", user.uid, "dictionary");
+    const dictQ = query(dictRef, orderBy("savedAt", "desc"));
+    const unsubDict = onSnapshot(dictQ, (snap) => {
+      const terms = snap.docs.map((d) => ({
+        id: d.id,
+        term: (d.data() as any).term ?? d.id,
+        mastered: (d.data() as any).mastered ?? false,
+      }));
+      setDictionaryTerms(terms);
+    });
+
     return () => {
       unsubUser();
       unsubProgress();
+       unsubDict();
     };
   }, [user]);
 
@@ -410,47 +425,56 @@ export default function ProfilePage() {
 
             {/* Vocab & Knowledge */}
             <section>
-              <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
-                Vocabulary & Knowledge
-              </h3>
+  <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
+    Vocabulary & Knowledge
+  </h3>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <div className="text-sm font-medium text-gray-600 mb-1">
-                      Terms Learned
-                    </div>
-                    <div className="text-4xl font-bold text-blue-600">
-                      {termsLearned}
-                    </div>
-                  </div>
+  <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex gap-8">
+        <div>
+          <div className="text-sm font-medium text-gray-600 mb-1">Terms Saved</div>
+          <div className="text-4xl font-bold text-blue-600">{dictionaryTerms.length}</div>
+        </div>
+        <div>
+          <div className="text-sm font-medium text-gray-600 mb-1">Mastered</div>
+          <div className="text-4xl font-bold text-emerald-600">
+            {dictionaryTerms.filter((t) => t.mastered).length}
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => router.push("/dictionary")}
+        className="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 transition"
+      >
+        Open Personal Dictionary
+        <i className="ti ti-arrow-right" />
+      </button>
+    </div>
 
-                  <button
-                    onClick={() => router.push("/dictionary")}
-                    className="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 transition"
-                  >
-                    Open Personal Dictionary
-                    <i className="ti ti-arrow-right" />
-                  </button>
-                </div>
-
-                <div>
-                  <div className="text-sm font-medium text-gray-700 mb-3">
-                    Recently Learned:
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {recentTerms.map((term, idx) => (
-                      <span
-                        key={idx}
-                        className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
-                      >
-                        {term}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
+    {dictionaryTerms.length === 0 ? (
+      <p className="text-sm text-gray-500">
+        Save terms from lessons to build your dictionary.
+      </p>
+    ) : (
+      <div className="flex flex-wrap gap-2">
+        {dictionaryTerms.map((term) => (
+          <span
+            key={term.id}
+            className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1 ${
+              term.mastered
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-blue-50 text-blue-700"
+            }`}
+          >
+            {term.mastered && <span>✓</span>}
+            {term.term}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
             {/* Account Settings */}
             <section>
