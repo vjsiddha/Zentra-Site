@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import AssetDashboard from './components/AssetDashboard';
-
+import { useAuth } from '@/components/providers/AuthProvider'; 
 // ============================================================================
 // DESIGN TOKENS
 // ============================================================================
@@ -33,15 +33,23 @@ const PIE_COLORS = ['#0B5E8E', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4
 // ============================================================================
 // API CONFIG
 // ============================================================================
-const MOCK_INVESTOR_API = process.env.NEXT_PUBLIC_MOCK_INVESTOR_API || 'http://localhost:8000';
-const MARKET_DATA_API = process.env.NEXT_PUBLIC_MARKET_API || 'http://localhost:8001';
+const MOCK_INVESTOR_API =
+  (process.env.NEXT_PUBLIC_MOCK_INVESTOR_API || "http://localhost:8000").replace(/\/+$/, "");
+
+const MARKET_DATA_API =
+  (process.env.NEXT_PUBLIC_MARKET_API || "http://localhost:8001").replace(/\/+$/, "");
 
 // ============================================================================
 // API FUNCTIONS
 // ============================================================================
 
-async function mockInvestorCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${MOCK_INVESTOR_API}${endpoint}`;
+async function mockInvestorCall<T>(
+  endpoint: string,
+  username: string,
+  options?: RequestInit
+): Promise<T> {
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const url = `${MOCK_INVESTOR_API}${endpoint}${separator}user=${encodeURIComponent(username)}`;
   console.log(`Mock Investor API Call: ${url}`);
   
   try {
@@ -83,33 +91,6 @@ async function marketDataCall<T>(endpoint: string): Promise<T> {
   }
 }
 
-// Portfolio functions
-async function getPortfolio() {
-  return mockInvestorCall<any>('/portfolio');
-}
-
-async function resetPortfolio(startingCash = 100000) {
-  return mockInvestorCall<any>('/portfolio/reset', {
-    method: 'POST',
-    body: JSON.stringify({ starting_cash: startingCash }),
-  });
-}
-
-// Trading functions
-async function buyStock(symbol: string, qty: number, price: number) {
-  return mockInvestorCall<any>('/orders/buy', {
-    method: 'POST',
-    body: JSON.stringify({ symbol, qty, price }),
-  });
-}
-
-async function sellStock(symbol: string, qty: number, price: number) {
-  return mockInvestorCall<any>('/orders/sell', {
-    method: 'POST',
-    body: JSON.stringify({ symbol, qty, price }),
-  });
-}
-
 // Market Data functions
 async function getQuote(symbol: string) {
   return marketDataCall<any>(`/quote/${symbol}`);
@@ -117,15 +98,6 @@ async function getQuote(symbol: string) {
 
 async function searchSymbols(query: string) {
   return marketDataCall<any[]>(`/search?q=${encodeURIComponent(query)}`);
-}
-
-// Portfolio Analytics functions
-async function getEquityCurve(period: string = "1y", interval: string = "1d") {
-  return mockInvestorCall<any[]>(`/metrics/equity-curve?period=${period}&interval=${interval}`);
-}
-
-async function getMarkToMarket() {
-  return mockInvestorCall<any>('/metrics/mark-to-market');
 }
 
 // ============================================================================
@@ -253,7 +225,7 @@ function calculateRiskLevel(positions: any, totalValue: number): { level: string
 // ============================================================================
 // PORTFOLIO VALUE CHART (FIXED)
 // ============================================================================
-function PortfolioValueChart({ portfolio }: { portfolio: any }) {
+function PortfolioValueChart({ portfolio, username }: { portfolio: any; username: string }) {
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"ALL" | "1y" | "3m" | "1m">("ALL");
@@ -267,7 +239,9 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
         const fetchPeriod = period === "ALL" ? "1y" : period;
         
         // Fetch equity curve from backend
-        const data = await getEquityCurve(fetchPeriod, "1d");
+        const data = await mockInvestorCall<any[]>(
+          `/metrics/equity-curve?period=${fetchPeriod}&interval=1d`, username
+        );
         
         if (!data || data.length === 0) {
           // No transaction history yet - show flat line at starting cash
@@ -435,8 +409,11 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
               tickLine={false}
               axisLine={false}
             />
-            <Tooltip 
-              formatter={(val: number) => [`$${val.toLocaleString()}`, 'Portfolio Value']}
+            <Tooltip
+              formatter={(val: any) => {
+                const num = typeof val === "number" ? val : Number(val);
+                return [`$${(isFinite(num) ? num : 0).toLocaleString()}`, "Portfolio Value"];
+              }}
               labelFormatter={(label) => `Date: ${label}`}
               contentStyle={{ 
                 borderRadius: '12px', 
@@ -593,8 +570,11 @@ function FutureProjectionsChart({ currentValue }: { currentValue: number }) {
               tickLine={false}
               axisLine={false}
             />
-            <Tooltip 
-              formatter={(val: number) => [`$${val.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, '']}
+            <Tooltip
+              formatter={(val: any) => {
+                const num = typeof val === "number" ? val : Number(val);
+                return [`$${(isFinite(num) ? num : 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, ""];
+              }}
               labelFormatter={(label) => `Time: ${label}`}
               contentStyle={{ 
                 borderRadius: '12px', 
@@ -698,7 +678,7 @@ function PortfolioAllocationChart({ positions }: { positions: any }) {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }) => `${name} ${(((percent ?? 0) * 100)).toFixed(0)}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"
@@ -707,14 +687,14 @@ function PortfolioAllocationChart({ positions }: { positions: any }) {
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip 
-              formatter={(value: number) => `$${value.toLocaleString()}`}
-              contentStyle={{ 
-                borderRadius: '12px', 
-                border: 'none', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-              }}
-            />
+            <Tooltip
+            formatter={(value) => `$${Number(value ?? 0).toLocaleString()}`}
+            contentStyle={{
+              borderRadius: '12px',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            }}
+          />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -748,6 +728,8 @@ function PortfolioAllocationChart({ positions }: { positions: any }) {
 // ============================================================================
 export default function SimulatorPage() {
   // Portfolio state
+  const { user, loading: authLoading } = useAuth();
+  const username = user?.uid ?? "demo";
   const [portfolio, setPortfolio] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -794,7 +776,7 @@ export default function SimulatorPage() {
 
     try {
       setMarketValueLoading(true);
-      const mtm = await getMarkToMarket();
+      const mtm = await mockInvestorCall<any>('/metrics/mark-to-market', username);
       setCurrentMarketValue(mtm.market_value || 0);
       
       // Calculate monthly dividends
@@ -838,7 +820,7 @@ export default function SimulatorPage() {
     } finally {
       setMarketValueLoading(false);
     }
-  }, [portfolio]);
+  }, [portfolio, username]);
 
   // Fetch market value when portfolio changes
   useEffect(() => {
@@ -856,10 +838,10 @@ export default function SimulatorPage() {
   // LOAD PORTFOLIO
   // -------------------------------------------------------------------------
   const loadPortfolioData = useCallback(async () => {
+    if (authLoading) return;
     try {
       setLoading(true);
-      
-      const portfolioData = await getPortfolio();
+      const portfolioData = await mockInvestorCall<any>('/portfolio', username);
       
       setPortfolio(portfolioData);
       setError(null);
@@ -869,7 +851,7 @@ export default function SimulatorPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [username, authLoading]);
 
   useEffect(() => {
     loadPortfolioData();
@@ -966,7 +948,10 @@ export default function SimulatorPage() {
     setTradeSuccess(null);
 
     try {
-      const result = await buyStock(selectedSymbol, buyQty, currentPrice);
+      await mockInvestorCall<any>('/orders/buy', username, {
+        method: 'POST',
+        body: JSON.stringify({ symbol: selectedSymbol, qty: buyQty, price: currentPrice }),
+      });
       
       const purchasedSymbol = selectedSymbol;
       setTradeSuccess(`Bought ${buyQty} shares of ${purchasedSymbol} at $${currentPrice.toFixed(2)}`);
@@ -1001,7 +986,10 @@ export default function SimulatorPage() {
     setTradeSuccess(null);
 
     try {
-      const result = await sellStock(sellSymbol, sellQty, sellPrice);
+      await mockInvestorCall<any>('/orders/sell', username, {
+      method: 'POST',
+      body: JSON.stringify({ symbol: sellSymbol, qty: sellQty, price: sellPrice }),
+    });
       
       setTradeSuccess(`Sold ${sellQty} shares of ${sellSymbol} at $${sellPrice.toFixed(2)}`);
       setSellQty(0);
@@ -1024,7 +1012,10 @@ export default function SimulatorPage() {
     if (!confirm('Reset portfolio to $100,000? All positions will be closed.')) return;
     
     try {
-      await resetPortfolio(100000);
+      await mockInvestorCall<any>('/portfolio/reset', username, {
+        method: 'POST',
+        body: JSON.stringify({ starting_cash: 100000 }),
+      });
       await loadPortfolioData();
       setTradeSuccess('Portfolio reset to $100,000');
       
@@ -1066,6 +1057,20 @@ export default function SimulatorPage() {
   // -------------------------------------------------------------------------
   // LOADING STATE
   // -------------------------------------------------------------------------
+
+  if (authLoading) {
+  return (
+    <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: COLORS.background }}>
+      <div className="text-center">
+        <div
+          className="animate-spin w-8 h-8 border-4 border-t-transparent rounded-full mx-auto mb-4"
+          style={{ borderColor: COLORS.primary, borderTopColor: "transparent" }}
+        />
+        <p className="text-slate-600">Loading...</p>
+      </div>
+    </main>
+  );
+}
 
   if (loading) {
     return (
@@ -1523,7 +1528,7 @@ export default function SimulatorPage() {
                 <div className="space-y-6">
                   {/* Portfolio Growth Chart */}
                   <Card title="Portfolio Value Over Time" icon="">
-                    <PortfolioValueChart portfolio={portfolio} />
+                    <PortfolioValueChart portfolio={portfolio} username={username} />
                   </Card>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
