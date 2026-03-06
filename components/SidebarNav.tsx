@@ -59,7 +59,6 @@ export default function SidebarNav({ onProfileClick }: SidebarNavProps) {
         <div className="space-y-1">
           <NavItem href="/" icon="ti-home" label="Dashboard" />
           <NavItem href="/module" icon="ti-book" label="Lesson" />
-          <NavItem href="/library" icon="ti-library" label="Library" />
           <NavItem href="/simulator" icon="ti-device-desktop" label="Simulator" />
         </div>
       </div>
