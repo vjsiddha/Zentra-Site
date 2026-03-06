@@ -36,6 +36,21 @@ function ModuleSixContent() {
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
+       {/* Fixed Top Right - Back to Modules */}
+      {activeStep !== 4 && (
+        <div className="fixed top-0 right-0 z-50 p-6">
+          <button
+            onClick={() => router.push("/module")}
+            className="px-6 py-3 bg-white text-[#0B5E8E] rounded-full font-bold text-sm hover:bg-slate-50 transition-all shadow-lg border border-slate-200 flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Back to Modules
+          </button>
+        </div>
+      )}
+      
       {/* LESSON 1: Definitions */}
       {activeStep === 1 && (
         <L1_Definitions

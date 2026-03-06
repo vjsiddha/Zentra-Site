@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#B8D4F0"/>
+
+  <!-- Ears -->
+  <circle cx="58" cy="68" r="22" fill="#7B5EA7"/>
+  <circle cx="142" cy="68" r="22" fill="#7B5EA7"/>
+  <circle cx="58" cy="68" r="13" fill="#9B7EC8"/>
+  <circle cx="142" cy="68" r="13" fill="#9B7EC8"/>
+
+  <!-- Head -->
+  <ellipse cx="100" cy="112" rx="55" ry="50" fill="#7B5EA7"/>
+
+  <!-- Muzzle -->
+  <ellipse cx="100" cy="128" rx="28" ry="22" fill="#9B7EC8"/>
+
+  <!-- Hat brim -->
+  <ellipse cx="100" cy="72" rx="52" ry="9" fill="#2C2C2C"/>
+  <!-- Hat top -->
+  <rect x="68" y="30" width="64" height="45" rx="6" fill="#2C2C2C"/>
+  <!-- Hat band -->
+  <rect x="68" y="65" width="64" height="10" fill="#8B0000"/>
+
+  <!-- Eyes -->
+  <circle cx="83" cy="100" r="10" fill="#1a1a2e"/>
+  <circle cx="117" cy="100" r="10" fill="#1a1a2e"/>
+  <circle cx="86" cy="97" r="3" fill="white"/>
+  <circle cx="120" cy="97" r="3" fill="white"/>
+
+  <!-- Glasses -->
+  <circle cx="83" cy="100" r="13" fill="none" stroke="#1a1a2e" stroke-width="3"/>
+  <circle cx="117" cy="100" r="13" fill="none" stroke="#1a1a2e" stroke-width="3"/>
+  <line x1="96" y1="100" x2="104" y2="100" stroke="#1a1a2e" stroke-width="3"/>
+  <line x1="70" y1="97" x2="56" y2="93" stroke="#1a1a2e" stroke-width="2.5"/>
+  <line x1="130" y1="97" x2="144" y2="93" stroke="#1a1a2e" stroke-width="2.5"/>
+
+  <!-- Nose -->
+  <ellipse cx="100" cy="118" rx="7" ry="5" fill="#1a1a2e"/>
+
+  <!-- Smile -->
+  <path d="M89 128 Q100 138 111 128" stroke="#1a1a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Collar -->
+  <path d="M68 152 Q100 165 132 152" stroke="#4A90D9" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <circle cx="100" cy="160" r="6" fill="#F0C040"/>
+</svg>

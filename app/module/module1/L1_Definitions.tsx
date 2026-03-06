@@ -298,8 +298,7 @@ const toggleSave = async () => {
     setScore(0);
   };
 
-  const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
-
+const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
     const handleNextDefinition = async () => {
     // ✅ Award small XP for each definition read
     await awardXP(20);

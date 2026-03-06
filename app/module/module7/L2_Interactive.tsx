@@ -247,7 +247,6 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
   if (view === "intro") {
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
-        {showBackButton && <BackButton />}
         <div className="w-full text-center mb-8">
           <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs mb-2">Lesson 2: Apply</p>
           <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Apply Your Knowledge</h1>

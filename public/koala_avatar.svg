@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <circle cx="100" cy="100" r="100" fill="#F3E5F5"/>
+  <!-- Big round ears -->
+  <circle cx="55" cy="72" r="28" fill="#9E9E9E"/>
+  <circle cx="145" cy="72" r="28" fill="#9E9E9E"/>
+  <circle cx="55" cy="72" r="18" fill="#BDBDBD"/>
+  <circle cx="145" cy="72" r="18" fill="#BDBDBD"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="114" rx="54" ry="50" fill="#9E9E9E"/>
+  <!-- Face -->
+  <ellipse cx="100" cy="118" rx="40" ry="36" fill="#BDBDBD"/>
+  <!-- Graduation cap -->
+  <ellipse cx="100" cy="70" rx="48" ry="9" fill="#4A148C"/>
+  <polygon points="100,46 52,70 100,80 148,70" fill="#4A148C"/>
+  <line x1="148" y1="70" x2="162" y2="78" stroke="#F9A825" stroke-width="3"/>
+  <circle cx="162" cy="84" r="6" fill="#F9A825"/>
+  <!-- Eyes -->
+  <circle cx="84" cy="106" r="10" fill="#1a1a2e"/>
+  <circle cx="116" cy="106" r="10" fill="#1a1a2e"/>
+  <circle cx="87" cy="103" r="3" fill="white"/>
+  <circle cx="119" cy="103" r="3" fill="white"/>
+  <!-- Glasses -->
+  <circle cx="84" cy="106" r="13" fill="none" stroke="#4A148C" stroke-width="3"/>
+  <circle cx="116" cy="106" r="13" fill="none" stroke="#4A148C" stroke-width="3"/>
+  <line x1="97" y1="106" x2="103" y2="106" stroke="#4A148C" stroke-width="3"/>
+  <line x1="71" y1="103" x2="57" y2="99" stroke="#4A148C" stroke-width="2.5"/>
+  <line x1="129" y1="103" x2="143" y2="99" stroke="#4A148C" stroke-width="2.5"/>
+  <!-- Big nose -->
+  <ellipse cx="100" cy="120" rx="12" ry="9" fill="#424242"/>
+  <!-- Smile -->
+  <path d="M88 132 Q100 142 112 132" stroke="#616161" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Collar -->
+  <path d="M68 158 Q100 170 132 158" stroke="#7B1FA2" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <circle cx="100" cy="166" r="6" fill="#F9A825"/>
+</svg>

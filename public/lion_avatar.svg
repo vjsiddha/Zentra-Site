@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <circle cx="100" cy="100" r="100" fill="#FFF3E0"/>
+  <!-- Mane -->
+  <circle cx="100" cy="108" r="62" fill="#E65100"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="110" rx="48" ry="46" fill="#FFB74D"/>
+  <!-- Ears -->
+  <circle cx="62" cy="74" r="16" fill="#FFB74D"/>
+  <circle cx="138" cy="74" r="16" fill="#FFB74D"/>
+  <circle cx="62" cy="74" r="9" fill="#FF8A65"/>
+  <circle cx="138" cy="74" r="9" fill="#FF8A65"/>
+  <!-- Muzzle -->
+  <ellipse cx="100" cy="126" rx="26" ry="20" fill="#FFCC80"/>
+  <!-- Eyes -->
+  <circle cx="84" cy="102" r="10" fill="#1a1a2e"/>
+  <circle cx="116" cy="102" r="10" fill="#1a1a2e"/>
+  <circle cx="87" cy="99" r="3" fill="white"/>
+  <circle cx="119" cy="99" r="3" fill="white"/>
+  <!-- Glasses -->
+  <circle cx="84" cy="102" r="13" fill="none" stroke="#4E342E" stroke-width="3"/>
+  <circle cx="116" cy="102" r="13" fill="none" stroke="#4E342E" stroke-width="3"/>
+  <line x1="97" y1="102" x2="103" y2="102" stroke="#4E342E" stroke-width="3"/>
+  <line x1="71" y1="99" x2="57" y2="95" stroke="#4E342E" stroke-width="2.5"/>
+  <line x1="129" y1="99" x2="143" y2="95" stroke="#4E342E" stroke-width="2.5"/>
+  <!-- Nose -->
+  <ellipse cx="100" cy="118" rx="6" ry="4" fill="#BF360C"/>
+  <!-- Smile -->
+  <path d="M89 128 Q100 138 111 128" stroke="#BF360C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Whiskers -->
+  <line x1="58" y1="122" x2="86" y2="124" stroke="#4E342E" stroke-width="1.5" opacity="0.5"/>
+  <line x1="58" y1="129" x2="86" y2="128" stroke="#4E342E" stroke-width="1.5" opacity="0.5"/>
+  <line x1="114" y1="124" x2="142" y2="122" stroke="#4E342E" stroke-width="1.5" opacity="0.5"/>
+  <line x1="114" y1="128" x2="142" y2="129" stroke="#4E342E" stroke-width="1.5" opacity="0.5"/>
+  <!-- Bow tie -->
+  <polygon points="85,154 100,147 85,140" fill="#1565C0"/>
+  <polygon points="115,154 100,147 115,140" fill="#1565C0"/>
+  <circle cx="100" cy="147" r="5" fill="#0D47A1"/>
+</svg>

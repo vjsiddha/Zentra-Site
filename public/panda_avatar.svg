@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#E8F5E9"/>
+
+  <!-- Ears -->
+  <circle cx="58" cy="65" r="24" fill="#2C2C2C"/>
+  <circle cx="142" cy="65" r="24" fill="#2C2C2C"/>
+
+  <!-- Head -->
+  <ellipse cx="100" cy="112" rx="56" ry="52" fill="#F5F5F5"/>
+
+  <!-- Eye patches -->
+  <ellipse cx="82" cy="100" rx="18" ry="16" fill="#2C2C2C"/>
+  <ellipse cx="118" cy="100" rx="18" ry="16" fill="#2C2C2C"/>
+
+  <!-- Eyes -->
+  <circle cx="82" cy="100" r="9" fill="white"/>
+  <circle cx="118" cy="100" r="9" fill="white"/>
+  <circle cx="82" cy="100" r="5" fill="#1a1a2e"/>
+  <circle cx="118" cy="100" r="5" fill="#1a1a2e"/>
+  <circle cx="84" cy="97" r="2" fill="white"/>
+  <circle cx="120" cy="97" r="2" fill="white"/>
+
+  <!-- Glasses -->
+  <circle cx="82" cy="100" r="16" fill="none" stroke="#2C2C2C" stroke-width="3"/>
+  <circle cx="118" cy="100" r="16" fill="none" stroke="#2C2C2C" stroke-width="3"/>
+  <line x1="98" y1="100" x2="102" y2="100" stroke="#2C2C2C" stroke-width="3"/>
+  <line x1="66" y1="96" x2="52" y2="92" stroke="#2C2C2C" stroke-width="2.5"/>
+  <line x1="134" y1="96" x2="148" y2="92" stroke="#2C2C2C" stroke-width="2.5"/>
+
+  <!-- Muzzle -->
+  <ellipse cx="100" cy="124" rx="22" ry="16" fill="#E0E0E0"/>
+
+  <!-- Nose -->
+  <ellipse cx="100" cy="116" rx="6" ry="4" fill="#2C2C2C"/>
+
+  <!-- Smile -->
+  <path d="M90 126 Q100 135 110 126" stroke="#757575" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Bow tie -->
+  <polygon points="84,152 100,145 84,138" fill="#4CAF50"/>
+  <polygon points="116,152 100,145 116,138" fill="#4CAF50"/>
+  <circle cx="100" cy="145" r="5" fill="#2E7D32"/>
+</svg>

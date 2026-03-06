@@ -41,6 +41,21 @@ type UserDoc = {
   unlockedAvatars?: { name: string; color: string; unlocked: boolean }[];
 };
 
+// Avatar unlock schedule — unlocksAt = number of modules completed needed
+const AVATARS = [
+  { name: "Benny",   file: "benny_avatar.png",  unlocksAt: 0 },
+  { name: "Fox",     file: "fox_avatar.svg",     unlocksAt: 1 },
+  { name: "Bear",    file: "bear_avatar.svg",    unlocksAt: 2 },
+  { name: "Owl",     file: "owl_avatar.svg",     unlocksAt: 3 },
+  { name: "Cat",     file: "cat_avatar.svg",     unlocksAt: 4 },
+  { name: "Panda",   file: "panda_avatar.svg",   unlocksAt: 4 },
+  { name: "Lion",    file: "lion_avatar.svg",    unlocksAt: 5 },
+  { name: "Rabbit",  file: "rabbit_avatar.svg",  unlocksAt: 6 },
+  { name: "Penguin", file: "penguin_avatar.svg", unlocksAt: 7 },
+  { name: "Koala",   file: "koala_avatar.svg",   unlocksAt: 7 },
+  { name: "Tiger",   file: "tiger_avatar.svg",   unlocksAt: 8 },
+];
+
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -49,26 +64,20 @@ export default function ProfilePage() {
   const [lessonProgress, setLessonProgress] = useState<LessonProgressDoc[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
-  // Edit profile state
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [dictionaryTerms, setDictionaryTerms] = useState<{id: string; term: string; mastered?: boolean}[]>([]);
 
-  // Auth guard
   useEffect(() => {
     if (!loading && !user) router.replace("/signin");
   }, [loading, user, router]);
 
-  // Update editName when user loads
   useEffect(() => {
-    if (user?.displayName) {
-      setEditName(user.displayName);
-    }
+    if (user?.displayName) setEditName(user.displayName);
   }, [user]);
 
-  // Realtime listeners
   useEffect(() => {
     if (!user) {
       setUserData(null);
@@ -85,9 +94,7 @@ export default function ProfilePage() {
 
     const unsubUser = onSnapshot(
       userRef,
-      (snap) => {
-        setUserData(snap.exists() ? (snap.data() as UserDoc) : null);
-      },
+      (snap) => setUserData(snap.exists() ? (snap.data() as UserDoc) : null),
       (err) => console.error("User doc listener error:", err)
     );
 
@@ -119,50 +126,44 @@ export default function ProfilePage() {
     return () => {
       unsubUser();
       unsubProgress();
-       unsubDict();
+      unsubDict();
     };
   }, [user]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!user) return;
+    e.preventDefault();
+    if (!user) return;
 
-  const trimmedName = editName.trim();
-  if (!trimmedName) {
-    alert("Display name cannot be empty.");
-    return;
-  }
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      alert("Display name cannot be empty.");
+      return;
+    }
 
-  setSaving(true);
-  try {
-    // 1) Update Firebase Auth profile
-    await updateProfile(user, { displayName: trimmedName });
+    setSaving(true);
+    try {
+      await updateProfile(user, { displayName: trimmedName });
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(
+        userRef,
+        {
+          displayName: trimmedName,
+          email: user.email ?? "",
+          photoURL: user.photoURL ?? "",
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      alert("Profile updated successfully!");
+      setShowEditProfile(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    // 2) Update Firestore user profile doc
-    const userRef = doc(db, "users", user.uid);
-    await setDoc(
-      userRef,
-      {
-        displayName: trimmedName,
-        email: user.email ?? "",
-        photoURL: user.photoURL ?? "",
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    alert("Profile updated successfully!");
-    setShowEditProfile(false);
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    alert("Failed to update profile. Please try again.");
-  } finally {
-    setSaving(false);
-  }
-};
-
-
-  // Derived values
   const totalModules = 8;
 
   const modulesCompleted = useMemo(() => {
@@ -179,22 +180,18 @@ export default function ProfilePage() {
   const joinDate = useMemo(() => {
     const ts = userData?.createdAt;
     if (ts?.toDate) {
-      return ts
-        .toDate()
-        .toLocaleString(undefined, { month: "long", year: "numeric" });
+      return ts.toDate().toLocaleString(undefined, { month: "long", year: "numeric" });
     }
     return "—";
   }, [userData]);
 
   const moduleProgressList = useMemo(() => {
     const ids = Array.from({ length: totalModules }, (_, i) => `module${i + 1}`);
-
     return ids.map((id) => {
-      const doc = lessonProgress.find((p) => p.lessonId === id);
-      const step = doc?.currentStep ?? 1;
-      const completed = doc?.isComplete === true || step >= 4;
+      const docItem = lessonProgress.find((p) => p.lessonId === id);
+      const step = docItem?.currentStep ?? 1;
+      const completed = docItem?.isComplete === true || step >= 4;
       const pct = completed ? 100 : Math.max(0, Math.min(100, ((step - 1) / 3) * 100));
-
       return {
         id,
         title: `Module ${id.replace("module", "")}`,
@@ -205,20 +202,16 @@ export default function ProfilePage() {
     });
   }, [lessonProgress]);
 
+  // Avatar unlock logic — based on modules completed
+  const avatarsWithStatus = AVATARS.map((a) => ({
+    ...a,
+    unlocked: modulesCompleted >= a.unlocksAt,
+  }));
+
   const userLevel = userData?.level ?? 1;
   const userXP = userData?.xp ?? 0;
   const xpToNextLevel = userData?.xpToNextLevel ?? 3000;
   const streak = userData?.streak ?? 0;
-
-  const unlockedAvatars =
-    userData?.unlockedAvatars ??
-    [
-      { name: "Spark", color: "bg-orange-400", unlocked: true },
-      { name: "Wave", color: "bg-blue-400", unlocked: true },
-      { name: "Bloom", color: "bg-purple-400", unlocked: true },
-      { name: "Mint", color: "bg-green-400", unlocked: true },
-    ];
-
   const termsLearned = userData?.termsLearned ?? 0;
   const recentTerms = userData?.recentTerms ?? ["—", "—", "—", "—"];
 
@@ -243,6 +236,7 @@ export default function ProfilePage() {
         {/* CENTER */}
         <main className="relative w-full min-w-0 before:absolute before:top-0 before:bottom-0 before:left-[-12px] before:w-px before:bg-[#E9EEF3] after:absolute after:top-0 after:bottom-0 after:right-[-12px] after:w-px after:bg-[#E9EEF3]">
           <div className="flex flex-col gap-8">
+
             {/* Header */}
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Your Profile</h1>
@@ -268,7 +262,6 @@ export default function ProfilePage() {
                     <span>{(userData?.displayName || user.displayName || user.email || "U")[0].toUpperCase()}</span>
                   )}
                 </div>
-
                 <div className="flex-1">
                   <h2 className="text-3xl font-bold mb-2">
                     {userData?.displayName || user.displayName || "Student"}
@@ -276,7 +269,6 @@ export default function ProfilePage() {
                   <p className="text-blue-100 mb-1">{user.email}</p>
                   <p className="text-sm text-blue-200">Member since {joinDate}</p>
                 </div>
-
                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border-2 border-white/30">
                   <div className="text-sm font-medium text-blue-100 mb-1">LEVEL</div>
                   <div className="text-4xl font-bold">{userLevel}</div>
@@ -289,7 +281,6 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Learning Progress
               </h3>
-
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 {dataLoading ? (
                   <div className="text-gray-600">Loading your progress…</div>
@@ -304,12 +295,9 @@ export default function ProfilePage() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm text-gray-600">Streak</div>
-                        <div className="text-2xl font-bold text-orange-500">
-                          🔥 {streak}
-                        </div>
+                        <div className="text-2xl font-bold text-orange-500">🔥 {streak}</div>
                       </div>
                     </div>
-
                     <div className="flex gap-3 mb-8">
                       <button
                         onClick={() => router.push(`/module/module1?step=${module1Step}`)}
@@ -317,7 +305,6 @@ export default function ProfilePage() {
                       >
                         Resume Module 1 (Step {module1Step})
                       </button>
-
                       <button
                         onClick={() => router.push("/lesson")}
                         className="rounded-full bg-gray-100 px-6 py-3 font-medium text-gray-800 hover:bg-gray-200 transition"
@@ -325,17 +312,12 @@ export default function ProfilePage() {
                         All Modules
                       </button>
                     </div>
-
                     <div className="space-y-4">
                       {moduleProgressList.map((m) => (
                         <div key={m.id}>
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              {m.title}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              Step {m.currentStep}/4
-                            </span>
+                            <span className="text-sm font-medium text-gray-700">{m.title}</span>
+                            <span className="text-sm text-gray-500">Step {m.currentStep}/4</span>
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div
@@ -356,33 +338,25 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Experience Points
               </h3>
-
               <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <div className="text-sm font-medium text-gray-600 mb-1">
-                      Current XP
-                    </div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Current XP</div>
                     <div className="text-3xl font-bold text-purple-700">
                       {Number(userXP).toLocaleString()} XP
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium text-gray-600 mb-1">
-                      Next Level
-                    </div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Next Level</div>
                     <div className="text-xl font-bold text-gray-900">
                       {Math.max(0, xpToNextLevel - userXP)} XP to go
                     </div>
                   </div>
                 </div>
-
                 <div className="h-4 bg-white rounded-full overflow-hidden border border-purple-200">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(100, (userXP / xpToNextLevel) * 100)}%`,
-                    }}
+                    style={{ width: `${Math.min(100, (userXP / xpToNextLevel) * 100)}%` }}
                   />
                 </div>
               </div>
@@ -393,98 +367,102 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Unlocked Avatars
               </h3>
-
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="grid grid-cols-8 gap-4">
-                  {unlockedAvatars.map((avatar, idx) => (
+                <div className="grid grid-cols-6 gap-6">
+                  {avatarsWithStatus.map((avatar, idx) => (
                     <div key={idx} className="text-center">
                       <div
-                        className={`h-16 w-16 rounded-full ${avatar.color} flex items-center justify-center mb-2 ${
-                          avatar.unlocked ? "" : "opacity-30 grayscale"
+                        className={`h-16 w-16 rounded-full overflow-hidden flex items-center justify-center mb-2 border-2 mx-auto transition-all ${
+                          avatar.unlocked
+                            ? "border-blue-200 shadow-sm"
+                            : "border-gray-200 opacity-30 grayscale"
                         }`}
                       >
-                        <span className="text-2xl">✦</span>
+                        {avatar.unlocked ? (
+                          <img
+                            src={`/${avatar.file}`}
+                            alt={avatar.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <i className="ti ti-lock text-gray-400 text-xl" />
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-gray-600">{avatar.name}</div>
-                    </div>
-                  ))}
-                  {[...Array(4)].map((_, idx) => (
-                    <div key={`locked-${idx}`} className="text-center">
-                      <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                        <i className="ti ti-lock text-gray-400 text-xl" />
+                      <div className="text-xs text-gray-500">
+                        {avatar.unlocked ? avatar.name : `Module ${avatar.unlocksAt}`}
                       </div>
-                      <div className="text-xs text-gray-400">Locked</div>
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500 mt-4 text-center">
-                  Unlock more avatars by completing lessons and reaching higher levels!
+                <p className="text-sm text-gray-500 mt-6 text-center">
+                  Complete modules to unlock all {AVATARS.length} avatars!{" "}
+                  <span className="font-medium text-blue-600">
+                    {avatarsWithStatus.filter((a) => a.unlocked).length}/{AVATARS.length} unlocked
+                  </span>
                 </p>
               </div>
             </section>
 
             {/* Vocab & Knowledge */}
             <section>
-  <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
-    Vocabulary & Knowledge
-  </h3>
-
-  <div className="bg-white rounded-xl border border-gray-200 p-6">
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex gap-8">
-        <div>
-          <div className="text-sm font-medium text-gray-600 mb-1">Terms Saved</div>
-          <div className="text-4xl font-bold text-blue-600">{dictionaryTerms.length}</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium text-gray-600 mb-1">Mastered</div>
-          <div className="text-4xl font-bold text-emerald-600">
-            {dictionaryTerms.filter((t) => t.mastered).length}
-          </div>
-        </div>
-      </div>
-      <button
-        onClick={() => router.push("/dictionary")}
-        className="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 transition"
-      >
-        Open Personal Dictionary
-        <i className="ti ti-arrow-right" />
-      </button>
-    </div>
-
-    {dictionaryTerms.length === 0 ? (
-      <p className="text-sm text-gray-500">
-        Save terms from lessons to build your dictionary.
-      </p>
-    ) : (
-      <div className="flex flex-wrap gap-2">
-        {dictionaryTerms.map((term) => (
-          <span
-            key={term.id}
-            className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1 ${
-              term.mastered
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-blue-50 text-blue-700"
-            }`}
-          >
-            {term.mastered && <span>✓</span>}
-            {term.term}
-          </span>
-        ))}
-      </div>
-    )}
-  </div>
-</section>
+              <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
+                Vocabulary & Knowledge
+              </h3>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex gap-8">
+                    <div>
+                      <div className="text-sm font-medium text-gray-600 mb-1">Terms Saved</div>
+                      <div className="text-4xl font-bold text-blue-600">{dictionaryTerms.length}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-600 mb-1">Mastered</div>
+                      <div className="text-4xl font-bold text-emerald-600">
+                        {dictionaryTerms.filter((t) => t.mastered).length}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push("/dictionary")}
+                    className="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 transition"
+                  >
+                    Open Personal Dictionary
+                    <i className="ti ti-arrow-right" />
+                  </button>
+                </div>
+                {dictionaryTerms.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Save terms from lessons to build your dictionary.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {dictionaryTerms.map((term) => (
+                      <span
+                        key={term.id}
+                        className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1 ${
+                          term.mastered
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-blue-50 text-blue-700"
+                        }`}
+                      >
+                        {term.mastered && <span>✓</span>}
+                        {term.term}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
 
             {/* Account Settings */}
             <section>
               <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
                 Account Settings
               </h3>
-
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="space-y-3">
-                  {/* Personal Information */}
                   <button
                     onClick={() => setShowEditProfile(!showEditProfile)}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition text-left"
@@ -493,10 +471,9 @@ export default function ProfilePage() {
                       <i className="ti ti-user-edit text-gray-600 text-xl" />
                       <span className="font-medium text-gray-700">Personal Information</span>
                     </div>
-                    <i className={`ti ti-chevron-${showEditProfile ? 'down' : 'right'} text-gray-400`} />
+                    <i className={`ti ti-chevron-${showEditProfile ? "down" : "right"} text-gray-400`} />
                   </button>
 
-                  {/* Expandable Edit Form */}
                   {showEditProfile && (
                     <div className="px-4 py-4 bg-gray-50 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
                       <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -512,33 +489,29 @@ export default function ProfilePage() {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email
-                          </label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                           <input
                             type="email"
-                            value={user?.email || ''}
+                            value={user?.email || ""}
                             disabled
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                           />
                           <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                         </div>
-
                         <div className="flex gap-3 pt-2">
                           <button
                             type="submit"
                             disabled={saving}
                             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {saving ? 'Saving...' : 'Save Changes'}
+                            {saving ? "Saving..." : "Save Changes"}
                           </button>
                           <button
                             type="button"
                             onClick={() => {
                               setShowEditProfile(false);
-                              setEditName(user?.displayName || '');
+                              setEditName(user?.displayName || "");
                             }}
                             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition"
                           >
@@ -549,7 +522,6 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* Sign Out */}
                   <button
                     onClick={signOutUser}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition text-left"
@@ -561,30 +533,24 @@ export default function ProfilePage() {
                     <i className="ti ti-chevron-right text-gray-400" />
                   </button>
 
-                  {/* Delete Account */}
                   <button
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-red-50 transition text-left"
                     onClick={() => {
-                      if (
-                        confirm(
-                          "Are you sure you want to delete your account? This action cannot be undone."
-                        )
-                      ) {
+                      if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
                         alert("Account deletion coming soon");
                       }
                     }}
                   >
                     <div className="flex items-center gap-3">
                       <i className="ti ti-trash text-red-600 text-xl" />
-                      <span className="font-medium text-red-600">
-                        Delete Account
-                      </span>
+                      <span className="font-medium text-red-600">Delete Account</span>
                     </div>
                     <i className="ti ti-chevron-right text-red-400" />
                   </button>
                 </div>
               </div>
             </section>
+
           </div>
         </main>
 

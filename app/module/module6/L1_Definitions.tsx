@@ -173,7 +173,6 @@ export default function L1_Definitions({
   if (view === "intro") {
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
-        <BackButton />
         <div className="w-full text-center mb-8">
           <p className="text-sky-600 font-bold uppercase tracking-widest text-xs mb-2">Module 6 • Lesson 1</p>
           <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Sector Investing & Trends</h1>
