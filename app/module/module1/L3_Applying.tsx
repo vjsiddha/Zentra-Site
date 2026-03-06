@@ -30,9 +30,9 @@ interface Scenario {
   decisions: {
     housing: { optionA: DecisionOption; optionB: DecisionOption };
     transport: { optionA: DecisionOption; optionB: DecisionOption };
-    thirdChoice: { 
+    thirdChoice: {
       title: string;
-      optionA: DecisionOption; 
+      optionA: DecisionOption;
       optionB: DecisionOption;
     };
   };
@@ -236,31 +236,28 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 };
 
-const STAGES = Object.values(SCENARIOS).map(s => ({ label: s.label, id: s.id }));
+const STAGES = Object.values(SCENARIOS).map((s) => ({ label: s.label, id: s.id }));
 
 type Goal = string;
-
 type QuizAnswer = "GICs" | "Savings Accounts";
 
 export default function L3_Applying({ onComplete }: L3Props) {
-  const [view, setView] = useState<"select" | "persona" | "decisions" | "invest" | "prioritize" | "results">("select");
-  
-  // Selected scenario
+  const [view, setView] = useState<
+    "select" | "persona" | "decisions" | "invest" | "prioritize" | "lesson-results" | "module-results"
+  >("select");
+
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   const scenario = selectedStageId ? SCENARIOS[selectedStageId] : null;
 
-  // Decision states
   const [housingChoice, setHousingChoice] = useState<"A" | "B">("A");
   const [transportChoice, setTransportChoice] = useState<"A" | "B">("A");
   const [thirdChoice, setThirdChoice] = useState<"A" | "B">("A");
 
-  // Investment states
   const [q1, setQ1] = useState<QuizAnswer | null>(null);
   const [q2, setQ2] = useState<QuizAnswer | null>(null);
   const [q3, setQ3] = useState<QuizAnswer | null>(null);
   const [savingsAllocation, setSavingsAllocation] = useState(50);
 
-  // Prioritize states
   const [available, setAvailable] = useState<Goal[]>([]);
   const [ranked, setRanked] = useState<Goal[]>([]);
   const [dragged, setDragged] = useState<Goal | null>(null);
@@ -268,12 +265,10 @@ export default function L3_Applying({ onComplete }: L3Props) {
   const [priorityResult, setPriorityResult] = useState<"ideal" | "good" | "adjust" | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  // Scores
   const [decisionScore, setDecisionScore] = useState(0);
   const [investScore, setInvestScore] = useState(0);
   const [priorityScore, setPriorityScore] = useState(0);
 
-  // Initialize goals when scenario changes
   useEffect(() => {
     if (scenario) {
       setAvailable([...scenario.goals]);
@@ -281,7 +276,6 @@ export default function L3_Applying({ onComplete }: L3Props) {
     }
   }, [scenario]);
 
-  // Timer for prioritize game
   useEffect(() => {
     if (view === "prioritize" && secondsLeft > 0) {
       timerRef.current = window.setInterval(() => {
@@ -296,36 +290,29 @@ export default function L3_Applying({ onComplete }: L3Props) {
   const minutes = Math.floor(secondsLeft / 60).toString().padStart(2, "0");
   const seconds = (secondsLeft % 60).toString().padStart(2, "0");
 
-  // Calculated costs
   const getHousingCost = () => scenario ? (housingChoice === "A" ? scenario.decisions.housing.optionA.cost : scenario.decisions.housing.optionB.cost) : 0;
   const getTransportCost = () => scenario ? (transportChoice === "A" ? scenario.decisions.transport.optionA.cost : scenario.decisions.transport.optionB.cost) : 0;
   const getThirdCost = () => scenario ? (thirdChoice === "A" ? scenario.decisions.thirdChoice.optionA.cost : scenario.decisions.thirdChoice.optionB.cost) : 0;
-  
+
   const totalMonthlySpending = scenario ? scenario.baseLiving + getHousingCost() + getTransportCost() + getThirdCost() : 0;
   const monthlySurplus = scenario ? scenario.monthlyIncome - totalMonthlySpending : 0;
 
-  // Calculate decision score based on scenario
   const calculateDecisionScore = () => {
     if (!scenario) return 0;
-    let score = 50; // Base score
-    
-    // Reward positive cash flow
+    let score = 50;
     if (monthlySurplus > scenario.monthlyIncome * 0.2) score += 30;
     else if (monthlySurplus > scenario.monthlyIncome * 0.1) score += 20;
     else if (monthlySurplus > 0) score += 10;
     else score -= 20;
-
-    // Scenario-specific scoring
-    if (scenario.id === "debt" && thirdChoice === "B") score += 10; // Aggressive payoff
-    if (scenario.id === "career" && housingChoice === "B") score += 10; // Roommates save money
-    if (scenario.id === "retirement" && housingChoice === "B") score += 10; // Downsizing is smart
-    if (scenario.id === "education" && thirdChoice === "A") score += 10; // Max 529
-    
+    if (scenario.id === "debt" && thirdChoice === "B") score += 10;
+    if (scenario.id === "career" && housingChoice === "B") score += 10;
+    if (scenario.id === "retirement" && housingChoice === "B") score += 10;
+    if (scenario.id === "education" && thirdChoice === "A") score += 10;
     return Math.max(0, Math.min(100, score));
   };
 
   const calculateInvestScore = () => {
-    let score = 25; // Base for completing
+    let score = 25;
     if (q1 === "Savings Accounts") score += 25;
     if (q2 === "GICs") score += 25;
     if (q3 === "GICs") score += 25;
@@ -335,20 +322,15 @@ export default function L3_Applying({ onComplete }: L3Props) {
   const calculatePriorityScore = () => {
     if (!scenario || ranked.length < 5) return 0;
     let score = 0;
-    // First priority should match scenario needs
     const idealFirst = scenario.goals[0];
     if (ranked[0] === idealFirst) score += 40;
     else if (ranked[1] === idealFirst) score += 20;
-    
-    // General good ordering
     ranked.forEach((goal, idx) => {
       if (scenario.goals.indexOf(goal) <= idx + 1) score += 12;
     });
-    
     return Math.min(100, score);
   };
 
-  // Handlers
   const handleBack = () => {
     if (view === "persona") setView("select");
     else if (view === "decisions") setView("persona");
@@ -396,10 +378,9 @@ export default function L3_Applying({ onComplete }: L3Props) {
     else setPriorityResult("adjust");
   };
 
-  // Drag handlers
   const onDragStart = (g: Goal) => setDragged(g);
   const onDragEnd = () => setDragged(null);
-  
+
   const onDropToRanked = () => {
     if (!dragged) return;
     if (available.includes(dragged) && !ranked.includes(dragged)) {
@@ -408,7 +389,7 @@ export default function L3_Applying({ onComplete }: L3Props) {
     }
     setDragged(null);
   };
-  
+
   const onDropToAvailable = () => {
     if (!dragged || !scenario) return;
     if (ranked.includes(dragged)) {
@@ -430,11 +411,9 @@ export default function L3_Applying({ onComplete }: L3Props) {
     });
   };
 
-  // Final score
   const totalScore = Math.round((decisionScore + investScore + priorityScore) / 3);
   const passed = totalScore >= 60;
 
-  // Back Button Component
   const BackButton = () => (
     <button
       onClick={handleBack}
@@ -447,28 +426,23 @@ export default function L3_Applying({ onComplete }: L3Props) {
     </button>
   );
 
-  // VIEW 1: SELECT LIFE STAGE
+  // VIEW 1: SELECT
   if (view === "select") {
     return (
       <main className="min-h-screen bg-[#F7FAFC] grid place-items-center py-10">
         <section className="w-full mx-auto max-w-4xl px-4 sm:px-6">
           <header className="mb-10 text-center">
             <div className="inline-flex items-center px-4 py-2 bg-violet-100 text-violet-700 rounded-full mb-4">
-            <span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>
+              <span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>
             </div>
-            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-              Apply Your Knowledge
-            </h2>
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">Apply Your Knowledge</h2>
             <p className="mt-3 mx-auto max-w-3xl text-slate-600">
-              Choose a real-life scenario and help someone make smart financial decisions.
-              Each scenario has unique challenges and goals!
+              Choose a real-life scenario and help someone make smart financial decisions. Each scenario has unique challenges and goals!
             </p>
           </header>
 
           <div className="mx-auto max-w-2xl">
-            <h3 className="mb-4 text-center text-lg font-semibold text-slate-800">
-              Select a Life Stage
-            </h3>
+            <h3 className="mb-4 text-center text-lg font-semibold text-slate-800">Select a Life Stage</h3>
             <div className="flex flex-wrap justify-center gap-3">
               {STAGES.map((stage) => (
                 <button
@@ -485,7 +459,6 @@ export default function L3_Applying({ onComplete }: L3Props) {
               ))}
             </div>
 
-            {/* Preview of selected scenario */}
             {scenario && (
               <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm border border-slate-200 animate-in fade-in">
                 <div className="flex items-center gap-4">
@@ -522,7 +495,7 @@ export default function L3_Applying({ onComplete }: L3Props) {
 
   if (!scenario) return null;
 
-  // VIEW 2: PERSONA OVERVIEW
+  // VIEW 2: PERSONA
   if (view === "persona") {
     return (
       <main className="min-h-screen bg-[#F7FAFC]">
@@ -532,27 +505,13 @@ export default function L3_Applying({ onComplete }: L3Props) {
             <div className="inline-flex items-center px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-medium mb-3">
               {scenario.label}
             </div>
-            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-              Scenario Overview
-            </h2>
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">Scenario Overview</h2>
           </header>
 
           <div className="grid gap-10 md:grid-cols-2 items-start">
-            {/* Illustration */}
-            <div
-              className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-sm ring-1"
-              style={{ backgroundColor: BLUE_TINT, borderColor: BLUE_RING }}
-            >
-              <Image
-                src={scenario.persona.image}
-                alt={scenario.persona.name}
-                fill
-                className="object-cover"
-                sizes="(min-width: 768px) 560px, 100vw"
-              />
+            <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-sm ring-1" style={{ backgroundColor: BLUE_TINT, borderColor: BLUE_RING }}>
+              <Image src={scenario.persona.image} alt={scenario.persona.name} fill className="object-cover" sizes="(min-width: 768px) 560px, 100vw" />
             </div>
-
-            {/* Persona */}
             <article className="max-w-[620px]">
               <h3 className="text-2xl font-bold text-slate-900">Meet {scenario.persona.name}!</h3>
               <ul className="mt-3 space-y-1 text-slate-700">
@@ -563,23 +522,15 @@ export default function L3_Applying({ onComplete }: L3Props) {
                   <li><span className="font-medium">Additional:</span> {scenario.persona.additionalIncome}</li>
                 )}
               </ul>
-              <p className="mt-4 leading-7 text-slate-700">
-                {scenario.persona.description}
-              </p>
-
-              {/* Monthly Income Highlight */}
+              <p className="mt-4 leading-7 text-slate-700">{scenario.persona.description}</p>
               <div className="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                <p className="text-sm text-emerald-700">
-                  <span className="font-bold">Monthly Income:</span> ${scenario.monthlyIncome.toLocaleString()}
-                </p>
+                <p className="text-sm text-emerald-700"><span className="font-bold">Monthly Income:</span> ${scenario.monthlyIncome.toLocaleString()}</p>
               </div>
             </article>
           </div>
 
-          {/* Divider */}
           <div className="my-10 h-px w-full" style={{ backgroundColor: BLUE_RING }} />
 
-          {/* Key Aspects */}
           <div>
             <h4 className="text-2xl font-bold text-slate-900">Key Financial Challenges</h4>
             <div className="mt-6 space-y-4">
@@ -589,17 +540,10 @@ export default function L3_Applying({ onComplete }: L3Props) {
             </div>
           </div>
 
-          {/* CTA */}
           <div className="mt-10 flex justify-end">
-            <button
-              onClick={() => setView("decisions")}
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow"
-              style={{ backgroundColor: PRIMARY }}
-            >
+            <button onClick={() => setView("decisions")} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow" style={{ backgroundColor: PRIMARY }}>
               Help {scenario.persona.name} Make Decisions
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
         </section>
@@ -607,120 +551,58 @@ export default function L3_Applying({ onComplete }: L3Props) {
     );
   }
 
-  // VIEW 3: BUDGET DECISIONS
+  // VIEW 3: DECISIONS
   if (view === "decisions") {
     return (
       <main className="min-h-screen bg-[#F7FAFC]">
         <BackButton />
         <section className="mx-auto max-w-5xl px-4 sm:px-6 pt-14 pb-24">
           <header>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-              Help {scenario.persona.name} Budget!
-            </h1>
-            <p className="mt-3 max-w-2xl text-slate-600">
-              Make smart financial choices for {scenario.persona.name}'s situation.
-            </p>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">Help {scenario.persona.name} Budget!</h1>
+            <p className="mt-3 max-w-2xl text-slate-600">Make smart financial choices for {scenario.persona.name}'s situation.</p>
           </header>
 
-          {/* Decisions */}
           <section className="mt-10 space-y-8">
-            {/* Housing */}
             <DecisionGroup title="Housing">
               <div className="grid gap-3 sm:grid-cols-2">
-                <OptionCard
-                  title={scenario.decisions.housing.optionA.title}
-                  subtitle={scenario.decisions.housing.optionA.subtitle}
-                  detail={`Monthly cost: $${scenario.decisions.housing.optionA.cost.toLocaleString()}`}
-                  active={housingChoice === "A"}
-                  onClick={() => setHousingChoice("A")}
-                />
-                <OptionCard
-                  title={scenario.decisions.housing.optionB.title}
-                  subtitle={scenario.decisions.housing.optionB.subtitle}
-                  detail={`Monthly cost: $${scenario.decisions.housing.optionB.cost.toLocaleString()}`}
-                  active={housingChoice === "B"}
-                  onClick={() => setHousingChoice("B")}
-                />
+                <OptionCard title={scenario.decisions.housing.optionA.title} subtitle={scenario.decisions.housing.optionA.subtitle} detail={`Monthly cost: $${scenario.decisions.housing.optionA.cost.toLocaleString()}`} active={housingChoice === "A"} onClick={() => setHousingChoice("A")} />
+                <OptionCard title={scenario.decisions.housing.optionB.title} subtitle={scenario.decisions.housing.optionB.subtitle} detail={`Monthly cost: $${scenario.decisions.housing.optionB.cost.toLocaleString()}`} active={housingChoice === "B"} onClick={() => setHousingChoice("B")} />
               </div>
             </DecisionGroup>
-
-            {/* Transportation */}
             <DecisionGroup title="Transportation">
               <div className="grid gap-3 sm:grid-cols-2">
-                <OptionCard
-                  title={scenario.decisions.transport.optionA.title}
-                  subtitle={scenario.decisions.transport.optionA.subtitle}
-                  detail={`Monthly cost: $${scenario.decisions.transport.optionA.cost.toLocaleString()}`}
-                  active={transportChoice === "A"}
-                  onClick={() => setTransportChoice("A")}
-                />
-                <OptionCard
-                  title={scenario.decisions.transport.optionB.title}
-                  subtitle={scenario.decisions.transport.optionB.subtitle}
-                  detail={`Monthly cost: $${scenario.decisions.transport.optionB.cost.toLocaleString()}`}
-                  active={transportChoice === "B"}
-                  onClick={() => setTransportChoice("B")}
-                />
+                <OptionCard title={scenario.decisions.transport.optionA.title} subtitle={scenario.decisions.transport.optionA.subtitle} detail={`Monthly cost: $${scenario.decisions.transport.optionA.cost.toLocaleString()}`} active={transportChoice === "A"} onClick={() => setTransportChoice("A")} />
+                <OptionCard title={scenario.decisions.transport.optionB.title} subtitle={scenario.decisions.transport.optionB.subtitle} detail={`Monthly cost: $${scenario.decisions.transport.optionB.cost.toLocaleString()}`} active={transportChoice === "B"} onClick={() => setTransportChoice("B")} />
               </div>
             </DecisionGroup>
-
-            {/* Third Choice (Scenario-specific) */}
             <DecisionGroup title={scenario.decisions.thirdChoice.title}>
               <div className="grid gap-3 sm:grid-cols-2">
-                <OptionCard
-                  title={scenario.decisions.thirdChoice.optionA.title}
-                  subtitle={scenario.decisions.thirdChoice.optionA.subtitle}
-                  detail={`Monthly cost: $${scenario.decisions.thirdChoice.optionA.cost.toLocaleString()}`}
-                  active={thirdChoice === "A"}
-                  onClick={() => setThirdChoice("A")}
-                />
-                <OptionCard
-                  title={scenario.decisions.thirdChoice.optionB.title}
-                  subtitle={scenario.decisions.thirdChoice.optionB.subtitle}
-                  detail={`Monthly cost: $${scenario.decisions.thirdChoice.optionB.cost.toLocaleString()}`}
-                  active={thirdChoice === "B"}
-                  onClick={() => setThirdChoice("B")}
-                />
+                <OptionCard title={scenario.decisions.thirdChoice.optionA.title} subtitle={scenario.decisions.thirdChoice.optionA.subtitle} detail={`Monthly cost: $${scenario.decisions.thirdChoice.optionA.cost.toLocaleString()}`} active={thirdChoice === "A"} onClick={() => setThirdChoice("A")} />
+                <OptionCard title={scenario.decisions.thirdChoice.optionB.title} subtitle={scenario.decisions.thirdChoice.optionB.subtitle} detail={`Monthly cost: $${scenario.decisions.thirdChoice.optionB.cost.toLocaleString()}`} active={thirdChoice === "B"} onClick={() => setThirdChoice("B")} />
               </div>
             </DecisionGroup>
           </section>
 
-          {/* Spending Overview */}
           <section className="mt-10">
             <h2 className="text-xl font-semibold text-slate-900 mb-4">Spending Overview</h2>
-
             <div className="grid gap-4 lg:grid-cols-3 mb-6">
               <SummaryCard label="Monthly Income" value={`$${scenario.monthlyIncome.toLocaleString()}`} tone="positive" />
               <SummaryCard label="Total Spending" value={`$${totalMonthlySpending.toLocaleString()}`} />
-              <SummaryCard 
-                label="Monthly Surplus" 
-                value={`$${monthlySurplus.toLocaleString()}`} 
-                tone={monthlySurplus >= 0 ? "positive" : "negative"} 
-              />
+              <SummaryCard label="Monthly Surplus" value={`$${monthlySurplus.toLocaleString()}`} tone={monthlySurplus >= 0 ? "positive" : "negative"} />
             </div>
-
-            {/* Cash Flow Status */}
-            <div className={`p-4 rounded-2xl ${monthlySurplus >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
-              <p className={`font-semibold ${monthlySurplus >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                {monthlySurplus >= 0 
+            <div className={`p-4 rounded-2xl ${monthlySurplus >= 0 ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
+              <p className={`font-semibold ${monthlySurplus >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                {monthlySurplus >= 0
                   ? `✓ Great! ${scenario.persona.name} has $${monthlySurplus.toLocaleString()} left for savings and goals.`
-                  : `⚠️ Warning: ${scenario.persona.name} is spending $${Math.abs(monthlySurplus).toLocaleString()} more than they earn!`
-                }
+                  : `⚠️ Warning: ${scenario.persona.name} is spending $${Math.abs(monthlySurplus).toLocaleString()} more than they earn!`}
               </p>
             </div>
           </section>
 
-          {/* CTA */}
           <div className="mt-10 flex justify-end">
-            <button
-              onClick={handleDecisionsComplete}
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow"
-              style={{ backgroundColor: PRIMARY }}
-            >
+            <button onClick={handleDecisionsComplete} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow" style={{ backgroundColor: PRIMARY }}>
               Continue to Investments
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
         </section>
@@ -728,78 +610,32 @@ export default function L3_Applying({ onComplete }: L3Props) {
     );
   }
 
-  // VIEW 4: INVESTMENT STRATEGY
+  // VIEW 4: INVEST
   if (view === "invest") {
     return (
       <main className="min-h-screen bg-[#F7FAFC]">
         <BackButton />
         <section className="mx-auto max-w-5xl px-4 sm:px-6 pt-14 pb-24">
           <header className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-              {scenario.persona.name}'s Investment Strategy
-            </h1>
-            <p className="mt-2 max-w-3xl text-slate-600">
-              <strong>Focus:</strong> {scenario.investmentFocus}
-            </p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">{scenario.persona.name}'s Investment Strategy</h1>
+            <p className="mt-2 max-w-3xl text-slate-600"><strong>Focus:</strong> {scenario.investmentFocus}</p>
           </header>
 
-          {/* Investment Quiz */}
           <section className="mb-10">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">Investment Knowledge Check</h2>
-
-            <QuizQuestion
-              n={1}
-              question={`If ${scenario.persona.name} needs access to funds within a year, which option is best?`}
-              options={["GICs", "Savings Accounts"]}
-              value={q1}
-              onChange={(v) => setQ1(v as QuizAnswer)}
-              explanation={q1 === "Savings Accounts" 
-                ? "✓ Correct! Savings accounts offer flexible access." 
-                : q1 ? "✗ GICs lock funds for a fixed term." : null}
-            />
-
-            <QuizQuestion
-              n={2}
-              question="Which investment offers more security for someone risk-averse?"
-              options={["GICs", "Savings Accounts"]}
-              value={q2}
-              onChange={(v) => setQ2(v as QuizAnswer)}
-              explanation={q2 === "GICs" 
-                ? "✓ Correct! GICs guarantee a fixed rate." 
-                : q2 ? "✗ Savings rates can vary." : null}
-            />
-
-            <QuizQuestion
-              n={3}
-              question="Which investment type typically offers higher returns?"
-              options={["GICs", "Savings Accounts"]}
-              value={q3}
-              onChange={(v) => setQ3(v as QuizAnswer)}
-              explanation={q3 === "GICs" 
-                ? "✓ Correct! GICs offer higher returns for locking in funds." 
-                : q3 ? "✗ Savings accounts typically have lower returns." : null}
-            />
+            <QuizQuestion n={1} question={`If ${scenario.persona.name} needs access to funds within a year, which option is best?`} options={["GICs", "Savings Accounts"]} value={q1} onChange={(v) => setQ1(v as QuizAnswer)} explanation={q1 === "Savings Accounts" ? "✓ Correct! Savings accounts offer flexible access." : q1 ? "✗ GICs lock funds for a fixed term." : null} />
+            <QuizQuestion n={2} question="Which investment offers more security for someone risk-averse?" options={["GICs", "Savings Accounts"]} value={q2} onChange={(v) => setQ2(v as QuizAnswer)} explanation={q2 === "GICs" ? "✓ Correct! GICs guarantee a fixed rate." : q2 ? "✗ Savings rates can vary." : null} />
+            <QuizQuestion n={3} question="Which investment type typically offers higher returns?" options={["GICs", "Savings Accounts"]} value={q3} onChange={(v) => setQ3(v as QuizAnswer)} explanation={q3 === "GICs" ? "✓ Correct! GICs offer higher returns for locking in funds." : q3 ? "✗ Savings accounts typically have lower returns." : null} />
           </section>
 
-          {/* Savings Allocation */}
           <section className="mb-10">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              How should {scenario.persona.name} split their ${monthlySurplus > 0 ? monthlySurplus.toLocaleString() : 0} monthly surplus?
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">How should {scenario.persona.name} split their ${monthlySurplus > 0 ? monthlySurplus.toLocaleString() : 0} monthly surplus?</h2>
             <div className="bg-white p-6 rounded-2xl border border-slate-200">
               <div className="flex justify-between mb-2">
                 <span className="text-emerald-600 font-medium">Savings: {savingsAllocation}%</span>
                 <span className="text-violet-600 font-medium">Investing: {100 - savingsAllocation}%</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="10"
-                value={savingsAllocation}
-                onChange={(e) => setSavingsAllocation(parseInt(e.target.value))}
-                className="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-              />
+              <input type="range" min="0" max="100" step="10" value={savingsAllocation} onChange={(e) => setSavingsAllocation(parseInt(e.target.value))} className="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
               <div className="flex justify-between mt-4 text-sm">
                 <div className="text-center">
                   <p className="text-slate-500">To Savings</p>
@@ -814,16 +650,9 @@ export default function L3_Applying({ onComplete }: L3Props) {
           </section>
 
           <div className="flex justify-end">
-            <button
-              onClick={handleInvestComplete}
-              disabled={!q1 || !q2 || !q3}
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow disabled:opacity-40"
-              style={{ backgroundColor: PRIMARY }}
-            >
+            <button onClick={handleInvestComplete} disabled={!q1 || !q2 || !q3} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow disabled:opacity-40" style={{ backgroundColor: PRIMARY }}>
               Continue to Goal Prioritization
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
         </section>
@@ -831,99 +660,55 @@ export default function L3_Applying({ onComplete }: L3Props) {
     );
   }
 
-  // VIEW 5: PRIORITIZE GOALS
+  // VIEW 5: PRIORITIZE
   if (view === "prioritize") {
     return (
       <main className="min-h-screen bg-[#F7FAFC]">
         <BackButton />
         <section className="mx-auto max-w-4xl px-4 sm:px-6 pt-14 pb-24">
           <header className="mb-6">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-              Prioritize {scenario.persona.name}'s Goals
-            </h1>
-            <p className="mt-2 text-slate-600">
-              Drag and drop to rank financial objectives from most to least important for {scenario.persona.name}'s situation.
-            </p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">Prioritize {scenario.persona.name}'s Goals</h1>
+            <p className="mt-2 text-slate-600">Drag and drop to rank financial objectives from most to least important.</p>
           </header>
 
-          {/* Available chips */}
-          <div
-            className="mb-4 flex flex-wrap gap-2 min-h-[50px] p-3 bg-slate-100 rounded-xl"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onDropToAvailable}
-          >
+          <div className="mb-4 flex flex-wrap gap-2 min-h-[50px] p-3 bg-slate-100 rounded-xl" onDragOver={(e) => e.preventDefault()} onDrop={onDropToAvailable}>
             <p className="text-sm text-slate-500 w-full mb-2">Available goals:</p>
             {available.map((g) => (
-              <div
-                key={g}
-                draggable
-                onDragStart={() => onDragStart(g)}
-                onDragEnd={onDragEnd}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm cursor-grab active:cursor-grabbing hover:border-sky-400"
-              >
-                {g}
-              </div>
+              <div key={g} draggable onDragStart={() => onDragStart(g)} onDragEnd={onDragEnd} className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm cursor-grab active:cursor-grabbing hover:border-sky-400">{g}</div>
             ))}
             {available.length === 0 && <p className="text-slate-400 italic">All goals ranked!</p>}
           </div>
 
-          {/* Drop zone */}
-          <div
-            className="rounded-xl border-2 border-dashed border-slate-300 bg-white/70 p-4 min-h-[120px]"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onDropToRanked}
-          >
+          <div className="rounded-xl border-2 border-dashed border-slate-300 bg-white/70 p-4 min-h-[120px]" onDragOver={(e) => e.preventDefault()} onDrop={onDropToRanked}>
             <p className="text-sm text-slate-500 mb-3">Drop goals here in priority order (1 = highest):</p>
             {ranked.length === 0 ? (
               <span className="text-slate-400 italic">Drag goals here...</span>
             ) : (
               <ol className="flex flex-wrap gap-2">
                 {ranked.map((g, i) => (
-                  <div
-                    key={g}
-                    draggable
-                    onDragStart={() => onDragStart(g)}
-                    onDragEnd={onDragEnd}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-sky-400 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-800 shadow-sm cursor-grab"
-                  >
+                  <div key={g} draggable onDragStart={() => onDragStart(g)} onDragEnd={onDragEnd} className="inline-flex items-center gap-2 rounded-full border-2 border-sky-400 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-800 shadow-sm cursor-grab">
                     <span className="font-bold">{i + 1}.</span> {g}
-                    <button
-                      onClick={() => removeFromRanked(g)}
-                      className="ml-1 w-5 h-5 rounded-full bg-sky-200 text-sky-700 hover:bg-sky-300 flex items-center justify-center"
-                    >
-                      ×
-                    </button>
+                    <button onClick={() => removeFromRanked(g)} className="ml-1 w-5 h-5 rounded-full bg-sky-200 text-sky-700 hover:bg-sky-300 flex items-center justify-center">×</button>
                   </div>
                 ))}
               </ol>
             )}
           </div>
 
-          {/* Legend */}
           <div className="mt-4 flex items-center gap-6 text-sm">
             <LegendItem tone="ideal" active={priorityResult === "ideal"}>Ideal</LegendItem>
             <LegendItem tone="good" active={priorityResult === "good"}>Good</LegendItem>
             <LegendItem tone="adjust" active={priorityResult === "adjust"}>Needs Adjustment</LegendItem>
           </div>
 
-          {/* Timer */}
           <div className="mt-8 grid grid-cols-2 gap-6 max-w-xs">
             <TimeBox label="Minutes" value={minutes} />
             <TimeBox label="Seconds" value={seconds} />
           </div>
 
-          {/* Result feedback */}
           {priorityResult && (
-            <div className={`mt-6 p-4 rounded-2xl ${
-              priorityResult === "ideal" ? "bg-emerald-50 border border-emerald-200" :
-              priorityResult === "good" ? "bg-sky-50 border border-sky-200" :
-              "bg-amber-50 border border-amber-200"
-            }`}>
-              <p className={`font-semibold ${
-                priorityResult === "ideal" ? "text-emerald-700" :
-                priorityResult === "good" ? "text-sky-700" :
-                "text-amber-700"
-              }`}>
+            <div className={`mt-6 p-4 rounded-2xl ${priorityResult === "ideal" ? "bg-emerald-50 border border-emerald-200" : priorityResult === "good" ? "bg-sky-50 border border-sky-200" : "bg-amber-50 border border-amber-200"}`}>
+              <p className={`font-semibold ${priorityResult === "ideal" ? "text-emerald-700" : priorityResult === "good" ? "text-sky-700" : "text-amber-700"}`}>
                 {priorityResult === "ideal" && `🎉 Perfect! You've nailed ${scenario.persona.name}'s priorities!`}
                 {priorityResult === "good" && `👍 Good job! Your priorities make sense for ${scenario.persona.name}.`}
                 {priorityResult === "adjust" && `💡 Hint: For ${scenario.persona.name}, "${scenario.goals[0]}" should be a top priority.`}
@@ -931,40 +716,23 @@ export default function L3_Applying({ onComplete }: L3Props) {
             </div>
           )}
 
-          {/* Actions */}
           <div className="mt-8 flex items-center justify-end gap-3">
-            <button
-              onClick={() => {
-                if (scenario) {
-                  setAvailable([...scenario.goals]);
-                  setRanked([]);
-                  setPriorityResult(null);
-                }
-              }}
-              className="px-5 py-2.5 rounded-full font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-white"
-            >
-              Reset
-            </button>
-            <button
-              onClick={handlePriorityCheck}
-              className="px-6 py-3 rounded-full font-semibold text-white shadow"
-              style={{ backgroundColor: PRIMARY }}
-            >
-              Check Priority
-            </button>
+            <button onClick={() => { if (scenario) { setAvailable([...scenario.goals]); setRanked([]); setPriorityResult(null); } }} className="px-5 py-2.5 rounded-full font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-white">Reset</button>
+            <button onClick={handlePriorityCheck} className="px-6 py-3 rounded-full font-semibold text-white shadow" style={{ backgroundColor: PRIMARY }}>Check Priority</button>
           </div>
 
           {priorityResult && (
             <div className="mt-6 flex justify-end">
               <button
-                onClick={() => setView("results")}
+                onClick={() => {
+                  setPriorityScore(calculatePriorityScore());
+                  setView("lesson-results");
+                }}
                 className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white font-semibold shadow"
                 style={{ backgroundColor: "#059669" }}
               >
-                See Final Results
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                See Lesson Results
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </div>
           )}
@@ -973,81 +741,82 @@ export default function L3_Applying({ onComplete }: L3Props) {
     );
   }
 
-  // VIEW 6: RESULTS
-  return (
-    <main className="min-h-screen bg-[#F7FAFC] py-10">
-      <section className="mx-auto max-w-2xl px-4">
-        <div className="bg-white p-10 rounded-[40px] shadow-xl border border-slate-100 text-center">
-          <div className="text-6xl mb-4">{passed ? "🎉" : "📚"}</div>
-          <h2 className="text-3xl font-black text-slate-900 mb-2">
-            {passed ? "Lesson 3 Complete!" : "Keep Practicing!"}
-          </h2>
-          <p className="text-slate-600 mb-2">
-            You helped <strong>{scenario.persona.name}</strong> with their "{scenario.label}" journey!
-          </p>
-          <p className="text-slate-500 mb-8 text-sm">
-            {passed 
-              ? "Great work applying your financial knowledge to a real-world scenario." 
-              : "You need 60% to complete this lesson. Try different choices!"}
-          </p>
+  // VIEW 6: LESSON RESULTS (scorecard 1)
+  if (view === "lesson-results") {
+    return (
+      <main className="min-h-screen bg-[#F7FAFC] py-10">
+        <section className="mx-auto max-w-2xl px-4">
+          <div className="bg-white p-10 rounded-[40px] shadow-xl border border-slate-100 text-center">
+            <div className="text-6xl mb-4">{passed ? "🎉" : "📚"}</div>
+            <h2 className="text-3xl font-black text-slate-900 mb-2">
+              {passed ? "Lesson 3 Complete!" : "Keep Practicing!"}
+            </h2>
+            <p className="text-slate-600 mb-2">
+              You helped <strong>{scenario.persona.name}</strong> with their "{scenario.label}" journey!
+            </p>
+            <p className="text-slate-500 mb-8 text-sm">
+              {passed
+                ? "Great work applying your financial knowledge to a real-world scenario."
+                : "You need 60% to complete this lesson. Try different choices!"}
+            </p>
 
-          {/* Overall Score */}
-          <div className={`w-36 h-36 mx-auto rounded-full flex items-center justify-center mb-8 ${
-            passed ? 'bg-emerald-100' : 'bg-amber-100'
-          }`}>
-            <div className="text-center">
-              <p className={`text-5xl font-black ${passed ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {totalScore}%
-              </p>
-              <p className="text-xs text-slate-500">Overall</p>
+            {/* Overall Score */}
+            <div className={`w-36 h-36 mx-auto rounded-full flex items-center justify-center mb-8 ${passed ? "bg-emerald-100" : "bg-amber-100"}`}>
+              <div className="text-center">
+                <p className={`text-5xl font-black ${passed ? "text-emerald-600" : "text-amber-600"}`}>{totalScore}%</p>
+                <p className="text-xs text-slate-500">Overall</p>
+              </div>
             </div>
-          </div>
 
-          {/* Score Breakdown */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs text-slate-500 uppercase font-bold">Decisions</p>
-              <p className="text-2xl font-black text-slate-800">{decisionScore}%</p>
+            {/* Score Breakdown */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs text-slate-500 uppercase font-bold">Decisions</p>
+                <p className="text-2xl font-black text-slate-800">{decisionScore}%</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs text-slate-500 uppercase font-bold">Investment</p>
+                <p className="text-2xl font-black text-slate-800">{investScore}%</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs text-slate-500 uppercase font-bold">Priorities</p>
+                <p className="text-2xl font-black text-slate-800">{priorityScore}%</p>
+              </div>
             </div>
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs text-slate-500 uppercase font-bold">Investment</p>
-              <p className="text-2xl font-black text-slate-800">{investScore}%</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs text-slate-500 uppercase font-bold">Priorities</p>
-              <p className="text-2xl font-black text-slate-800">{priorityScore}%</p>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            {passed ? (
-              <button
-                onClick={() => onComplete(totalScore)}
-                className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-emerald-700 transition-all"
-              >
-                Complete Module 1 →
-              </button>
-            ) : (
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {passed ? (
+                <button
+                  onClick={() => onComplete(totalScore)}
+                  className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-emerald-700 transition-all"
+                >
+                  Complete Lesson 3 →
+                </button>
+              ) : (
+                <button
+                  onClick={handleRedo}
+                  className="w-full py-5 text-white rounded-2xl font-bold text-lg shadow-lg hover:opacity-90 transition-all"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  Try Again →
+                </button>
+              )}
               <button
                 onClick={handleRedo}
-                className="w-full py-5 text-white rounded-2xl font-bold text-lg shadow-lg hover:opacity-90 transition-all"
-                style={{ backgroundColor: PRIMARY }}
+                className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
               >
-                Try Again →
+                Try Different Scenario
               </button>
-            )}
-            <button
-              onClick={handleRedo}
-              className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
-            >
-              Try Different Scenario
-            </button>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
-  );
+        </section>
+      </main>
+    );
+  }
+
+  // Should not reach here — module-results is handled by parent via onComplete
+  return null;
 }
 
 /* ---------------------- Helper Components ---------------------- */
@@ -1055,10 +824,7 @@ export default function L3_Applying({ onComplete }: L3Props) {
 function AspectCard({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="flex items-start gap-3 rounded-2xl p-4 ring-1 bg-white" style={{ borderColor: "#E8EEF6" }}>
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-        style={{ backgroundColor: BLUE_TINT, color: PRIMARY }}
-      >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: BLUE_TINT, color: PRIMARY }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <path d="M12 3l9 4-9 4-9-4 9-4Zm0 8l9 4-9 4-9-4 9-4Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -1080,21 +846,9 @@ function DecisionGroup({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function OptionCard({ title, subtitle, detail, active, onClick }: {
-  title: string;
-  subtitle: string;
-  detail: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+function OptionCard({ title, subtitle, detail, active, onClick }: { title: string; subtitle: string; detail: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full rounded-xl border-2 p-4 text-left transition ${
-        active ? "border-sky-400 bg-sky-50 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50"
-      }`}
-    >
+    <button type="button" onClick={onClick} className={`w-full rounded-xl border-2 p-4 text-left transition ${active ? "border-sky-400 bg-sky-50 shadow-sm" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
       <div className="font-semibold text-slate-900">{title}</div>
       <div className="text-sm text-slate-600">{subtitle}</div>
       <div className="mt-1 text-sm font-medium text-slate-700">{detail}</div>
@@ -1113,38 +867,17 @@ function SummaryCard({ label, value, tone }: { label: string; value: string; ton
   );
 }
 
-function QuizQuestion({ n, question, options, value, onChange, explanation }: {
-  n: number;
-  question: string;
-  options: string[];
-  value: string | null;
-  onChange: (v: string) => void;
-  explanation: string | null;
-}) {
+function QuizQuestion({ n, question, options, value, onChange, explanation }: { n: number; question: string; options: string[]; value: string | null; onChange: (v: string) => void; explanation: string | null }) {
   return (
     <div className="mt-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
       <div className="text-sm font-semibold text-slate-700">Question {n}</div>
       <p className="mt-1 text-slate-800">{question}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {options.map((opt) => (
-          <button
-            key={opt}
-            onClick={() => onChange(opt)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              value === opt
-                ? "bg-sky-100 text-sky-800 border-2 border-sky-400"
-                : "bg-white text-slate-700 border border-slate-300 hover:border-sky-300"
-            }`}
-          >
-            {opt}
-          </button>
+          <button key={opt} onClick={() => onChange(opt)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${value === opt ? "bg-sky-100 text-sky-800 border-2 border-sky-400" : "bg-white text-slate-700 border border-slate-300 hover:border-sky-300"}`}>{opt}</button>
         ))}
       </div>
-      {explanation && (
-        <p className={`mt-3 text-sm ${explanation.startsWith("✓") ? "text-emerald-700" : "text-amber-700"}`}>
-          {explanation}
-        </p>
-      )}
+      {explanation && <p className={`mt-3 text-sm ${explanation.startsWith("✓") ? "text-emerald-700" : "text-amber-700"}`}>{explanation}</p>}
     </div>
   );
 }
@@ -1166,9 +899,7 @@ function LegendItem({ tone, active, children }: { tone: "ideal" | "good" | "adju
 function TimeBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <div className="rounded-2xl bg-slate-200 py-6 text-2xl font-extrabold text-slate-900 tracking-widest">
-        {value}
-      </div>
+      <div className="rounded-2xl bg-slate-200 py-6 text-2xl font-extrabold text-slate-900 tracking-widest">{value}</div>
       <div className="mt-2 text-sm text-slate-600">{label}</div>
     </div>
   );

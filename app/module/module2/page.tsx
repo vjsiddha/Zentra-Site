@@ -11,13 +11,11 @@ function ModuleTwoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Steps: 1 = Definitions, 2 = Interactive, 3 = Applying, 4 = Complete
   const [activeStep, setActiveStep] = useState(1);
   const [lesson1Score, setLesson1Score] = useState(0);
   const [lesson2Score, setLesson2Score] = useState(0);
   const [lesson3Score, setLesson3Score] = useState(0);
 
-  // Sync step with URL (?step=2)
   useEffect(() => {
     const step = searchParams.get("step");
     if (step) {
@@ -26,23 +24,18 @@ function ModuleTwoContent() {
     }
   }, [searchParams]);
 
-  // ✅ SAVE PROGRESS whenever activeStep changes
   useEffect(() => {
-    // We want the 3 lesson cards to show progress, so we save per step (1..3)
-    // If user is on completion screen (4), we mark step3 as complete.
-    const stepForCard = Math.min(activeStep, 3); // 1..3
+    const stepForCard = Math.min(activeStep, 3);
     const lessonId = `module2_step${stepForCard}`;
     const lastPath = `/module/module2?step=${activeStep}`;
-    const totalSteps = 4;
 
     saveLessonProgress(lessonId, activeStep, {
-      totalSteps,
+      totalSteps: 4,
       lastPath,
       isComplete: activeStep >= 4,
     });
   }, [activeStep]);
 
-  // Update URL when step changes
   const goToStep = (step: number) => {
     setActiveStep(step);
     router.push(`/module/module2?step=${step}`, { scroll: false });
@@ -50,7 +43,21 @@ function ModuleTwoContent() {
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
-      {/* LESSON 1: Definitions & Quiz */}
+      {/* Fixed Top Right - Back to Modules */}
+      {activeStep !== 4 && (
+        <div className="fixed top-0 right-0 z-50 p-6">
+          <button
+            onClick={() => router.push("/module")}
+            className="px-6 py-3 bg-white text-[#0B5E8E] rounded-full font-bold text-sm hover:bg-slate-50 transition-all shadow-lg border border-slate-200 flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Back to Modules
+          </button>
+        </div>
+      )}
+
       {activeStep === 1 && (
         <L1_Definitions
           onComplete={(score) => {
@@ -61,7 +68,6 @@ function ModuleTwoContent() {
         />
       )}
 
-      {/* LESSON 2: Interactive */}
       {activeStep === 2 && (
         <L2_Interactive
           onComplete={(score) => {
@@ -72,7 +78,6 @@ function ModuleTwoContent() {
         />
       )}
 
-      {/* LESSON 3: Apply & Reflect */}
       {activeStep === 3 && (
         <L3_Applying
           onComplete={(score) => {
@@ -83,18 +88,16 @@ function ModuleTwoContent() {
         />
       )}
 
-      {/* MODULE COMPLETE */}
       {activeStep === 4 && (
         <section className="min-h-screen flex items-center justify-center px-6">
           <div className="max-w-xl w-full bg-white p-12 rounded-[40px] shadow-xl border border-slate-100 text-center animate-in zoom-in duration-500">
             <div className="text-7xl mb-6">🏁</div>
             <h2 className="text-4xl font-black mb-4 text-slate-900">Module 2 Complete!</h2>
             <p className="text-lg text-[#4F7D96] mb-8 leading-relaxed">
-              You’ve built the foundations of investing: portfolios, asset types, risk vs return, time horizon,
+              You've built the foundations of investing: portfolios, asset types, risk vs return, time horizon,
               diversification, and fees.
             </p>
 
-            {/* Score Summary */}
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="bg-sky-50 rounded-xl p-4">
                 <p className="text-xs text-sky-600 uppercase font-bold">Lesson 1</p>
@@ -110,7 +113,6 @@ function ModuleTwoContent() {
               </div>
             </div>
 
-            {/* Progress */}
             <div className="mb-8">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-bold text-slate-700">Module 2 Progress</span>

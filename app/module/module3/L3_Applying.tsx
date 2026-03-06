@@ -525,7 +525,6 @@ export default function L3_Applying({
   if (view === "intro") {
     return (
       <div className="min-h-[70vh]">
-        <BackButton />
         <Stepper />
 
         <div className="max-w-5xl mx-auto px-4 pt-10 pb-12">

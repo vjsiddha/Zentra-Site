@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/AuthProvider";
 
@@ -10,45 +10,52 @@ type UserDoc = {
   displayName?: string;
   level?: number;
   xp?: number;
-  totalXp?: number;
   xpToNextLevel?: number;
-  unlockedAvatars?: { name: string; color: string; unlocked: boolean }[];
 };
 
-const AVATAR_NEXT_UNLOCK: Record<string, string> = {
-  Spark: "Wave",
-  Wave: "Bloom",
-  Bloom: "Mint",
-  Mint: "Nova",
-  Nova: "Flux",
-  Flux: "Crest",
-  Crest: "Apex",
-  Apex: "Max level!",
+type LessonProgressDoc = {
+  lessonId: string;
+  currentStep?: number;
+  isComplete?: boolean;
 };
 
-const AVATAR_SVG_COLORS: Record<string, string> = {
-  "bg-orange-400": "from-orange-300 to-orange-500",
-  "bg-blue-400":   "from-blue-300 to-blue-500",
-  "bg-purple-400": "from-purple-300 to-purple-500",
-  "bg-green-400":  "from-green-300 to-green-500",
-  "bg-pink-400":   "from-pink-300 to-pink-500",
-  "bg-yellow-400": "from-yellow-300 to-yellow-500",
-  "bg-red-400":    "from-red-300 to-red-500",
-  "bg-indigo-400": "from-indigo-300 to-indigo-500",
-};
+const AVATARS = [
+  { name: "Benny",   file: "benny_avatar.png",  unlocksAt: 0 },
+  { name: "Fox",     file: "fox_avatar.svg",     unlocksAt: 1 },
+  { name: "Bear",    file: "bear_avatar.svg",    unlocksAt: 2 },
+  { name: "Owl",     file: "owl_avatar.svg",     unlocksAt: 3 },
+  { name: "Cat",     file: "cat_avatar.svg",     unlocksAt: 4 },
+  { name: "Panda",   file: "panda_avatar.svg",   unlocksAt: 4 },
+  { name: "Lion",    file: "lion_avatar.svg",    unlocksAt: 5 },
+  { name: "Rabbit",  file: "rabbit_avatar.svg",  unlocksAt: 6 },
+  { name: "Penguin", file: "penguin_avatar.svg", unlocksAt: 7 },
+  { name: "Koala",   file: "koala_avatar.svg",   unlocksAt: 7 },
+  { name: "Tiger",   file: "tiger_avatar.svg",   unlocksAt: 8 },
+];
 
 export default function HeroCard() {
   const { user } = useAuth();
   const router = useRouter();
   const [userData, setUserData] = useState<UserDoc | null>(null);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgressDoc[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    const ref = doc(db, "users", user.uid);
-    const unsub = onSnapshot(ref, (snap) => {
+
+    const userRef = doc(db, "users", user.uid);
+    const unsubUser = onSnapshot(userRef, (snap) => {
       if (snap.exists()) setUserData(snap.data() as UserDoc);
     });
-    return () => unsub();
+
+    const progressRef = collection(db, "users", user.uid, "lessonProgress");
+    const unsubProgress = onSnapshot(query(progressRef), (snap) => {
+      setLessonProgress(snap.docs.map((d) => d.data() as LessonProgressDoc));
+    });
+
+    return () => {
+      unsubUser();
+      unsubProgress();
+    };
   }, [user]);
 
   const displayName = userData?.displayName || user?.displayName || "Student";
@@ -58,15 +65,22 @@ export default function HeroCard() {
   const xpToNext = userData?.xpToNextLevel ?? 3000;
   const xpPct = Math.min(100, Math.round((xp / xpToNext) * 100));
 
-  const avatars = userData?.unlockedAvatars ?? [];
-  const currentAvatar = [...avatars].reverse().find((a) => a.unlocked);
-  const nextLockedAvatar = currentAvatar
-    ? AVATAR_NEXT_UNLOCK[currentAvatar.name] ?? "Max level!"
-    : "Spark";
+  // How many modules completed
+  const modulesCompleted = useMemo(() => {
+    return lessonProgress.filter(
+      (m) => m.isComplete === true || (m.currentStep ?? 1) >= 4
+    ).length;
+  }, [lessonProgress]);
 
-  const avatarGradient = currentAvatar
-    ? AVATAR_SVG_COLORS[currentAvatar.color] ?? "from-orange-300 to-orange-500"
-    : "from-orange-300 to-orange-500";
+  // Current avatar = highest one unlocked
+  const currentAvatar = useMemo(() => {
+    return [...AVATARS].reverse().find((a) => modulesCompleted >= a.unlocksAt) ?? AVATARS[0];
+  }, [modulesCompleted]);
+
+  // Next avatar to unlock
+  const nextAvatar = useMemo(() => {
+    return AVATARS.find((a) => a.unlocksAt > modulesCompleted) ?? null;
+  }, [modulesCompleted]);
 
   return (
     <div className="w-full rounded-3xl p-10 bg-gradient-to-r from-[#0E5B87] to-[#0F6CAB] flex items-center justify-between text-white">
@@ -104,14 +118,17 @@ export default function HeroCard() {
         </button>
       </div>
 
-      {/* Right — current avatar + level */}
+      {/* Right — current avatar */}
       <div className="flex flex-col items-center gap-2 min-w-[140px]">
         <div className="relative">
+          {/* Outer glow ring */}
           <div className="w-[120px] h-[120px] bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-              <div className={`w-16 h-16 bg-gradient-to-br ${avatarGradient} rounded-full flex items-center justify-center`}>
-                <span className="text-white text-3xl font-bold">✦</span>
-              </div>
+            <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-4 border-white/30">
+              <img
+                src={`/${currentAvatar.file}`}
+                alt={currentAvatar.name}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
           {/* Level badge */}
@@ -121,10 +138,10 @@ export default function HeroCard() {
         </div>
 
         <div className="text-center mt-2">
-          <div className="font-bold text-lg">Level {level}</div>
-          {nextLockedAvatar !== "Max level!" ? (
+          <div className="font-bold text-lg">{currentAvatar.name}</div>
+          {nextAvatar ? (
             <div className="text-xs text-white/80 max-w-[140px] leading-relaxed">
-              Unlock <span className="font-semibold">{nextLockedAvatar}</span> at next milestone
+              Unlock <span className="font-semibold">{nextAvatar.name}</span> at module {nextAvatar.unlocksAt}
             </div>
           ) : (
             <div className="text-xs text-white/80">All avatars unlocked! 🎉</div>

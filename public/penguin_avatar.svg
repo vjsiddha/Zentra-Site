@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <circle cx="100" cy="100" r="100" fill="#E3F2FD"/>
+  <!-- Body/Head -->
+  <ellipse cx="100" cy="118" rx="52" ry="54" fill="#1A237E"/>
+  <!-- White belly/face -->
+  <ellipse cx="100" cy="122" rx="34" ry="40" fill="#ECEFF1"/>
+  <!-- Top hat -->
+  <ellipse cx="100" cy="70" rx="46" ry="8" fill="#1a1a2e"/>
+  <rect x="70" y="28" width="60" height="44" rx="4" fill="#1a1a2e"/>
+  <!-- Hat band -->
+  <rect x="70" y="62" width="60" height="10" fill="#F9A825"/>
+  <!-- Eyes -->
+  <circle cx="85" cy="104" r="10" fill="#1a1a2e"/>
+  <circle cx="115" cy="104" r="10" fill="#1a1a2e"/>
+  <circle cx="88" cy="101" r="3" fill="white"/>
+  <circle cx="118" cy="101" r="3" fill="white"/>
+  <!-- Glasses -->
+  <circle cx="85" cy="104" r="13" fill="none" stroke="#37474F" stroke-width="3"/>
+  <circle cx="115" cy="104" r="13" fill="none" stroke="#37474F" stroke-width="3"/>
+  <line x1="98" y1="104" x2="102" y2="104" stroke="#37474F" stroke-width="3"/>
+  <line x1="72" y1="101" x2="58" y2="97" stroke="#37474F" stroke-width="2.5"/>
+  <line x1="128" y1="101" x2="142" y2="97" stroke="#37474F" stroke-width="2.5"/>
+  <!-- Beak -->
+  <polygon points="93,118 107,118 100,128" fill="#FF8F00"/>
+  <!-- Bow tie -->
+  <polygon points="85,148 100,141 85,134" fill="#E53935"/>
+  <polygon points="115,148 100,141 115,134" fill="#E53935"/>
+  <circle cx="100" cy="141" r="5" fill="#B71C1C"/>
+  <!-- Flippers hint -->
+  <ellipse cx="56" cy="128" rx="12" ry="22" fill="#1A237E" transform="rotate(-20 56 128)"/>
+  <ellipse cx="144" cy="128" rx="12" ry="22" fill="#1A237E" transform="rotate(20 144 128)"/>
+</svg>

@@ -272,7 +272,6 @@ export default function L3_Applying({
   if (view === "intro") {
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
-        {showBackButton && <BackButton />}
 
         <div className="w-full text-center mb-8">
           <p className="text-violet-600 font-bold uppercase tracking-widest text-xs mb-2">Lesson 3: Apply</p>

@@ -374,7 +374,6 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
   if (view === "intro") {
     return (
       <div className="min-h-screen bg-[#F7FAFC]">
-        {onBack && <BackButton />}
         <div className="flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 py-16 animate-in fade-in slide-in-from-bottom-4">
           <div className="w-full text-center mb-8">
             <div className="inline-flex items-center px-4 py-2 bg-sky-100 text-sky-700 rounded-full mb-4">
