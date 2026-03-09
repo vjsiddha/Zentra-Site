@@ -36,7 +36,7 @@ export default function LandingPageContent({ isPreview }: { isPreview?: boolean 
   };
 
   const handleGetStarted = () => {
-    router.push('/signin');
+    router.push('/signup');
   };
 
   const handleLogin = () => {

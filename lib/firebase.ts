@@ -1,7 +1,8 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore"; // ✅ add
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth"; // ✅ added
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,8 +17,11 @@ const firebaseConfig = {
 // Avoid re-initializing if Firebase app already exists
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// ✅ Firestore instance
+// Firestore instance
 const db = getFirestore(app);
+
+// Auth instance ✅ added
+const auth = getAuth(app);
 
 // Optional: analytics only on client
 let analytics: ReturnType<typeof getAnalytics> | null = null;
@@ -25,4 +29,4 @@ if (typeof window !== "undefined") {
   analytics = getAnalytics(app);
 }
 
-export { app, analytics, db }; // ✅ export db
+export { app, analytics, db, auth }; // ✅ auth added to exports
