@@ -82,6 +82,21 @@ export default function Dashboard() {
       { lessonId: "module7_step1", title: "Timing the Market vs Time in the Market", category: "Definitions", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515", href: "/module/module7?step=1" },
       { lessonId: "module7_step2", title: "Timing the Market vs Time in the Market", category: "Interactive Games", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515", href: "/module/module7?step=2" },
       { lessonId: "module7_step3", title: "Timing the Market vs Time in the Market", category: "Applying Your Knowledge", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515", href: "/module/module7?step=3" },
+    
+      // Module 8
+      { lessonId: "module8_step1", title: "Timing the Market vs Time in the Market", category: "Definitions", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515", href: "/module/module7?step=1" },
+      { lessonId: "module8_step2", title: "Timing the Market vs Time in the Market", category: "Interactive Games", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515", href: "/module/module7?step=2" },
+      { lessonId: "module8_step3", title: "Timing the Market vs Time in the Market", category: "Applying Your Knowledge", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515", href: "/module/module7?step=3" },
+    
+      // Module 9
+      { lessonId: "module9_step1", title: "Timing the Market vs Time in the Market", category: "Definitions", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515", href: "/module/module7?step=1" },
+      { lessonId: "module9_step2", title: "Timing the Market vs Time in the Market", category: "Interactive Games", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515", href: "/module/module7?step=2" },
+      { lessonId: "module9_step3", title: "Timing the Market vs Time in the Market", category: "Applying Your Knowledge", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515", href: "/module/module7?step=3" },
+    
+      // Module 7
+      { lessonId: "module10_step1", title: "Timing the Market vs Time in the Market", category: "Definitions", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515", href: "/module/module7?step=1" },
+      { lessonId: "module10_step2", title: "Timing the Market vs Time in the Market", category: "Interactive Games", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515", href: "/module/module7?step=2" },
+      { lessonId: "module10_step3", title: "Timing the Market vs Time in the Market", category: "Applying Your Knowledge", imageUrl: "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515", href: "/module/module7?step=3" },
     ],
     []
   );
