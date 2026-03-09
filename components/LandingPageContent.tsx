@@ -49,12 +49,14 @@ export default function LandingPageContent({ isPreview }: { isPreview?: boolean 
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#0B5E8E] rounded-lg flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect x="4" y="4" width="16" height="16" rx="2" fill="white"/>
-              </svg>
-            </div>
+            <div className="flex items-center gap-3">
+            <img
+              src="/zentra_logo.png"
+              alt="Zentra"
+              className="w-12 h-12 object-contain"
+            />
             <span className="text-xl font-bold text-[#0B5E8E]">ZENTRA</span>
+          </div>
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -586,25 +588,23 @@ export default function LandingPageContent({ isPreview }: { isPreview?: boolean 
           </div>
           <div className="bg-gradient-to-br from-[#0B5E8E] to-blue-600 rounded-2xl p-10 text-white">
             <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 rounded-full mb-4 backdrop-blur">
-                <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-4xl">🟠</span>
-                </div>
-              </div>
-              <div className="text-3xl font-bold mb-2">Level 9</div>
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 rounded-full mb-4 backdrop-blur">
+            <img src="/benny_avatar.png" className="w-20 h-20 rounded-full object-cover" alt="Benny" />
+          </div>
+          <div className="text-3xl font-bold mb-2">Level 1</div>
               <div className="text-white/90">Complete Two More Modules</div>
               <div className="text-sm text-white/80 mt-1">And Unlock Equity Elephant</div>
             </div>
-            <div className="flex justify-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full"></div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full"></div>
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full"></div>
-              <div className="w-12 h-12 bg-white/20 rounded-full"></div>
-            </div>
+          <div className="flex justify-center gap-3 mb-6">
+            <img src="/fox_avatar.svg" className="w-12 h-12 rounded-full bg-white/20" alt="Fox" />
+            <img src="/bear_avatar.svg" className="w-12 h-12 rounded-full bg-white/20" alt="Bear" />
+            <img src="/owl_avatar.svg" className="w-12 h-12 rounded-full bg-white/20" alt="Owl" />
+            <img src="/cat_avatar.svg" className="w-12 h-12 rounded-full opacity-50" alt="Locked" />
+          </div>
             <div className="bg-white/10 rounded-xl p-4 backdrop-blur">
               <div className="flex items-center justify-between text-sm">
                 <span>Modules Completed</span>
-                <span className="font-bold">6 / 12</span>
+                <span className="font-bold">1 / 10</span>
               </div>
               <div className="w-full bg-white/20 rounded-full h-2 mt-2">
                 <div className="bg-white h-2 rounded-full" style={{width: '50%'}}></div>
@@ -640,12 +640,14 @@ export default function LandingPageContent({ isPreview }: { isPreview?: boolean 
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#0B5E8E] rounded-lg flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <rect x="4" y="4" width="16" height="16" rx="2" fill="white"/>
-                </svg>
-              </div>
+              <div className="flex items-center gap-3">
+              <img
+                src="/zentra_logo.png"
+                alt="Zentra"
+                className="w-10 h-10 object-contain"
+              />
               <span className="font-bold text-gray-900">ZENTRA</span>
+            </div>
             </div>
             <div className="text-sm text-[#4F7D96]">
               © 2026 Zentra. Making financial education accessible.

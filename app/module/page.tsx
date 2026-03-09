@@ -148,8 +148,7 @@ export default function LessonPage() {
           lessonId: "module2_step2",
           title: "Introduction to Investing",
           category: "Interactive Games",
-          imageUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/ec1139cf90eee717dc9fae0659202477cddf756f?width=515",
+          imageUrl: "/M2L2.png",
           progress: 0,
           href: "/module/module2?step=2",
         },
@@ -207,7 +206,7 @@ export default function LessonPage() {
           category: "Definitions",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/682e7ba457ab32f55fd136dd9bea4b2bfc9dfef8?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module4?step=1",
         },
         {
@@ -216,7 +215,7 @@ export default function LessonPage() {
           category: "Interactive Games",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/c9a519d462ae7109500af09e881bd5217c4fd2d4?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module4?step=2",
         },
         {
@@ -225,7 +224,7 @@ export default function LessonPage() {
           category: "Applying Your Knowledge",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/9009d02bbca809a3239a04be5fe4bba849f160fc?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module4?step=3",
         },
       ],
@@ -240,7 +239,7 @@ export default function LessonPage() {
           category: "Definitions",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/3f0ff33d7122ae2536ca66f24a4feff12f41703d?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module5?step=1",
         },
         {
@@ -249,7 +248,7 @@ export default function LessonPage() {
           category: "Interactive Games",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/2bffdbaaa7066d288d28dec2d792c1460c7ac58e?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module5?step=2",
         },
         {
@@ -258,7 +257,7 @@ export default function LessonPage() {
           category: "Applying Your Knowledge",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/fd9756af4aeed573522c2e899816ec55c77b1d62?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module5?step=3",
         },
       ],
@@ -306,7 +305,7 @@ export default function LessonPage() {
           category: "Definitions",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515",
-          progress: 51,
+          progress: 0,
           href: "/module/module7?step=1",
         },
         {
@@ -315,7 +314,7 @@ export default function LessonPage() {
           category: "Interactive Games",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515",
-          progress: 5,
+          progress: 0,
           href: "/module/module7?step=2",
         },
         {
@@ -324,7 +323,104 @@ export default function LessonPage() {
           category: "Applying Your Knowledge",
           imageUrl:
             "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515",
-          progress: 51,
+          progress: 0,
+          href: "/module/module7?step=3",
+        },
+      ],
+    },
+
+    {
+      moduleNumber: 8,
+      lessons: [
+        {
+          lessonId: "module8_step1",
+          title: "Timing the Market vs Time in the Market",
+          category: "Definitions",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515",
+          progress: 0,
+          href: "/module/module7?step=1",
+        },
+        {
+          lessonId: "module8_step2",
+          title: "Timing the Market vs Time in the Market",
+          category: "Interactive Games",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515",
+          progress: 0,
+          href: "/module/module7?step=2",
+        },
+        {
+          lessonId: "module8_step3",
+          title: "Timing the Market vs Time in the Market",
+          category: "Applying Your Knowledge",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515",
+          progress: 0,
+          href: "/module/module7?step=3",
+        },
+      ],
+    },
+
+    {
+      moduleNumber: 9,
+      lessons: [
+        {
+          lessonId: "module9_step1",
+          title: "Timing the Market vs Time in the Market",
+          category: "Definitions",
+          imageUrl: "/M9L1.png",
+          progress: 0,
+          href: "/module/module7?step=1",
+        },
+        {
+          lessonId: "module9_step2",
+          title: "Timing the Market vs Time in the Market",
+          category: "Interactive Games",
+          imageUrl: "/M9L2.png",
+          progress: 0,
+          href: "/module/module7?step=2",
+        },
+        {
+          lessonId: "module9_step3",
+          title: "Timing the Market vs Time in the Market",
+          category: "Applying Your Knowledge",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515",
+          progress: 0,
+          href: "/module/module7?step=3",
+        },
+      ],
+    },
+
+    {
+      moduleNumber: 10,
+      lessons: [
+        {
+          lessonId: "module10_step1",
+          title: "Timing the Market vs Time in the Market",
+          category: "Definitions",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/7ecf44d31a9e2f936f3b957ce4b7f93dd95d7fa2?width=515",
+          progress: 0,
+          href: "/module/module7?step=1",
+        },
+        {
+          lessonId: "module10_step2",
+          title: "Timing the Market vs Time in the Market",
+          category: "Interactive Games",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/acb725f3f86f965dd026a61661145caf37d68231?width=515",
+          progress: 0,
+          href: "/module/module7?step=2",
+        },
+        {
+          lessonId: "module10_step3",
+          title: "Timing the Market vs Time in the Market",
+          category: "Applying Your Knowledge",
+          imageUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/2746cae0ae4cb0d6fda16603ef4887ac5ad6d641?width=515",
+          progress: 0,
           href: "/module/module7?step=3",
         },
       ],
