@@ -1,11 +1,13 @@
+from pathlib import Path
 import os
 
-DATA_DIR = os.environ.get("MIS_DATA_DIR", "./data")
-PORTFOLIO_PATH = os.path.join(DATA_DIR, "saved_portfolio.json")
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = Path(os.environ.get("MIS_DATA_DIR", str(BASE_DIR / "data")))
+PORTFOLIO_PATH = DATA_DIR / "saved_portfolio.json"
 
 SYMBOL_FILES = [
-    os.path.join(DATA_DIR, "nasdaq-listed-symbols.csv"),
-    os.path.join(DATA_DIR, "extended_nasdaq_symbols.csv"),
+    DATA_DIR / "nasdaq-listed-symbols.csv",
+    DATA_DIR / "extended_nasdaq_symbols.csv",
 ]
 
 # Cache TTLs (seconds)

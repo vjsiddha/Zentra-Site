@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from .settings import DATA_DIR
 
-DB_PATH = os.path.join(DATA_DIR, "users.db")
+DB_PATH = DATA_DIR / "users.db"
 
 # ---------------------------------------------------------------------------
 # DB bootstrap
@@ -12,7 +12,7 @@ DB_PATH = os.path.join(DATA_DIR, "users.db")
 
 def _conn() -> sqlite3.Connection:
     os.makedirs(DATA_DIR, exist_ok=True)
-    con = sqlite3.connect(DB_PATH, check_same_thread=False)
+    con = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     con.row_factory = sqlite3.Row
     return con
 
