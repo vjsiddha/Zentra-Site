@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  saveToDictionary,
+  removeFromDictionary,
+  isInDictionary,
+} from "@/lib/dictionary";
 
 // Data arrays outside the component
 const DEFINITIONS = [
@@ -177,12 +183,60 @@ const QUIZ_QUESTIONS = [
 ];
 
 export default function L1_Definitions({ onComplete, onBack }: { onComplete: (score: number) => void; onBack?: () => void }) {
+  const { user } = useAuth();
+
   const [view, setView] = useState<"intro" | "study" | "quiz" | "results">("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [quizIdx, setQuizIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+
+  // Dictionary saved state per definition.id
+  const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
+  const [saving, setSaving] = useState(false);
+
+  const currentDef = useMemo(() => DEFINITIONS[currentIndex], [currentIndex]);
+  const currentTermId = useMemo(() => String(currentDef.id), [currentDef.id]);
+  const isSaved = Boolean(savedMap[currentDef.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkSaved() {
+      if (!user) return;
+      try {
+        const exists = await isInDictionary(user.uid, currentTermId);
+        if (!cancelled) setSavedMap((prev) => ({ ...prev, [currentDef.id]: exists }));
+      } catch {}
+    }
+    if (view === "study" && user) checkSaved();
+    return () => { cancelled = true; };
+  }, [user, view, currentDef.id, currentTermId]);
+
+  const toggleSave = async () => {
+    if (!user || saving) return;
+    setSaving(true);
+    try {
+      if (isSaved) {
+        await removeFromDictionary(user.uid, currentTermId);
+        setSavedMap((prev) => ({ ...prev, [currentDef.id]: false }));
+      } else {
+        await saveToDictionary(user.uid, {
+          id: currentTermId,
+          term: currentDef.term,
+          definition: currentDef.definition,
+          analogy: currentDef.analogy,
+          category: "INVESTING",
+          moduleId: "module8",
+          lessonId: "L1_Definitions",
+          savedAt: Date.now(),
+        });
+        setSavedMap((prev) => ({ ...prev, [currentDef.id]: true }));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Back navigation handler
   const handleBack = () => {
@@ -343,7 +397,23 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
                 <span className="text-xs font-bold text-sky-600 uppercase block mb-1">Simple Analogy:</span>
                 <p className="italic text-slate-600">"{DEFINITIONS[currentIndex].analogy}"</p>
               </div>
-              <button onClick={handleNextDefinition} className="mt-8 w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg">
+
+              {/* Dictionary Save Button */}
+              <button
+                onClick={toggleSave}
+                disabled={!user || saving}
+                className={[
+                  "mt-5 w-full py-3 rounded-xl font-bold transition-all border-2",
+                  isSaved
+                    ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                    : "bg-[#0B5E8E] border-[#0B5E8E] text-white hover:bg-[#094a72]",
+                  (!user || saving) ? "opacity-60 cursor-not-allowed" : "",
+                ].join(" ")}
+              >
+                {isSaved ? "✓ Saved to Dictionary (Click to Remove)" : "＋ Add to My Dictionary"}
+              </button>
+
+              <button onClick={handleNextDefinition} className="mt-3 w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg">
                 {currentIndex === DEFINITIONS.length - 1 ? "Start Knowledge Check" : "Next Definition"}
               </button>
             </div>
