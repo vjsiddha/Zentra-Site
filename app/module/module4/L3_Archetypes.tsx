@@ -4,6 +4,7 @@ import { useState } from "react";
 
 interface L3Props {
   onComplete: (score: number) => void;
+  onBack?: () => void;
 }
 
 interface Archetype {
@@ -140,12 +141,47 @@ const QUIZ_SCENARIOS = [
   }
 ];
 
-export default function L3_Archetypes({ onComplete }: L3Props) {
+export default function L3_Archetypes({ onComplete, onBack }: L3Props) {
   const [view, setView] = useState<"intro" | "archetypes" | "quiz" | "results">("intro");
   const [currentArchetypeIdx, setCurrentArchetypeIdx] = useState(0);
   const [quizIdx, setQuizIdx] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  const handleBack = () => {
+    if (view === "intro") { onBack?.(); return; }
+    if (view === "archetypes") {
+      if (currentArchetypeIdx > 0) { setCurrentArchetypeIdx(v => v - 1); return; }
+      setView("intro");
+      return;
+    }
+    if (view === "quiz") {
+      if (quizIdx > 0) {
+        setQuizIdx(v => v - 1);
+        setQuizAnswers(prev => prev.slice(0, -1));
+        setSelectedOption(null);
+        return;
+      }
+      setView("archetypes");
+      setCurrentArchetypeIdx(ARCHETYPES.length - 1);
+      return;
+    }
+    // results → back to quiz
+    setView("quiz");
+    setQuizIdx(QUIZ_SCENARIOS.length - 1);
+  };
+
+  const BackButton = () => (
+    <button
+      onClick={handleBack}
+      className="fixed top-4 left-6 z-50 flex items-center gap-2 px-4 py-2 text-[#4F7D96] hover:text-[#0B5E8E] font-bold transition-all hover:bg-slate-100 rounded-lg"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Back
+    </button>
+  );
 
   const handleArchetypeNext = () => {
     if (currentArchetypeIdx < ARCHETYPES.length - 1) {
@@ -195,9 +231,11 @@ export default function L3_Archetypes({ onComplete }: L3Props) {
   if (view === "intro") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center px-6 py-16">
+        {onBack && <BackButton />}
         <div className="max-w-3xl">
           <div className="inline-flex items-center px-4 py-2 bg-violet-100 text-violet-700 rounded-full mb-6">
-<span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>          </div>
+            <span className="text-sm font-bold uppercase tracking-widest">Lesson 3</span>
+          </div>
 
           <h1 className="text-[36px] font-bold text-[#0D171C] leading-tight mb-4">
             Which Investor Are You?
@@ -246,6 +284,7 @@ export default function L3_Archetypes({ onComplete }: L3Props) {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 py-16 px-6">
+        <BackButton />
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
             <p className="text-violet-600 font-bold uppercase tracking-widest text-xs mb-2">
@@ -304,6 +343,7 @@ export default function L3_Archetypes({ onComplete }: L3Props) {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 py-16 px-6">
+        <BackButton />
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <p className="text-violet-600 font-bold uppercase tracking-widest text-xs mb-2">
@@ -450,6 +490,7 @@ export default function L3_Archetypes({ onComplete }: L3Props) {
           <button
             onClick={() => {
               setView("intro");
+              setCurrentArchetypeIdx(0);
               setQuizIdx(0);
               setQuizAnswers([]);
               setSelectedOption(null);

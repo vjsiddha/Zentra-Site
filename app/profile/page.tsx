@@ -43,6 +43,21 @@ type UserDoc = {
   unlockedAvatars?: { name: string; color: string; unlocked: boolean }[];
 };
 
+// Avatar unlock schedule — unlocksAt = number of modules completed needed
+const AVATARS = [
+  { name: "Benny",   file: "benny_avatar.png",  unlocksAt: 0 },
+  { name: "Fox",     file: "fox_avatar.svg",     unlocksAt: 1 },
+  { name: "Bear",    file: "bear_avatar.svg",    unlocksAt: 2 },
+  { name: "Owl",     file: "owl_avatar.svg",     unlocksAt: 3 },
+  { name: "Cat",     file: "cat_avatar.svg",     unlocksAt: 4 },
+  { name: "Panda",   file: "panda_avatar.svg",   unlocksAt: 4 },
+  { name: "Lion",    file: "lion_avatar.svg",    unlocksAt: 5 },
+  { name: "Rabbit",  file: "rabbit_avatar.svg",  unlocksAt: 6 },
+  { name: "Penguin", file: "penguin_avatar.svg", unlocksAt: 7 },
+  { name: "Koala",   file: "koala_avatar.svg",   unlocksAt: 7 },
+  { name: "Tiger",   file: "tiger_avatar.svg",   unlocksAt: 8 },
+];
+
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -52,7 +67,6 @@ export default function ProfilePage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Edit profile state
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -62,18 +76,14 @@ export default function ProfilePage() {
 
   const [dictionaryTerms, setDictionaryTerms] = useState<{id: string; term: string; mastered?: boolean}[]>([]);
 
-  // Auth guard
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/signin");
     }
   }, [loading, user, router]);
 
-  // Update editName when user loads
   useEffect(() => {
-    if (user?.displayName) {
-      setEditName(user.displayName);
-    }
+    if (user?.displayName) setEditName(user.displayName);
   }, [user]);
 
   // Optimized data loading with timeout
@@ -237,7 +247,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Derived values
   const totalModules = 8;
 
   const modulesCompleted = useMemo(() => {
@@ -254,22 +263,18 @@ export default function ProfilePage() {
   const joinDate = useMemo(() => {
     const ts = userData?.createdAt;
     if (ts?.toDate) {
-      return ts
-        .toDate()
-        .toLocaleString(undefined, { month: "long", year: "numeric" });
+      return ts.toDate().toLocaleString(undefined, { month: "long", year: "numeric" });
     }
     return "—";
   }, [userData]);
 
   const moduleProgressList = useMemo(() => {
     const ids = Array.from({ length: totalModules }, (_, i) => `module${i + 1}`);
-
     return ids.map((id) => {
       const doc = lessonProgress.find((p) => p.lessonId === id);
       const step = doc?.currentStep ?? 1;
       const completed = doc?.isComplete === true;
       const pct = completed ? 100 : Math.max(0, Math.min(100, ((step - 1) / 3) * 100));
-
       return {
         id,
         title: `Module ${id.replace("module", "")}`,
@@ -279,6 +284,12 @@ export default function ProfilePage() {
       };
     });
   }, [lessonProgress]);
+
+  // Avatar unlock logic — based on modules completed
+  const avatarsWithStatus = AVATARS.map((a) => ({
+    ...a,
+    unlocked: modulesCompleted >= a.unlocksAt,
+  }));
 
   const userLevel = userData?.level ?? 1;
   const userXP = userData?.xp ?? 0;

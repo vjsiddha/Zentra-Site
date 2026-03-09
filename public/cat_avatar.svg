@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#F8BBD9"/>
+
+  <!-- Ears -->
+  <polygon points="58,80 42,42 82,72" fill="#E91E8C"/>
+  <polygon points="142,80 158,42 118,72" fill="#E91E8C"/>
+  <polygon points="60,76 48,50 78,70" fill="#F48CB1"/>
+  <polygon points="140,76 152,50 122,70" fill="#F48CB1"/>
+
+  <!-- Head -->
+  <ellipse cx="100" cy="112" rx="55" ry="50" fill="#E91E8C"/>
+
+  <!-- Face -->
+  <ellipse cx="100" cy="115" rx="42" ry="38" fill="#F48CB1"/>
+
+  <!-- Eyes -->
+  <ellipse cx="83" cy="100" rx="9" ry="10" fill="#1a1a2e"/>
+  <ellipse cx="117" cy="100" rx="9" ry="10" fill="#1a1a2e"/>
+  <circle cx="86" cy="97" r="3" fill="white"/>
+  <circle cx="120" cy="97" r="3" fill="white"/>
+
+  <!-- Monocle on right eye -->
+  <circle cx="117" cy="100" r="14" fill="none" stroke="#8B6914" stroke-width="3"/>
+  <line x1="128" y1="110" x2="136" y2="122" stroke="#8B6914" stroke-width="2.5"/>
+
+  <!-- Regular glasses left side only -->
+  <circle cx="83" cy="100" r="13" fill="none" stroke="#1a1a2e" stroke-width="2.5"/>
+  <line x1="70" y1="97" x2="56" y2="93" stroke="#1a1a2e" stroke-width="2.5"/>
+
+  <!-- Nose -->
+  <polygon points="100,113 95,120 105,120" fill="#C2185B"/>
+
+  <!-- Whiskers -->
+  <line x1="60" y1="118" x2="88" y2="122" stroke="#1a1a2e" stroke-width="1.5" opacity="0.6"/>
+  <line x1="60" y1="125" x2="88" y2="126" stroke="#1a1a2e" stroke-width="1.5" opacity="0.6"/>
+  <line x1="112" y1="122" x2="140" y2="118" stroke="#1a1a2e" stroke-width="1.5" opacity="0.6"/>
+  <line x1="112" y1="126" x2="140" y2="125" stroke="#1a1a2e" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Smile -->
+  <path d="M90 130 Q100 140 110 130" stroke="#C2185B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Bow tie -->
+  <polygon points="84,155 100,148 84,141" fill="#7B1FA2"/>
+  <polygon points="116,155 100,148 116,141" fill="#7B1FA2"/>
+  <circle cx="100" cy="148" r="5" fill="#4A148C"/>
+</svg>

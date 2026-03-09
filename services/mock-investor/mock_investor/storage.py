@@ -1,19 +1,25 @@
 from __future__ import annotations
-import json, os, tempfile, time
+import json
+import os
+import tempfile
 from datetime import datetime
 from .schemas import Portfolio, Txn
 from .errors import PersistenceError
 from .settings import PORTFOLIO_PATH, DATA_DIR
 
+# ---------------------------------------------------------------------------
+# Legacy single-file helpers (kept for backward-compat / anonymous mode)
+# ---------------------------------------------------------------------------
+
 def _ensure_dirs() -> None:
-    os.makedirs(DATA_DIR, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 def _default_portfolio() -> Portfolio:
     return Portfolio(cash=100000.0, positions={}, history=[])
 
 def load_portfolio() -> Portfolio:
     _ensure_dirs()
-    if not os.path.exists(PORTFOLIO_PATH):
+    if not PORTFOLIO_PATH.exists():
         p = _default_portfolio()
         save_portfolio(p)
         return p
@@ -26,14 +32,18 @@ def load_portfolio() -> Portfolio:
 
 def save_portfolio(p: Portfolio) -> None:
     _ensure_dirs()
-    tmp_fd, tmp_path = tempfile.mkstemp(prefix="portfolio_", suffix=".json", dir=DATA_DIR)
+    tmp_fd, tmp_path = tempfile.mkstemp(
+        prefix="portfolio_",
+        suffix=".json",
+        dir=str(DATA_DIR)
+    )
     try:
-        json_str = p.model_dump_json()  # ensures datetimes -> ISO8601 strings
+        json_str = p.model_dump_json()
         with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
             f.write(json_str)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp_path, PORTFOLIO_PATH)
+        os.replace(tmp_path, str(PORTFOLIO_PATH))
     except Exception as e:
         try:
             if os.path.exists(tmp_path):
@@ -49,7 +59,6 @@ def reset_portfolio(starting_cash: float) -> Portfolio:
     save_portfolio(p)
     return p
 
-# Optional helpers
 def deposit(amount: float) -> Portfolio:
     p = load_portfolio()
     p.cash += float(amount)
@@ -66,4 +75,37 @@ def withdraw(amount: float) -> Portfolio:
         ts=datetime.utcnow(), type="WITHDRAW", ticker="", qty=0.0, price=0.0, cash=p.cash
     ))
     save_portfolio(p)
+    return p
+
+# ---------------------------------------------------------------------------
+# Per-user portfolio helpers  (used by authenticated API routes)
+# ---------------------------------------------------------------------------
+
+def load_user_portfolio(user_id: int) -> Portfolio:
+    """Load a specific user's portfolio from SQLite. Creates default if absent."""
+    from .users import load_user_portfolio_raw
+    raw = load_user_portfolio_raw(user_id)
+    if raw is None:
+        p = _default_portfolio()
+        save_user_portfolio(user_id, p)
+        return p
+    try:
+        return Portfolio.model_validate(json.loads(raw))
+    except Exception as e:
+        raise PersistenceError(f"Failed to load portfolio for user {user_id}: {e}") from e
+
+def save_user_portfolio(user_id: int, p: Portfolio) -> None:
+    """Persist a user's portfolio to SQLite."""
+    from .users import save_user_portfolio_raw
+    try:
+        save_user_portfolio_raw(user_id, p.model_dump_json())
+    except Exception as e:
+        raise PersistenceError(f"Failed to save portfolio for user {user_id}: {e}") from e
+
+def reset_user_portfolio(user_id: int, starting_cash: float) -> Portfolio:
+    p = Portfolio(cash=float(starting_cash), positions={}, history=[])
+    p.history.append(Txn(
+        ts=datetime.utcnow(), type="RESET", ticker="", qty=0.0, price=0.0, cash=p.cash
+    ))
+    save_user_portfolio(user_id, p)
     return p

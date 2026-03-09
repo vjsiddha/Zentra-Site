@@ -13,3 +13,9 @@ dist/
 coverage/
 .DS_Store
 EOF
+__pycache__/
+*.pyc
+__pycache__/
+*.pyc
+__pycache__/
+*.pyc

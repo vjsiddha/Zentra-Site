@@ -217,7 +217,6 @@ export default function L2_Simulation({ onComplete, onBack }: L2Props) {
   if (view === "intro") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 to-orange-50">
-        {onBack && <BackButton />}
         <div className="flex flex-col items-center justify-center max-w-[1000px] mx-auto px-6 py-16">
           <div className="inline-flex items-center px-4 py-2 bg-rose-100 text-rose-700 rounded-full mb-6">
 <span className="text-sm font-bold uppercase tracking-widest">Lesson 2</span>          </div>

@@ -1,5 +1,11 @@
 "use client";
 
+import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  saveToDictionary,
+  removeFromDictionary,
+  isInDictionary,
+} from "@/lib/dictionary";
 import { useMemo, useState } from "react";
 
 type QA = {
@@ -139,9 +145,41 @@ export default function L1_Definitions({
   onComplete: (score: number) => void;
   onBack?: () => void;
 }) {
+  const { user } = useAuth();
+
   const [view, setView] = useState<"intro" | "learn" | "myths" | "quiz" | "results">("intro");
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
+
+  // Dictionary saved state per definition title (used as ID)
+  const [savedMap, setSavedMap] = useState<Record<string, boolean>>({});
+  const [savingMap, setSavingMap] = useState<Record<string, boolean>>({});
+
+  const toggleSave = async (def: typeof DEFINITIONS[0]) => {
+    const key = def.title;
+    if (!user || savingMap[key]) return;
+    setSavingMap((prev) => ({ ...prev, [key]: true }));
+    try {
+      if (savedMap[key]) {
+        await removeFromDictionary(user.uid, key);
+        setSavedMap((prev) => ({ ...prev, [key]: false }));
+      } else {
+        await saveToDictionary(user.uid, {
+          id: key,
+          term: def.title,
+          definition: def.text,
+          analogy: def.why,
+          category: "SECTORS",
+          moduleId: "module6",
+          lessonId: "L1_Definitions",
+          savedAt: Date.now(),
+        });
+        setSavedMap((prev) => ({ ...prev, [key]: true }));
+      }
+    } finally {
+      setSavingMap((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   const score = useMemo(() => {
     let correct = 0;
@@ -173,7 +211,6 @@ export default function L1_Definitions({
   if (view === "intro") {
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
-        <BackButton />
         <div className="w-full text-center mb-8">
           <p className="text-sky-600 font-bold uppercase tracking-widest text-xs mb-2">Module 6 • Lesson 1</p>
           <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Sector Investing & Trends</h1>
@@ -251,13 +288,27 @@ export default function L1_Definitions({
                   <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl">
                     {d.icon}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-black text-slate-900">{d.title}</h3>
                     <p className="text-sm text-slate-600 mt-2 leading-relaxed">{d.text}</p>
                     <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                       <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Why it matters</p>
                       <p className="text-sm text-slate-700 leading-relaxed">{d.why}</p>
                     </div>
+                    {/* Dictionary Save Button */}
+                    <button
+                      onClick={() => toggleSave(d)}
+                      disabled={!user || savingMap[d.title]}
+                      className={[
+                        "mt-4 w-full py-2.5 rounded-xl font-bold transition-all border-2 text-sm",
+                        savedMap[d.title]
+                          ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                          : "bg-[#0B5E8E] border-[#0B5E8E] text-white hover:bg-[#094a72]",
+                        (!user || savingMap[d.title]) ? "opacity-60 cursor-not-allowed" : "",
+                      ].join(" ")}
+                    >
+                      {savedMap[d.title] ? "✓ Saved to Dictionary (Click to Remove)" : "＋ Add to My Dictionary"}
+                    </button>
                   </div>
                 </div>
               </div>

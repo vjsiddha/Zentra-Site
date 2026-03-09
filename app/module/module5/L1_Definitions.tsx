@@ -1,7 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  saveToDictionary,
+  removeFromDictionary,
+  isInDictionary,
+} from "@/lib/dictionary";
 
 /**
  * Module 3 — Lesson 1 (Definitions + Misconception Challenge)
@@ -200,12 +206,60 @@ export default function L1_Definitions({
   onComplete: (score: number) => void;
   onBack?: () => void;
 }) {
+  const { user } = useAuth();
+
   const [view, setView] = useState<"intro" | "study" | "challenge" | "results">("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const [challengeIdx, setChallengeIdx] = useState(0);
   const [lockedChoice, setLockedChoice] = useState<ChallengeChoice | null>(null);
   const [score, setScore] = useState(0);
+
+  // Dictionary saved state per definition.id
+  const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
+  const [saving, setSaving] = useState(false);
+
+  const currentDef = useMemo(() => DEFINITIONS[currentIndex], [currentIndex]);
+  const currentTermId = useMemo(() => String(currentDef.id), [currentDef.id]);
+  const isSaved = Boolean(savedMap[currentDef.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkSaved() {
+      if (!user) return;
+      try {
+        const exists = await isInDictionary(user.uid, currentTermId);
+        if (!cancelled) setSavedMap((prev) => ({ ...prev, [currentDef.id]: exists }));
+      } catch {}
+    }
+    if (view === "study" && user) checkSaved();
+    return () => { cancelled = true; };
+  }, [user, view, currentDef.id, currentTermId]);
+
+  const toggleSave = async () => {
+    if (!user || saving) return;
+    setSaving(true);
+    try {
+      if (isSaved) {
+        await removeFromDictionary(user.uid, currentTermId);
+        setSavedMap((prev) => ({ ...prev, [currentDef.id]: false }));
+      } else {
+        await saveToDictionary(user.uid, {
+          id: currentTermId,
+          term: currentDef.term,
+          definition: currentDef.definition,
+          analogy: currentDef.takeaway,
+          category: "INVESTING",
+          moduleId: "module3",
+          lessonId: "L1_Definitions",
+          savedAt: Date.now(),
+        });
+        setSavedMap((prev) => ({ ...prev, [currentDef.id]: true }));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const showBackButton = view === "intro" || view === "study" || (view === "challenge" && !lockedChoice);
 
@@ -392,9 +446,24 @@ export default function L1_Definitions({
                 <p className="text-slate-800 font-medium">{d.takeaway}</p>
               </div>
 
+              {/* Dictionary Save Button */}
+              <button
+                onClick={toggleSave}
+                disabled={!user || saving}
+                className={[
+                  "mt-6 w-full py-3 rounded-xl font-bold transition-all border-2",
+                  isSaved
+                    ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                    : "bg-[#0B5E8E] border-[#0B5E8E] text-white hover:bg-[#094a72]",
+                  (!user || saving) ? "opacity-60 cursor-not-allowed" : "",
+                ].join(" ")}
+              >
+                {isSaved ? "✓ Saved to Dictionary (Click to Remove)" : "＋ Add to My Dictionary"}
+              </button>
+
               <button
                 onClick={handleNext}
-                className="mt-8 w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg"
+                className="mt-3 w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg"
               >
                 {currentIndex === DEFINITIONS.length - 1 ? "Start Misconception Challenge" : "Next Concept"}
               </button>

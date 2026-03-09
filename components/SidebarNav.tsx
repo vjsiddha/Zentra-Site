@@ -42,13 +42,15 @@ function NavItem({
 export default function SidebarNav({ onProfileClick }: SidebarNavProps) {
   return (
     <div className="w-full bg-white rounded-2xl shadow-sm p-8 flex flex-col gap-8 h-full">
-      {/* Logo */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-[#04456d] rounded-md flex items-center justify-center">
-          <div className="w-4 h-4 bg-white rounded-sm" />
-        </div>
-        <span className="font-bold text-lg text-[#04456d]">ZENTRA</span>
-      </div>
+{/* Logo */}
+<div className="flex items-center gap-3">
+  <img
+    src="/zentra_logo.png"
+    alt="Zentra"
+    className="w-12 h-12 object-contain"
+  />
+  <span className="font-bold text-xl text-[#04456d]">ZENTRA</span>
+</div>
 
       {/* Overview */}
       <div>
@@ -59,7 +61,6 @@ export default function SidebarNav({ onProfileClick }: SidebarNavProps) {
         <div className="space-y-1">
           <NavItem href="/" icon="ti-home" label="Dashboard" />
           <NavItem href="/module" icon="ti-book" label="Lesson" />
-          <NavItem href="/library" icon="ti-library" label="Library" />
           <NavItem href="/simulator" icon="ti-device-desktop" label="Simulator" />
         </div>
       </div>

@@ -8,7 +8,7 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
-import { auth } from "@/lib/auth"; 
+import { auth } from "@/lib/firebase"; 
 import type { User } from "firebase/auth";
 import { updateDoc, increment } from "firebase/firestore";
 import { computeLevel, computeAvatars, getXpToNextLevel } from "@/lib/upsertUser";

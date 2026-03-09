@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <circle cx="100" cy="100" r="100" fill="#FFF8E1"/>
+  <!-- Ears -->
+  <polygon points="58,80 40,40 82,68" fill="#FF6F00"/>
+  <polygon points="142,80 160,40 118,68" fill="#FF6F00"/>
+  <polygon points="60,76 46,50 78,68" fill="#FFCC80"/>
+  <polygon points="140,76 154,50 122,68" fill="#FFCC80"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="112" rx="55" ry="50" fill="#FF8F00"/>
+  <!-- Stripes on forehead -->
+  <path d="M88 76 Q90 68 92 76" stroke="#E65100" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M100 74 Q100 65 100 74" stroke="#E65100" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M108 76 Q110 68 112 76" stroke="#E65100" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Muzzle -->
+  <ellipse cx="100" cy="126" rx="28" ry="22" fill="#FFCC80"/>
+  <!-- Eyes -->
+  <circle cx="83" cy="102" r="10" fill="#1a1a2e"/>
+  <circle cx="117" cy="102" r="10" fill="#1a1a2e"/>
+  <circle cx="86" cy="99" r="3" fill="white"/>
+  <circle cx="120" cy="99" r="3" fill="white"/>
+  <!-- Glasses -->
+  <circle cx="83" cy="102" r="13" fill="none" stroke="#BF360C" stroke-width="3"/>
+  <circle cx="117" cy="102" r="13" fill="none" stroke="#BF360C" stroke-width="3"/>
+  <line x1="96" y1="102" x2="104" y2="102" stroke="#BF360C" stroke-width="3"/>
+  <line x1="70" y1="99" x2="56" y2="95" stroke="#BF360C" stroke-width="2.5"/>
+  <line x1="130" y1="99" x2="144" y2="95" stroke="#BF360C" stroke-width="2.5"/>
+  <!-- Nose -->
+  <ellipse cx="100" cy="118" rx="6" ry="4" fill="#BF360C"/>
+  <!-- Stripe cheeks -->
+  <path d="M60 112 Q70 114 78 116" stroke="#E65100" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M62 120 Q72 121 78 122" stroke="#E65100" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M122 116 Q130 114 140 112" stroke="#E65100" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M122 122 Q128 121 138 120" stroke="#E65100" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Smile -->
+  <path d="M89 130 Q100 140 111 130" stroke="#BF360C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Bow tie -->
+  <polygon points="85,155 100,148 85,141" fill="#1B5E20"/>
+  <polygon points="115,155 100,148 115,141" fill="#1B5E20"/>
+  <circle cx="100" cy="148" r="5" fill="#2E7D32"/>
+</svg>
