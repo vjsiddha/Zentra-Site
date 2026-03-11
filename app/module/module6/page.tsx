@@ -91,6 +91,16 @@ function ModuleSixContent() {
   }, [activeStep, hydrated]);
 
   // ── Navigation ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+  const lastPath = `/module/module6?step=${activeStep}`;
+  saveLessonProgress("module6", activeStep, {
+    totalSteps: 4,
+    lastPath,
+    isComplete: activeStep === 4,
+  });
+}, [activeStep]);
+
+  // Update URL when step changes
   const goToStep = (step: number) => {
     setActiveStep(step);
     router.push(`/module/module6?step=${step}`, { scroll: false });

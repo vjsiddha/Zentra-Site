@@ -10,7 +10,7 @@ import {
 } from "@/lib/dictionary";
 import { awardXP, XP_REWARDS } from "@/lib/progress";
 
-// Data arrays outside the component
+// Data arrays outside the component 
 const DEFINITIONS = [
   {
     id: 1,
@@ -205,7 +205,7 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export default function L1_Definitions({ onComplete }: { onComplete: (score: number) => void }) {
+export default function L1_Definitions({ onComplete, onBack }: { onComplete: (score: number) => void; onBack?: () => void }) {
   const { user } = useAuth();
 
   const [view, setView] = useState<"intro" | "study" | "quiz" | "results">("intro");

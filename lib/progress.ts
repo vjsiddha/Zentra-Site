@@ -81,7 +81,7 @@ export async function saveLessonProgress(
       progressPercent,
       lastPath: opts?.lastPath ?? null,
       lastVisitedAt: serverTimestamp(),
-      isComplete: opts?.isComplete ?? stepClamped >= totalSteps,
+      isComplete: opts?.isComplete ?? false,
     },
     { merge: true }
   );

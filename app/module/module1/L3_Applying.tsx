@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-
-interface L3Props {
+import Image from "next/image"; 
+import { awardXP, XP_REWARDS } from "@/lib/progress";
+  
+type L3Props = {
   onComplete: (score: number) => void;
-}
+  onBack?: () => void;
+};
 
 // Constants
 const PRIMARY = "#0B5E8E";
@@ -241,7 +243,7 @@ const STAGES = Object.values(SCENARIOS).map((s) => ({ label: s.label, id: s.id }
 type Goal = string;
 type QuizAnswer = "GICs" | "Savings Accounts";
 
-export default function L3_Applying({ onComplete }: L3Props) {
+export default function L3_Applying({ onComplete, }: L3Props) {
   const [view, setView] = useState<
     "select" | "persona" | "decisions" | "invest" | "prioritize" | "lesson-results" | "module-results"
   >("select");
@@ -356,15 +358,22 @@ export default function L3_Applying({ onComplete }: L3Props) {
     setPriorityScore(0);
   };
 
-  const handleDecisionsComplete = () => {
-    setDecisionScore(calculateDecisionScore());
-    setView("invest");
+  const handleComplete = async () => {
+    await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
+    onComplete(totalScore);
   };
 
-  const handleInvestComplete = () => {
-    setInvestScore(calculateInvestScore());
-    setView("prioritize");
-  };
+  const handleDecisionsComplete = async () => {
+  await awardXP(20); // XP for completing decisions step
+  setDecisionScore(calculateDecisionScore());
+  setView("invest");
+};
+
+  const handleInvestComplete = async () => {
+  await awardXP(20); // XP for completing investment step
+  setInvestScore(calculateInvestScore());
+  setView("prioritize");
+};
 
   const handlePriorityCheck = () => {
     if (ranked.length < 5) {

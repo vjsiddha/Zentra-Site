@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 
+interface L2Props {
+  onComplete: (score: number) => void;
+  onBack?: () => void;
+}
+
 /* ================= TYPES ================= */
 
 type View = "intro" | "scenario" | "tradeoff" | "match" | "results";
@@ -65,7 +70,7 @@ const MATCH_ITEMS: MatchItem[] = [
 
 /* ================= COMPONENT ================= */
 
-export default function RiskFreeGame() {
+export default function RiskFreeGame({ onComplete, onBack }: L2Props) {
   const [view, setView] = useState<View>("intro");
 
   // Scenario game
@@ -277,6 +282,12 @@ export default function RiskFreeGame() {
       <p className="text-slate-600 mb-8">
         Risk-free investing is about timelines, access, and tax efficiency — not chasing returns.
       </p>
+      <button
+  onClick={() => onComplete(finalScore)}
+  className="w-full mb-3 px-10 py-4 bg-emerald-600 text-white rounded-full font-bold"
+>
+  Continue to Lesson 3
+</button>
 
       <button
         onClick={() => {

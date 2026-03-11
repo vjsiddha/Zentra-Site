@@ -8,12 +8,13 @@ import chartAnim from "@/public/lottie/chart.json";
 import lightningAnim from "@/public/lottie/lightning.json";
 import targetAnim from "@/public/lottie/target.json";
 import lightbulbAnim from "@/public/lottie/lightbulb.json";
-
+import { awardXP, XP_REWARDS } from "@/lib/progress"; 
+  
 interface L2Props {
   onComplete: (score: number) => void;
   onBack?: () => void;
 }
-
+  
 // Smart suggestions based on budget choices
 const getSmartNudges = (budget: BudgetState): string[] => {
   const nudges: string[] = [];
@@ -233,7 +234,7 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
   const scores = calculateScores(budget, stressTestResults);
 
   // Initialize stress test
-  const initializeStressTest = () => {
+  const initializeStressTest = async () => {
     // Pick 4 random events
     const shuffled = [...UNEXPECTED_EVENTS].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 4);
@@ -253,6 +254,7 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
       remainingSavings: budget.savings,
       remainingFun: budget.fun
     });
+    await awardXP(20);
     setView("stress_intro");
   };
 
@@ -356,6 +358,11 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
       remainingFun: 0
     });
   };
+
+  const handleComplete = async () => {
+            await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
+            onComplete(scores.overall);
+          };
 
   // Back Button Component
   const BackButton = () => (

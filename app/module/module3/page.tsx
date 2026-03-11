@@ -57,14 +57,14 @@ function ModuleThreeContent() {
     const lastPath = `/module/module3?step=${activeStep}`;
 
     saveLessonProgress(
-      `module3_step${activeStep}`,
-      activeStep,
-      {
-        totalSteps: 4,
-        lastPath,
-        isComplete: activeStep >= 4
-      }
-    );
+  "module3",
+  activeStep,
+  { 
+      totalSteps: 4,
+      lastPath,
+      isComplete: activeStep === 4,
+    }
+  );
   }, [activeStep, hydrated]);
 
   // Update URL when step changes

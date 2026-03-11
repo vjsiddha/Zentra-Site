@@ -26,6 +26,7 @@ import { db } from "@/lib/firebase";
 type LessonProgressDoc = {
   lessonId: string;
   currentStep?: number;
+  totalSteps?: number;
   isComplete?: boolean;
   lastVisitedAt?: Timestamp | any;
 };
@@ -238,10 +239,8 @@ export default function ProfilePage() {
   const totalModules = 8;
 
   const modulesCompleted = useMemo(() => {
-    return lessonProgress.filter(
-      (m) => m.isComplete === true
-    ).length;
-  }, [lessonProgress]);
+  return lessonProgress.filter((m) => m.isComplete === true).length;
+}, [lessonProgress]);
 
   const module1Step = useMemo(() => {
     const m1 = lessonProgress.find((p) => p.lessonId === "module1");
@@ -257,27 +256,29 @@ export default function ProfilePage() {
   }, [userData]);
 
   const moduleProgressList = useMemo(() => {
-    const ids = Array.from({ length: totalModules }, (_, i) => `module${i + 1}`);
-    return ids.map((id) => {
-      const doc = lessonProgress.find((p) => p.lessonId === id);
-      const step = doc?.currentStep ?? 1;
-      const completed = doc?.isComplete === true;
-      const pct = completed ? 100 : Math.max(0, Math.min(100, ((step - 1) / 3) * 100));
-      return {
-        id,
-        title: `Module ${id.replace("module", "")}`,
-        currentStep: step,
-        completed,
-        progressPct: pct,
-      };
-    });
-  }, [lessonProgress]);
+  const ids = Array.from({ length: totalModules }, (_, i) => `module${i + 1}`);
+
+  return ids.map((id) => {
+    const docItem = lessonProgress.find((p) => p.lessonId === id);
+    const step = docItem?.currentStep ?? 1;
+    const total = docItem?.totalSteps ?? 4;
+    const completed = docItem?.isComplete === true;
+    const pct =
+      completed || total <= 1
+        ? 100
+        : Math.max(0, Math.min(100, ((step - 1) / (total - 1)) * 100));
+
+    return {
+      id,
+      title: `Module ${id.replace("module", "")}`,
+      currentStep: step,
+      completed,
+      progressPct: pct,
+    };
+  });
+}, [lessonProgress]);
 
   // Avatar unlock logic — based on modules completed
-  const avatarsWithStatus = AVATARS.map((a) => ({
-    ...a,
-    unlocked: modulesCompleted >= a.unlocksAt,
-  }));
 
   const userLevel = userData?.level ?? 1;
   const userXP = userData?.xp ?? 0;
@@ -503,8 +504,8 @@ export default function ProfilePage() {
   <div className="bg-white rounded-xl border border-gray-200 p-6">
     <div className="grid grid-cols-8 gap-4">
       {AVATARS.map((avatar, idx) => {
-          const isUnlocked = modulesCompleted >= avatar.modulesRequired;        
-          return (
+  const isUnlocked = modulesCompleted >= avatar.modulesRequired;
+  return (
           <div key={idx} className="text-center">
             <div
               className={`h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center mb-2 overflow-hidden mx-auto ${

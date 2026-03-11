@@ -26,14 +26,13 @@ function ModuleOneContent() {
 
   useEffect(() => {
     const stepForCard = Math.min(activeStep, 3);
-    const lessonId = `module1_step${stepForCard}`;
     const lastPath = `/module/module1?step=${activeStep}`;
 
-    saveLessonProgress(lessonId, activeStep, {
-      totalSteps: 4,
-      lastPath,
-      isComplete: activeStep >= 4,
-    });
+    saveLessonProgress("module1", activeStep, {
+  totalSteps: 4,
+  lastPath,
+  isComplete: activeStep === 4,
+});
   }, [activeStep]);
 
   const goToStep = (step: number) => {

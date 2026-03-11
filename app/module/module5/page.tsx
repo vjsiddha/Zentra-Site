@@ -29,15 +29,14 @@ function ModuleFiveContent() {
   useEffect(() => {
   // We save progress per lesson card (step 1–3)
   const stepForCard = Math.min(activeStep, 3); // keeps it within 1–3
-  const lessonId = `module5_step${stepForCard}`;
   const lastPath = `/module/module5?step=${activeStep}`;
   const totalSteps = 4;
 
-  saveLessonProgress(lessonId, activeStep, {
-    totalSteps,
-    lastPath,
-    isComplete: activeStep >= 4,
-  });
+  saveLessonProgress("module5", activeStep, {
+  totalSteps: 4,
+  lastPath,
+  isComplete: activeStep === 4,
+});
 }, [activeStep]);
 
   // Update URL when step changes
