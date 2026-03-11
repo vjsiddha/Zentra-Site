@@ -5,27 +5,25 @@ import { useRouter } from "next/navigation";
 import { collection, getDocs, limit, orderBy, query, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { AVATARS } from "lib/upsertUser"; 
 
 type DictTerm = { id: string; term?: string };
-type Avatar = { name: string; color: string; unlocked: boolean };
 
 export default function RightRail() {
   const router = useRouter();
   const { user } = useAuth();
 
   const [terms, setTerms] = useState<DictTerm[]>([]);
-  const [avatars, setAvatars] = useState<Avatar[]>([]);
+  const [modulesCompleted, setModulesCompleted] = useState(0);
   const [loadingTerms, setLoadingTerms] = useState(false);
 
-  // Live avatar listener from user doc
+  // Live modules completed listener
   useEffect(() => {
     if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    const unsub = onSnapshot(userRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setAvatars(data.unlockedAvatars ?? []);
-      }
+    const progressRef = collection(db, "users", user.uid, "lessonProgress");
+    const unsub = onSnapshot(progressRef, (snap) => {
+      const completed = snap.docs.filter((d) => d.data().isComplete === true).length;
+      setModulesCompleted(completed);
     });
     return () => unsub();
   }, [user]);
@@ -55,30 +53,8 @@ export default function RightRail() {
     return () => { cancelled = true; };
   }, [user]);
 
-  // Only show unlocked avatars in the rail (max 4)
-  const unlockedAvatars = avatars.filter((a) => a.unlocked).slice(0, 4);
-
-  const avatarDotColors: Record<string, string> = {
-    "bg-orange-400": "text-orange-500",
-    "bg-blue-400": "text-blue-500",
-    "bg-purple-400": "text-purple-500",
-    "bg-green-400": "text-green-500",
-    "bg-pink-400": "text-pink-500",
-    "bg-yellow-400": "text-yellow-500",
-    "bg-red-400": "text-red-500",
-    "bg-indigo-400": "text-indigo-500",
-  };
-
-  const avatarBgColors: Record<string, string> = {
-    "bg-orange-400": "bg-orange-100",
-    "bg-blue-400": "bg-blue-100",
-    "bg-purple-400": "bg-purple-100",
-    "bg-green-400": "bg-green-100",
-    "bg-pink-400": "bg-pink-100",
-    "bg-yellow-400": "bg-yellow-100",
-    "bg-red-400": "bg-red-100",
-    "bg-indigo-400": "bg-indigo-100",
-  };
+  // Only show unlocked avatars (max 4)
+  const unlockedAvatars = AVATARS.filter((a) => modulesCompleted >= a.modulesRequired).slice(0, 4);
 
   return (
     <div className="w-full bg-[#E8F3FA] rounded-2xl p-6 space-y-4">
@@ -93,9 +69,20 @@ export default function RightRail() {
               <div
                 key={avatar.name}
                 title={avatar.name}
-                className={`w-14 h-14 rounded-full ${avatarBgColors[avatar.color] ?? "bg-gray-100"} flex items-center justify-center`}
+                className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden"
               >
-                <span className={`text-2xl font-bold ${avatarDotColors[avatar.color] ?? "text-gray-500"}`}>✦</span>
+                <img
+                  src={`/${avatar.file}`}
+                  alt={avatar.name}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    if (target.parentElement) {
+                      target.parentElement.innerHTML = `<span class="text-2xl">✦</span>`;
+                    }
+                  }}
+                />
               </div>
             ))
           )}

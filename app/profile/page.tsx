@@ -10,6 +10,7 @@ import { signOutUser } from "@/lib/auth";
 import { updateProfile } from "firebase/auth";
 import { setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import AccountDeletionModal from "@/components/AccountDeletionModal";
+import { AVATARS } from "lib/upsertUser"; 
 
 import {
   doc,
@@ -44,19 +45,6 @@ type UserDoc = {
 };
 
 // Avatar unlock schedule — unlocksAt = number of modules completed needed
-const AVATARS = [
-  { name: "Benny",   file: "benny_avatar.png",  unlocksAt: 0 },
-  { name: "Fox",     file: "fox_avatar.svg",     unlocksAt: 1 },
-  { name: "Bear",    file: "bear_avatar.svg",    unlocksAt: 2 },
-  { name: "Owl",     file: "owl_avatar.svg",     unlocksAt: 3 },
-  { name: "Cat",     file: "cat_avatar.svg",     unlocksAt: 4 },
-  { name: "Panda",   file: "panda_avatar.svg",   unlocksAt: 4 },
-  { name: "Lion",    file: "lion_avatar.svg",    unlocksAt: 5 },
-  { name: "Rabbit",  file: "rabbit_avatar.svg",  unlocksAt: 6 },
-  { name: "Penguin", file: "penguin_avatar.svg", unlocksAt: 7 },
-  { name: "Koala",   file: "koala_avatar.svg",   unlocksAt: 7 },
-  { name: "Tiger",   file: "tiger_avatar.svg",   unlocksAt: 8 },
-];
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -299,11 +287,18 @@ export default function ProfilePage() {
   const unlockedAvatars =
     userData?.unlockedAvatars ??
     [
-      { name: "Spark", color: "bg-orange-400", unlocked: true },
-      { name: "Wave", color: "bg-blue-400", unlocked: true },
-      { name: "Bloom", color: "bg-purple-400", unlocked: true },
-      { name: "Mint", color: "bg-green-400", unlocked: true },
-    ];
+      { name: "Benny",   file: "benny_avatar.png",  unlocked: true },
+      { name: "Fox",     file: "fox_avatar.svg",     unlocked: true  },
+      { name: "Bear",    file: "bear_avatar.svg",    unlocked: true  },
+      { name: "Owl",     file: "owl_avatar.svg",     unlocked: true  },
+      { name: "Cat",     file: "cat_avatar.svg",     unlocked: true },
+      { name: "Panda",   file: "panda_avatar.svg",   unlocked: true },
+      { name: "Lion",    file: "lion_avatar.svg",    unlocked: true  },
+      { name: "Rabbit",  file: "rabbit_avatar.svg",  unlocked: true  },
+      { name: "Penguin", file: "penguin_avatar.svg", unlocked: true },
+      { name: "Koala",   file: "koala_avatar.svg",   unlocked: true  },
+      { name: "Tiger",   file: "tiger_avatar.svg",   unlocked: true  },
+        ];
 
   // Loading state
   if (loading || !user) {
@@ -499,40 +494,51 @@ export default function ProfilePage() {
                 </div>
               </section>
 
-              {/* Unlocked Avatars */}
-              <section>
-                <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
-                  Unlocked Avatars
-                </h3>
+            {/* Unlocked Avatars */}
+<section>
+  <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
+    Unlocked Avatars
+  </h3>
 
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="grid grid-cols-8 gap-4">
-                    {unlockedAvatars.map((avatar, idx) => (
-                      <div key={idx} className="text-center">
-                        <div
-                          className={`h-16 w-16 rounded-full ${avatar.color} flex items-center justify-center mb-2 ${
-                            avatar.unlocked ? "" : "opacity-30 grayscale"
-                          }`}
-                        >
-                          <span className="text-2xl">✦</span>
-                        </div>
-                        <div className="text-xs text-gray-600">{avatar.name}</div>
-                      </div>
-                    ))}
-                    {[...Array(4)].map((_, idx) => (
-                      <div key={`locked-${idx}`} className="text-center">
-                        <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                          <i className="ti ti-lock text-gray-400 text-xl" />
-                        </div>
-                        <div className="text-xs text-gray-400">Locked</div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-4 text-center">
-                    Unlock more avatars by completing lessons and reaching higher levels!
-                  </p>
-                </div>
-              </section>
+  <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="grid grid-cols-8 gap-4">
+      {AVATARS.map((avatar, idx) => {
+          const isUnlocked = modulesCompleted >= avatar.modulesRequired;        
+          return (
+          <div key={idx} className="text-center">
+            <div
+              className={`h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center mb-2 overflow-hidden mx-auto ${
+                isUnlocked ? "" : "opacity-30 grayscale"
+              }`}
+            >
+              <img
+              src={`/${avatar.file}`}
+              alt={avatar.name}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
+                if (target.parentElement) {
+                  target.parentElement.innerHTML = `<span class="text-2xl">✦</span>`;
+                }
+              }}
+            />
+            </div>
+            <div className="text-xs text-gray-600">{avatar.name}</div>
+            {!isUnlocked && (
+              <div className="text-xs text-gray-400 mt-1">
+                <i className="ti ti-lock" />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+    <p className="text-sm text-gray-500 mt-4 text-center">
+      Unlock more avatars by completing lessons and reaching higher levels!
+    </p>
+  </div>
+</section>          
 
               {/* Vocab & Knowledge */}
               <section>

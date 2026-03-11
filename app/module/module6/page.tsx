@@ -2,8 +2,8 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { saveLessonProgress, loadLessonProgress } from "@/lib/progress";
 
-// ✅ Update these import paths if your folder/file names differ
 import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
@@ -12,23 +12,85 @@ function ModuleSixContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Steps: 1 = Lesson 1, 2 = Lesson 2, 3 = Lesson 3, 4 = Complete
+  const MODULE_ID = "module6"; // module-level doc (for resume)
+
   const [activeStep, setActiveStep] = useState(1);
+  const [hydrated, setHydrated] = useState(false);
 
   const [lesson1Score, setLesson1Score] = useState(0);
   const [lesson2Score, setLesson2Score] = useState(0);
   const [lesson3Score, setLesson3Score] = useState(0);
 
-  // Sync step with URL (?step=2)
+  // ── Hydrate: URL → Firestore → default 1 ──────────────────────────────────
   useEffect(() => {
-    const step = searchParams.get("step");
-    if (step) {
-      const stepNum = parseInt(step, 10);
-      if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
-    }
-  }, [searchParams]);
+    (async () => {
+      const urlStep = searchParams.get("step");
+      if (urlStep) {
+        const stepNum = parseInt(urlStep, 10);
+        if (stepNum >= 1 && stepNum <= 4) {
+          setActiveStep(stepNum);
+          setHydrated(true);
+          return;
+        }
+      }
 
-  // Update URL when step changes
+      // Fall back to saved module-level progress
+      const saved = await loadLessonProgress(MODULE_ID);
+      if (saved?.currentStep && saved.currentStep >= 1 && saved.currentStep <= 4) {
+        setActiveStep(saved.currentStep);
+        router.replace(`/module/module6?step=${saved.currentStep}`, { scroll: false });
+      } else {
+        router.replace(`/module/module6?step=1`, { scroll: false });
+      }
+
+      setHydrated(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Save progress whenever activeStep changes (after hydration) ────────────
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const save = async () => {
+      // 1. Module-level doc — used by ProfilePage "Resume" button
+      await saveLessonProgress(MODULE_ID, activeStep, {
+        totalSteps: 4,
+        isComplete: activeStep >= 4,
+      });
+
+      // 2. Per-step docs — used by the lesson cards progress bars on /module page
+      //    Mark every step BEFORE the current one as 100% complete
+      for (let step = 1; step < activeStep; step++) {
+        await saveLessonProgress(`module6_step${step}`, 3, {
+          totalSteps: 3,
+          isComplete: true,
+        });
+      }
+
+      // 3. Mark the CURRENT step as in-progress (50%) unless it's the complete screen
+      if (activeStep <= 3) {
+        await saveLessonProgress(`module6_step${activeStep}`, 2, {
+          totalSteps: 3,
+          isComplete: false,
+        });
+      }
+
+      // 4. When module is complete (step 4), mark all 3 lesson cards as 100%
+      if (activeStep === 4) {
+        for (let step = 1; step <= 3; step++) {
+          await saveLessonProgress(`module6_step${step}`, 3, {
+            totalSteps: 3,
+            isComplete: true,
+          });
+        }
+      }
+    };
+
+    save();
+  }, [activeStep, hydrated]);
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
   const goToStep = (step: number) => {
     setActiveStep(step);
     router.push(`/module/module6?step=${step}`, { scroll: false });
@@ -36,7 +98,7 @@ function ModuleSixContent() {
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
-       {/* Fixed Top Right - Back to Modules */}
+      {/* Fixed Top Right - Back to Modules */}
       {activeStep !== 4 && (
         <div className="fixed top-0 right-0 z-50 p-6">
           <button
@@ -50,19 +112,19 @@ function ModuleSixContent() {
           </button>
         </div>
       )}
-      
-      {/* LESSON 1: Definitions */}
+
+      {/* LESSON 1 */}
       {activeStep === 1 && (
         <L1_Definitions
           onComplete={(score) => {
             setLesson1Score(score);
             goToStep(2);
           }}
-          onBack={() => router.push("/lesson")}
+          onBack={() => router.push("/module")}
         />
       )}
 
-      {/* LESSON 2: Interactive */}
+      {/* LESSON 2 */}
       {activeStep === 2 && (
         <L2_Interactive
           onComplete={(score) => {
@@ -73,7 +135,7 @@ function ModuleSixContent() {
         />
       )}
 
-      {/* LESSON 3: Apply & Reflect */}
+      {/* LESSON 3 */}
       {activeStep === 3 && (
         <L3_Applying
           onComplete={(score) => {
@@ -105,12 +167,10 @@ function ModuleSixContent() {
                 <p className="text-xs text-sky-600 uppercase font-bold">Lesson 1</p>
                 <p className="text-2xl font-black text-sky-700">{lesson1Score}%</p>
               </div>
-
               <div className="bg-emerald-50 rounded-xl p-4">
                 <p className="text-xs text-emerald-600 uppercase font-bold">Lesson 2</p>
                 <p className="text-2xl font-black text-emerald-700">{lesson2Score}%</p>
               </div>
-
               <div className="bg-violet-50 rounded-xl p-4">
                 <p className="text-xs text-violet-600 uppercase font-bold">Lesson 3</p>
                 <p className="text-2xl font-black text-violet-700">{lesson3Score}%</p>
@@ -130,12 +190,11 @@ function ModuleSixContent() {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push("/lesson")}
+                onClick={() => router.push("/module")}
                 className="w-full py-5 bg-[#0D171C] text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
               >
                 Back to All Modules
               </button>
-
               <button
                 onClick={() => goToStep(1)}
                 className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
