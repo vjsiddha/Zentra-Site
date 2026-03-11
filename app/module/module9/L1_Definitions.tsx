@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { saveToDictionary, removeFromDictionary } from "@/lib/dictionary";
 
 type QA = {
   id: number;
@@ -12,6 +14,7 @@ type QA = {
 
 const DEFINITIONS = [
   {
+    id: 1,
     title: "Inflation",
     icon: "📈",
     text:
@@ -20,6 +23,7 @@ const DEFINITIONS = [
       "High inflation reduces purchasing power and often leads central banks to raise interest rates.",
   },
   {
+    id: 2,
     title: "Interest Rates",
     icon: "🏦",
     text:
@@ -28,6 +32,7 @@ const DEFINITIONS = [
       "Higher rates increase borrowing costs and can slow economic growth.",
   },
   {
+    id: 3,
     title: "GDP",
     icon: "🌍",
     text:
@@ -36,6 +41,7 @@ const DEFINITIONS = [
       "GDP growth signals a strong economy and expanding business activity.",
   },
   {
+    id: 4,
     title: "Unemployment",
     icon: "👥",
     text:
@@ -44,6 +50,7 @@ const DEFINITIONS = [
       "Rising unemployment can indicate economic slowdown and lower consumer spending.",
   },
   {
+    id: 5,
     title: "Economic Indicators",
     icon: "📊",
     text:
@@ -55,21 +62,21 @@ const DEFINITIONS = [
 
 const MYTHS = [
   {
-    myth: "“Inflation is always bad for stocks.”",
+    myth: "\u201cInflation is always bad for stocks.\u201d",
     fact:
       "Moderate inflation often happens during strong economic growth.",
     takeaway: "Context matters more than the number alone.",
     icon: "🔥",
   },
   {
-    myth: "“GDP growth always means markets will rise.”",
+    myth: "\u201cGDP growth always means markets will rise.\u201d",
     fact:
       "Markets react to expectations, not just the data itself.",
     takeaway: "Surprises move markets more than predictions.",
     icon: "📊",
   },
   {
-    myth: "“Interest rates only affect banks.”",
+    myth: "\u201cInterest rates only affect banks.\u201d",
     fact:
       "Interest rates influence mortgages, business loans, and consumer borrowing.",
     takeaway: "Rate changes affect the entire economy.",
@@ -171,6 +178,10 @@ export default function L1_Definitions({
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const { user } = useAuth();
+  const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
+  const [saving, setSaving] = useState(false);
+
   const score = useMemo(() => {
     let correct = 0;
     for (const q of QUIZ) {
@@ -178,6 +189,30 @@ export default function L1_Definitions({
     }
     return Math.round((correct / QUIZ.length) * 100);
   }, [answers]);
+
+  const toggleSave = async (termId: number, term: string, definition: string) => {
+    if (!user || saving) return;
+    setSaving(true);
+    try {
+      if (savedMap[termId]) {
+        await removeFromDictionary(user.uid, String(termId));
+        setSavedMap((prev) => ({ ...prev, [termId]: false }));
+      } else {
+        await saveToDictionary(user.uid, {
+          id: String(termId),
+          term,
+          definition,
+          category: "ECONOMICS",
+          moduleId: "module9",
+          lessonId: "L1_Definitions",
+          savedAt: Date.now(),
+        });
+        setSavedMap((prev) => ({ ...prev, [termId]: true }));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const BackButton = () => (
     <button
@@ -266,7 +301,7 @@ export default function L1_Definitions({
 
         <div className="bg-gradient-to-r from-sky-50 to-emerald-50 p-6 rounded-2xl border border-sky-100 mb-8 w-full max-w-2xl">
           <h3 className="font-bold text-slate-900 mb-2">
-            🎯 By the end of Module 9, you’ll be able to:
+            🎯 By the end of Module 9, you'll be able to:
           </h3>
           <ul className="text-sm text-slate-700 space-y-2">
             <li>• Understand the major economic indicators investors track</li>
@@ -301,7 +336,7 @@ export default function L1_Definitions({
               Key Definitions
             </h2>
             <p className="text-slate-500 mt-1">
-              Short, practical, and focused on “why it matters.”
+              Short, practical, and focused on "why it matters."
             </p>
           </header>
 
@@ -315,7 +350,7 @@ export default function L1_Definitions({
                   <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl">
                     {d.icon}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-black text-slate-900">
                       {d.title}
                     </h3>
@@ -330,6 +365,19 @@ export default function L1_Definitions({
                         {d.why}
                       </p>
                     </div>
+                    <button
+                      onClick={() => toggleSave(d.id, d.title, d.text)}
+                      disabled={!user || saving}
+                      className={`mt-4 w-full py-3 rounded-xl font-bold border-2 transition-all ${
+                        savedMap[d.id]
+                          ? "bg-white border-slate-200 text-slate-700"
+                          : "bg-[#0B5E8E] border-[#0B5E8E] text-white hover:bg-[#094a72]"
+                      }`}
+                    >
+                      {savedMap[d.id]
+                        ? "✓ Saved to Dictionary (Click to Remove)"
+                        : "＋ Add to My Dictionary"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -363,7 +411,7 @@ export default function L1_Definitions({
               Myth vs Fact
             </h2>
             <p className="text-slate-500 mt-1">
-              Fix the most common “economic signals” mistakes.
+              Fix the most common "economic signals" mistakes.
             </p>
           </header>
 
@@ -596,7 +644,7 @@ export default function L1_Definitions({
           </p>
 
           <div className="bg-slate-50 rounded-2xl p-5 mb-6 text-left">
-            <h3 className="font-bold text-slate-900 mb-3">You’re ready to:</h3>
+            <h3 className="font-bold text-slate-900 mb-3">You're ready to:</h3>
             <ul className="space-y-2 text-sm text-slate-700">
               <li>• Interpret major economic indicators</li>
               <li>

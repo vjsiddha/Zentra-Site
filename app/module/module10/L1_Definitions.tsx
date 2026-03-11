@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { saveToDictionary, removeFromDictionary } from "@/lib/dictionary";
 
 type QA = {
   id: number;
@@ -12,6 +14,7 @@ type QA = {
 
 const DEFINITIONS = [
   {
+    id: 1,
     title: "Behavioral Bias",
     icon: "🧠",
     text:
@@ -20,6 +23,7 @@ const DEFINITIONS = [
       "Even smart investors can make bad choices when fear, greed, overconfidence, or habits take over.",
   },
   {
+    id: 2,
     title: "Loss Aversion",
     icon: "📉",
     text:
@@ -28,6 +32,7 @@ const DEFINITIONS = [
       "This can cause investors to panic sell during downturns or hold onto bad investments just to avoid admitting a loss.",
   },
   {
+    id: 3,
     title: "Overconfidence",
     icon: "🎯",
     text:
@@ -36,6 +41,7 @@ const DEFINITIONS = [
       "It often leads to excessive trading, larger mistakes, and taking risks without enough evidence.",
   },
   {
+    id: 4,
     title: "Herd Mentality",
     icon: "🐑",
     text:
@@ -44,6 +50,7 @@ const DEFINITIONS = [
       "This can drive people to buy at market highs out of hype or sell at lows out of fear.",
   },
   {
+    id: 5,
     title: "Long-Term Mindset",
     icon: "🌱",
     text:
@@ -55,28 +62,28 @@ const DEFINITIONS = [
 
 const MYTHS = [
   {
-    myth: "“Good investors never feel fear.”",
+    myth: "\u201cGood investors never feel fear.\u201d",
     fact:
       "Even experienced investors feel fear. The difference is that strong investors follow a process instead of reacting emotionally.",
-    takeaway: "The goal is not zero emotion — it’s emotional control.",
+    takeaway: "The goal is not zero emotion — it's emotional control.",
     icon: "⚠️",
   },
   {
-    myth: "“If everyone is buying it, it must be a good investment.”",
+    myth: "\u201cIf everyone is buying it, it must be a good investment.\u201d",
     fact:
       "Popularity can reflect hype, not value. By the time everyone is excited, expectations may already be priced in.",
     takeaway: "Crowds can be loud, but they are not always right.",
     icon: "🔥",
   },
   {
-    myth: "“Selling after a drop protects you from losses.”",
+    myth: "\u201cSelling after a drop protects you from losses.\u201d",
     fact:
       "Selling after panic often locks in losses instead of giving investments time to recover.",
     takeaway: "A drop feels urgent, but urgency is not always wisdom.",
     icon: "🧯",
   },
   {
-    myth: "“Confidence means your investment idea is probably correct.”",
+    myth: "\u201cConfidence means your investment idea is probably correct.\u201d",
     fact:
       "Confidence and correctness are not the same thing. People can feel extremely certain and still be wrong.",
     takeaway: "Strong process beats strong opinions.",
@@ -154,7 +161,7 @@ const QUIZ: QA[] = [
     id: 6,
     prompt: "Which statement best reflects a strong investor mindset?",
     options: [
-      "If I feel certain, I’m probably right",
+      "If I feel certain, I'm probably right",
       "The crowd usually knows best",
       "A good process matters more than emotional reactions",
       "The best strategy changes every week",
@@ -176,6 +183,10 @@ export default function L1_Definitions({
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const { user } = useAuth();
+  const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
+  const [saving, setSaving] = useState(false);
+
   const score = useMemo(() => {
     let correct = 0;
     for (const q of QUIZ) {
@@ -183,6 +194,30 @@ export default function L1_Definitions({
     }
     return Math.round((correct / QUIZ.length) * 100);
   }, [answers]);
+
+  const toggleSave = async (termId: number, term: string, definition: string) => {
+    if (!user || saving) return;
+    setSaving(true);
+    try {
+      if (savedMap[termId]) {
+        await removeFromDictionary(user.uid, String(termId));
+        setSavedMap((prev) => ({ ...prev, [termId]: false }));
+      } else {
+        await saveToDictionary(user.uid, {
+          id: String(termId),
+          term,
+          definition,
+          category: "ECONOMICS",
+          moduleId: "module10",
+          lessonId: "L1_Definitions",
+          savedAt: Date.now(),
+        });
+        setSavedMap((prev) => ({ ...prev, [termId]: true }));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const BackButton = () => (
     <button
@@ -230,7 +265,7 @@ export default function L1_Definitions({
 
             <div className="bg-white rounded-3xl border border-pink-100 p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-3">
-                In this lesson, you’ll learn to spot:
+                In this lesson, you'll learn to spot:
               </p>
               <div className="space-y-3 text-sm text-slate-700">
                 <div className="flex items-start gap-3">
@@ -287,7 +322,7 @@ export default function L1_Definitions({
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-8 w-full max-w-3xl shadow-sm">
-          <h3 className="font-bold text-slate-900 mb-3">🎯 By the end of Module 10, you’ll be able to:</h3>
+          <h3 className="font-bold text-slate-900 mb-3">🎯 By the end of Module 10, you'll be able to:</h3>
           <ul className="text-sm text-slate-700 space-y-2">
             <li>• Recognize the emotional biases that lead investors into avoidable mistakes</li>
             <li>• Explain why confidence, hype, and panic are unreliable decision tools</li>
@@ -324,13 +359,26 @@ export default function L1_Definitions({
                   <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl">
                     {d.icon}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-black text-slate-900">{d.title}</h3>
                     <p className="text-sm text-slate-600 mt-2 leading-relaxed">{d.text}</p>
                     <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                       <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Why it matters</p>
                       <p className="text-sm text-slate-700 leading-relaxed">{d.why}</p>
                     </div>
+                    <button
+                      onClick={() => toggleSave(d.id, d.title, d.text)}
+                      disabled={!user || saving}
+                      className={`mt-4 w-full py-3 rounded-xl font-bold border-2 transition-all ${
+                        savedMap[d.id]
+                          ? "bg-white border-slate-200 text-slate-700"
+                          : "bg-[#0B5E8E] border-[#0B5E8E] text-white hover:bg-[#094a72]"
+                      }`}
+                    >
+                      {savedMap[d.id]
+                        ? "✓ Saved to Dictionary (Click to Remove)"
+                        : "＋ Add to My Dictionary"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -560,7 +608,7 @@ export default function L1_Definitions({
           </div>
 
           <div className="bg-slate-50 rounded-2xl p-5 mb-6 text-left">
-            <h3 className="font-bold text-slate-900 mb-3">You’re ready to:</h3>
+            <h3 className="font-bold text-slate-900 mb-3">You're ready to:</h3>
             <ul className="space-y-2 text-sm text-slate-700">
               <li>• Identify the biases that cause investors to buy high, sell low, or overreact</li>
               <li>• Explain why emotional certainty is not the same as good reasoning</li>

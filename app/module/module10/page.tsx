@@ -7,6 +7,8 @@ import L1_Definitions from "./L1_Definitions";
 import L2_Interactive from "./L2_Interactive";
 import L3_Applying from "./L3_Applying";
 
+import { saveLessonProgress } from "@/lib/progress";
+
 function ModuleTenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -17,13 +19,26 @@ function ModuleTenContent() {
   const [lesson2Score, setLesson2Score] = useState(0);
   const [lesson3Score, setLesson3Score] = useState(0);
 
-  useEffect(() => {
-    const step = searchParams.get("step");
-    if (step) {
-      const stepNum = parseInt(step, 10);
-      if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
-    }
-  }, [searchParams]);
+  const [hydrated, setHydrated] = useState(false);
+
+useEffect(() => {
+  const step = searchParams.get("step");
+  if (step) {
+    const stepNum = parseInt(step, 10);
+    if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
+  }
+  setHydrated(true);
+}, [searchParams]);
+
+useEffect(() => {
+  if (!hydrated) return;
+  const lastPath = `/module/module10?step=${activeStep}`;  
+  saveLessonProgress("module10", activeStep, {
+    totalSteps: 4,
+    lastPath,
+    isComplete: activeStep === 4,
+  });
+}, [activeStep, hydrated]);
 
   const goToStep = (step: number) => {
     setActiveStep(step);

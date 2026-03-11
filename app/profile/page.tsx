@@ -236,7 +236,7 @@ export default function ProfilePage() {
     }
   };
 
-  const totalModules = 8;
+  const totalModules = 10;
 
   const modulesCompleted = useMemo(() => {
   return lessonProgress.filter((m) => m.isComplete === true).length;
