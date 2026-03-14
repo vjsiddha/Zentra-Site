@@ -11,6 +11,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 import logging
+import requests
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -63,44 +64,74 @@ async def root():
         "version": "1.0.0"
     }
 
-
-@app.get("/quote/{symbol}")
+@app.get("/quote/{symbol:path}")
 async def get_quote(symbol: str):
-    """
-    Get real-time quote for a stock symbol
-    """
     try:
         symbol = symbol.upper()
+        logger.info(f"Quote requested for symbol: '{symbol}'")
+
+        # ── Crypto check FIRST before anything else ──
+        CRYPTO_MAP = {
+            "BTC-USD": "bitcoin",
+            "ETH-USD": "ethereum",
+        }
+        if symbol in CRYPTO_MAP:
+            coin_id = CRYPTO_MAP[symbol]
+            try:
+                r = requests.get(
+                    "https://api.coingecko.com/api/v3/simple/price",
+                    params={"ids": coin_id, "vs_currencies": "usd", "include_24hr_change": "true"},
+                    timeout=5
+                )
+                data = r.json()
+                price      = data[coin_id]["usd"]
+                change_pct = data[coin_id].get("usd_24h_change", 0)
+                return {
+                    "ok": True,
+                    "data": {
+                        "symbol":     symbol,
+                        "last":       price,
+                        "change":     round(price * change_pct / 100, 2),
+                        "change_pct": round(change_pct, 2),
+                        "high":       price,
+                        "low":        price,
+                        "open":       price,
+                        "prev_close": price,
+                        "timestamp":  datetime.now().isoformat()
+                    }
+                }
+            except Exception as e:
+                logger.error(f"CoinGecko error for {symbol}: {e}")
+                raise HTTPException(status_code=500, detail="Crypto price unavailable")
+
+        # ── Finnhub for everything else ──
         cache_key = f"quote_{symbol}"
-        
         def fetch():
             return finnhub_client.quote(symbol)
-        
         quote = get_cached_or_fetch(cache_key, fetch)
-        
+
         if not quote or quote.get('c') == 0:
             raise HTTPException(status_code=404, detail=f"Symbol {symbol} not found")
-        
+
         return {
             "ok": True,
             "data": {
-                "symbol": symbol,
-                "last": quote['c'],
-                "change": quote['d'],
+                "symbol":     symbol,
+                "last":       quote['c'],
+                "change":     quote['d'],
                 "change_pct": quote['dp'],
-                "high": quote['h'],
-                "low": quote['l'],
-                "open": quote['o'],
+                "high":       quote['h'],
+                "low":        quote['l'],
+                "open":       quote['o'],
                 "prev_close": quote['pc'],
-                "high_52w": quote.get('h', 0),  # Approximation
-                "low_52w": quote.get('l', 0),   # Approximation
-                "timestamp": datetime.now().isoformat()
+                "timestamp":  datetime.now().isoformat()
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching quote for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/history/{symbol}")
 async def get_price_history(
