@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { awardXP, XP_REWARDS } from "@/lib/progress";
 import {
   ChevronLeft,
   Sparkles,
@@ -11,7 +12,6 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
   NotebookPen,
   Target,
 } from "lucide-react";
@@ -35,7 +35,12 @@ type DayEvent = {
   id: number;
   title: string;
   situation: string;
-  options: { id: "A" | "B" | "C"; label: string; scoreDelta: number; why: string }[];
+  options: {
+    id: "A" | "B" | "C";
+    label: string;
+    scoreDelta: number;
+    why: string;
+  }[];
   tip: string;
   badge: "Security" | "Fees" | "Mindset" | "Planning";
 };
@@ -57,7 +62,8 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "B",
-        label: "Pause, research it, and only use a tiny amount if you still want to learn",
+        label:
+          "Pause, research it, and only use a tiny amount if you still want to learn",
         scoreDelta: 10,
         why: "This is the healthiest approach. It turns emotion into a learning decision.",
       },
@@ -85,7 +91,8 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "B",
-        label: "Check whether your crypto size still matches your plan and do nothing today",
+        label:
+          "Check whether your crypto size still matches your plan and do nothing today",
         scoreDelta: 10,
         why: "This is disciplined. You are following your rules instead of your emotions.",
       },
@@ -113,7 +120,8 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "B",
-        label: "Block or report the message and only use official support channels you find yourself",
+        label:
+          "Block or report the message and only use official support channels you find yourself",
         scoreDelta: 12,
         why: "Perfect security instinct. You are protecting your wallet correctly.",
       },
@@ -141,7 +149,8 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "B",
-        label: "Wait for a cheaper time or use a cheaper network if it is appropriate",
+        label:
+          "Wait for a cheaper time or use a cheaper network if it is appropriate",
         scoreDelta: 8,
         why: "That is smart. You are managing costs instead of clicking impulsively.",
       },
@@ -197,7 +206,8 @@ const EVENTS: DayEvent[] = [
       },
       {
         id: "B",
-        label: "Tell them never to invest money they need soon and to start small if they want to learn",
+        label:
+          "Tell them never to invest money they need soon and to start small if they want to learn",
         scoreDelta: 12,
         why: "This is realistic, safe, and responsible.",
       },
@@ -219,7 +229,8 @@ const EVENTS: DayEvent[] = [
     options: [
       {
         id: "A",
-        label: "Stick to your plan and do not change your sizing because of one good week",
+        label:
+          "Stick to your plan and do not change your sizing because of one good week",
         scoreDelta: 10,
         why: "This is disciplined. Good plans should not change based on mood.",
       },
@@ -241,24 +252,6 @@ const EVENTS: DayEvent[] = [
 
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
-}
-
-function horizonText(h: Horizon) {
-  if (h === "1m") return "1 month";
-  if (h === "1y") return "1 year";
-  return "5+ years";
-}
-
-function goalText(g: Goal) {
-  if (g === "learn") return "Learn safely";
-  if (g === "save") return "Protect money";
-  return "Grow long-term";
-}
-
-function custodyText(c: Custody) {
-  if (c === "exchange") return "Exchange wallet";
-  if (c === "self") return "Self-custody";
-  return "Hybrid";
 }
 
 function badgeStyle(b: DayEvent["badge"]) {
@@ -314,7 +307,9 @@ function SectionCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-white border border-slate-100 shadow-lg rounded-[28px] p-6 md:p-8 ${className}`}>
+    <div
+      className={`bg-white border border-slate-100 shadow-md rounded-3xl p-4 md:p-5 ${className}`}
+    >
       {children}
     </div>
   );
@@ -337,46 +332,26 @@ function OptionPill({
     <button
       onClick={onClick}
       className={[
-        "w-full rounded-2xl border-2 p-4 text-left transition-all",
+        "w-full rounded-2xl border-2 p-3 text-left transition-all",
         active
-          ? "border-blue-500 bg-blue-50"
+          ? "border-sky-400 bg-sky-50"
           : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300",
       ].join(" ")}
     >
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
+      <div className="flex items-start gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
           {icon}
         </div>
         <div>
-          <div className="font-black text-slate-900">{title}</div>
-          <div className="text-sm text-slate-500 mt-1 leading-relaxed">{subtitle}</div>
+          <div className="font-bold text-sm md:text-base text-slate-900">
+            {title}
+          </div>
+          <div className="text-xs md:text-sm text-slate-600 mt-0.5 leading-snug">
+            {subtitle}
+          </div>
         </div>
       </div>
     </button>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-widest text-slate-500 font-black">{label}</div>
-          <div className="font-black text-slate-900 mt-2 text-lg">{value}</div>
-        </div>
-        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-slate-200 text-slate-700">
-          {icon}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -386,30 +361,71 @@ function ChoiceCard({
   selected,
   disabled,
   onClick,
+  scoreDelta,
 }: {
   id: "A" | "B" | "C";
   label: string;
   selected: boolean;
   disabled: boolean;
   onClick: () => void;
+  scoreDelta?: number;
 }) {
+  let borderColor = "border-slate-200";
+  let bgColor = "bg-white";
+
+  if (selected && !disabled && scoreDelta !== undefined) {
+    if (scoreDelta > 0) {
+      borderColor = "border-emerald-400";
+      bgColor = "bg-emerald-50";
+    } else if (scoreDelta < 0) {
+      borderColor = "border-rose-400";
+      bgColor = "bg-rose-50";
+    } else {
+      borderColor = "border-amber-400";
+      bgColor = "bg-amber-50";
+    }
+  } else if (selected && !disabled) {
+    borderColor = "border-sky-500";
+    bgColor = "bg-sky-50";
+  }
+
+  if (!selected && !disabled) {
+    borderColor = "border-slate-200 hover:border-slate-300";
+    bgColor = "bg-white hover:bg-slate-50";
+  }
+
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={[
-        "w-full rounded-2xl border-2 p-4 text-left transition-all",
-        selected && !disabled
-          ? "border-blue-500 bg-blue-50"
-          : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300",
-        disabled ? "cursor-default" : "",
-      ].join(" ")}
+      className={`w-full rounded-2xl border-2 p-3 text-left transition-all ${borderColor} ${bgColor} ${
+        disabled ? "cursor-default" : ""
+      }`}
     >
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold flex-shrink-0 text-sm">
           {id}
         </div>
-        <div className="font-semibold text-slate-900 leading-relaxed">{label}</div>
+        <div className="flex-1">
+          <div className="font-semibold text-sm md:text-base text-slate-900 leading-snug">
+            {label}
+          </div>
+          {selected && !disabled && scoreDelta !== undefined && (
+            <div className="mt-1.5 text-[11px] font-bold">
+              {scoreDelta > 0 ? (
+                <span className="text-emerald-600">
+                  ✓ Good choice (+{scoreDelta} points)
+                </span>
+              ) : scoreDelta < 0 ? (
+                <span className="text-rose-600">
+                  ✕ Risky choice ({scoreDelta} points)
+                </span>
+              ) : (
+                <span className="text-amber-600">~ Neutral choice</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -438,7 +454,13 @@ export default function L3_Applying({
   const [locked, setLocked] = useState(false);
   const [weekScore, setWeekScore] = useState(50);
   const [choiceLog, setChoiceLog] = useState<
-    { day: number; badge: DayEvent["badge"]; title: string; pick: "A" | "B" | "C"; delta: number }[]
+    {
+      day: number;
+      badge: DayEvent["badge"];
+      title: string;
+      pick: "A" | "B" | "C";
+      delta: number;
+    }[]
   >([]);
   const [notes, setNotes] = useState("");
 
@@ -471,7 +493,10 @@ export default function L3_Applying({
       else s += 6;
     }
 
-    if (plan.horizon === "5y" && (plan.custody === "self" || plan.custody === "hybrid")) {
+    if (
+      plan.horizon === "5y" &&
+      (plan.custody === "self" || plan.custody === "hybrid")
+    ) {
       s += 8;
     }
 
@@ -487,7 +512,8 @@ export default function L3_Applying({
   const progress = useMemo(() => {
     if (view === "intro") return 0;
     if (view === "plan") return 25;
-    if (view === "week") return 25 + ((dayIdx + (locked ? 1 : 0)) / EVENTS.length) * 55;
+    if (view === "week")
+      return 25 + ((dayIdx + (locked ? 1 : 0)) / EVENTS.length) * 55;
     if (view === "reflection") return 90;
     return 100;
   }, [view, dayIdx, locked]);
@@ -516,10 +542,10 @@ export default function L3_Applying({
         if (view === "reflection") return setView("week");
         if (view === "complete") return setView("reflection");
       }}
-      className="fixed top-4 left-4 sm:left-6 z-50 flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 font-bold transition-all hover:bg-white rounded-xl shadow-sm border border-slate-200"
+      className="fixed top-3 left-4 z-50 flex items-center gap-2 px-3 py-2 text-[#4F7D96] hover:text-[#0B5E8E] font-bold transition-all hover:bg-slate-100 rounded-lg"
       aria-label="Back"
     >
-      <ChevronLeft className="w-5 h-5" />
+      <ChevronLeft className="w-4 h-4" />
       Back
     </button>
   );
@@ -527,7 +553,7 @@ export default function L3_Applying({
   const Stepper = () => {
     const steps = ["Intro", "Build Plan", "7-Day Run", "Reflect", "Finish"];
     return (
-      <div className="w-full max-w-5xl mx-auto px-4 pt-6">
+      <div className="w-full max-w-5xl mx-auto px-4 pt-3">
         <div className="flex items-center justify-between gap-2">
           {steps.map((s, i) => {
             const active = i === stepIndex;
@@ -537,11 +563,11 @@ export default function L3_Applying({
               <div key={s} className="flex-1">
                 <div
                   className={[
-                    "rounded-2xl border px-3 py-2 text-center text-xs font-bold tracking-wide",
+                    "rounded-xl border px-2 py-1.5 text-center text-[11px] font-bold tracking-wide",
                     done
                       ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                       : active
-                      ? "bg-blue-50 border-blue-200 text-blue-700"
+                      ? "bg-sky-50 border-sky-200 text-sky-700"
                       : "bg-white border-slate-200 text-slate-500",
                   ].join(" ")}
                 >
@@ -552,9 +578,9 @@ export default function L3_Applying({
           })}
         </div>
 
-        <div className="mt-4 h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+        <div className="mt-3 h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-sky-500 to-violet-500 transition-all duration-500"
             style={{ width: `${clamp(progress, 0, 100)}%` }}
           />
         </div>
@@ -563,402 +589,335 @@ export default function L3_Applying({
   };
 
   if (view === "intro") {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50">
-      <BackButton />
-      <Stepper />
+    return (
+      <div className="min-h-screen bg-[#F7FAFC] [@media(max-height:850px)]:scale-[0.94] [@media(max-height:850px)]:origin-top">
+        <BackButton />
+        <Stepper />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-14">
-        <div className="grid xl:grid-cols-[1.2fr_0.8fr] gap-8 items-start">
-          {/* Left main hero card */}
-          <SectionCard className="p-8 md:p-10">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white shadow-lg mb-6">
-              <Sparkles className="w-8 h-8" />
+        <div className="max-w-[1000px] mx-auto px-4 sm:px-5 pt-4 pb-4">
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center px-4 py-2 bg-violet-100 text-violet-700 rounded-full mb-4">
+              <span className="text-xs font-bold uppercase tracking-widest">
+                Lesson 3: Apply
+              </span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
+              Build Your Crypto Plan & Survive the Week
+            </h1>
+            <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              First, you'll build a simple crypto plan. Then you'll go through a
+              week of realistic choices involving hype, fear, scams, fees, and
+              risk.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4 mb-5">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center mb-3">
+                <Target className="w-6 h-6 text-sky-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Mindset
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Avoid panic and FOMO
+              </p>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.05] max-w-3xl">
-              Build your first crypto plan, then survive a 7-day crypto week
-            </h1>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-3">
+                <ShieldCheck className="w-6 h-6 text-emerald-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Security
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Protect your wallet
+              </p>
+            </div>
 
-            <p className="text-slate-600 text-lg leading-8 mt-5 max-w-2xl">
-              First, you will build a simple crypto plan. Then you will go through a week of realistic choices involving hype, fear, scams, fees, and risk.
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center mb-3">
+                <NotebookPen className="w-6 h-6 text-violet-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Planning
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Stick to your rules
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-sky-600 to-violet-600 rounded-3xl p-5 md:p-6 text-white text-center shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold mb-2">
+              Ready to test your instincts?
+            </h2>
+            <p className="text-sky-100 text-sm md:text-base max-w-2xl mx-auto mb-4 leading-relaxed">
+              Build your plan (25% of score) and survive 7 days of crypto
+              decisions (75% of score).
             </p>
+            <button
+              onClick={() => setView("plan")}
+              className="px-8 py-3 bg-white text-slate-900 rounded-full font-bold hover:scale-105 transition-transform shadow-md text-sm md:text-base"
+            >
+              Start Building My Plan
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            <div className="grid sm:grid-cols-3 gap-4 mt-8">
-              <div className="rounded-3xl bg-slate-50 border border-slate-200 p-5">
-                <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 mb-4">
-                  <Target className="w-5 h-5" />
+  if (view === "plan") {
+    return (
+      <div className="min-h-screen bg-[#F7FAFC] [@media(max-height:850px)]:scale-[0.94] [@media(max-height:850px)]:origin-top">
+        <BackButton />
+        <Stepper />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-5 pt-4 pb-4">
+          <div className="text-center mb-5">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+              Build Your Crypto Plan
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 mt-1">
+              Your goal and time horizon should shape your risk
+            </p>
+          </div>
+
+          <SectionCard>
+            <div className="space-y-5">
+              <div>
+                <div className="font-bold text-slate-900 mb-2 text-base md:text-lg">
+                  1. What is your main goal?
                 </div>
-                <div className="text-xs uppercase tracking-widest text-slate-500 font-black mb-2">
-                  Mindset
-                </div>
-                <div className="font-black text-slate-900 text-2xl leading-tight">
-                  Avoid panic and FOMO
+                <div className="grid md:grid-cols-3 gap-2.5">
+                  <OptionPill
+                    active={plan.goal === "learn"}
+                    onClick={() => setPlan((p) => ({ ...p, goal: "learn" }))}
+                    title="Learn safely"
+                    subtitle="Start small and focus on understanding"
+                    icon={<Sparkles className="w-4 h-4" />}
+                  />
+                  <OptionPill
+                    active={plan.goal === "save"}
+                    onClick={() => setPlan((p) => ({ ...p, goal: "save" }))}
+                    title="Protect money"
+                    subtitle="Keep risk low and avoid big swings"
+                    icon={<ShieldCheck className="w-4 h-4" />}
+                  />
+                  <OptionPill
+                    active={plan.goal === "grow"}
+                    onClick={() => setPlan((p) => ({ ...p, goal: "grow" }))}
+                    title="Grow long-term"
+                    subtitle="Think patiently, not emotionally"
+                    icon={<TrendingUp className="w-4 h-4" />}
+                  />
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-slate-50 border border-slate-200 p-5">
-                <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 mb-4">
-                  <ShieldCheck className="w-5 h-5" />
+              <div>
+                <div className="font-bold text-slate-900 mb-2 text-base md:text-lg">
+                  2. What is your time horizon?
                 </div>
-                <div className="text-xs uppercase tracking-widest text-slate-500 font-black mb-2">
-                  Security
-                </div>
-                <div className="font-black text-slate-900 text-2xl leading-tight">
-                  Protect your wallet
+                <div className="grid md:grid-cols-3 gap-2.5">
+                  <OptionPill
+                    active={plan.horizon === "1m"}
+                    onClick={() => setPlan((p) => ({ ...p, horizon: "1m" }))}
+                    title="1 month"
+                    subtitle="Very short term, so risk should stay very low"
+                    icon={<Clock3 className="w-4 h-4" />}
+                  />
+                  <OptionPill
+                    active={plan.horizon === "1y"}
+                    onClick={() => setPlan((p) => ({ ...p, horizon: "1y" }))}
+                    title="1 year"
+                    subtitle="Medium term, still cautious"
+                    icon={<Clock3 className="w-4 h-4" />}
+                  />
+                  <OptionPill
+                    active={plan.horizon === "5y"}
+                    onClick={() => setPlan((p) => ({ ...p, horizon: "5y" }))}
+                    title="5+ years"
+                    subtitle="Longer term, but still needs discipline"
+                    icon={<Clock3 className="w-4 h-4" />}
+                  />
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-slate-50 border border-slate-200 p-5">
-                <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 mb-4">
-                  <NotebookPen className="w-5 h-5" />
+              <div>
+                <div className="font-bold text-slate-900 mb-2 text-base md:text-lg">
+                  3. Where will your crypto live?
                 </div>
-                <div className="text-xs uppercase tracking-widest text-slate-500 font-black mb-2">
-                  Planning
+                <div className="grid md:grid-cols-3 gap-2.5">
+                  <OptionPill
+                    active={plan.custody === "exchange"}
+                    onClick={() =>
+                      setPlan((p) => ({ ...p, custody: "exchange" }))
+                    }
+                    title="Exchange wallet"
+                    subtitle="Convenient, but has platform risk"
+                    icon={<Wallet className="w-4 h-4" />}
+                  />
+                  <OptionPill
+                    active={plan.custody === "self"}
+                    onClick={() => setPlan((p) => ({ ...p, custody: "self" }))}
+                    title="Self-custody"
+                    subtitle="More control, more responsibility"
+                    icon={<ShieldCheck className="w-4 h-4" />}
+                  />
+                  <OptionPill
+                    active={plan.custody === "hybrid"}
+                    onClick={() =>
+                      setPlan((p) => ({ ...p, custody: "hybrid" }))
+                    }
+                    title="Hybrid"
+                    subtitle="A mix of convenience and control"
+                    icon={<Target className="w-4 h-4" />}
+                  />
                 </div>
-                <div className="font-black text-slate-900 text-2xl leading-tight">
-                  Stick to your rules
+              </div>
+
+              <div>
+                <div className="font-bold text-slate-900 mb-2 text-base md:text-lg">
+                  4. Set your sizing
                 </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
+                          Emergency Cash
+                        </div>
+                        <div className="text-xl md:text-2xl font-bold text-slate-900 mt-1">
+                          {plan.emergencyCashPct}%
+                        </div>
+                      </div>
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-slate-200 text-sm">
+                        🧯
+                      </div>
+                    </div>
+
+                    <input
+                      className="mt-3 w-full"
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={plan.emergencyCashPct}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setPlan((p) => ({
+                          ...p,
+                          emergencyCashPct: v,
+                          cryptoPct: 100 - v,
+                        }));
+                      }}
+                    />
+
+                    <div className="text-xs md:text-sm text-slate-500 mt-1.5">
+                      Your safety money outside crypto.
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
+                          Crypto Portion
+                        </div>
+                        <div className="text-xl md:text-2xl font-bold text-slate-900 mt-1">
+                          {plan.cryptoPct}%
+                        </div>
+                      </div>
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-slate-200 text-sm">
+                        🪙
+                      </div>
+                    </div>
+
+                    <input
+                      className="mt-3 w-full"
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={plan.cryptoPct}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setPlan((p) => ({
+                          ...p,
+                          cryptoPct: v,
+                          emergencyCashPct: 100 - v,
+                        }));
+                      }}
+                    />
+
+                    <div className="text-xs md:text-sm text-slate-500 mt-1.5">
+                      Beginner rule: small size protects learning.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="font-bold text-slate-900 text-base md:text-lg">
+                  5. Pick one rule for volatile days
+                </div>
+                <p className="text-xs md:text-sm text-slate-600 mt-1">
+                  This is your personal rule for staying calm when markets get
+                  emotional.
+                </p>
+
+                <select
+                  value={plan.rule}
+                  onChange={(e) =>
+                    setPlan((p) => ({ ...p, rule: e.target.value }))
+                  }
+                  className="mt-3 w-full rounded-2xl border-2 border-slate-200 bg-white p-3 text-sm text-slate-800 font-medium outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400"
+                >
+                  <option value="">Select a rule</option>
+                  <option value="If crypto drops 20%, I wait 24 hours before deciding anything">
+                    Wait 24 hours during big drops
+                  </option>
+                  <option value="I never invest money I need within 6 months">
+                    Never invest money I need soon
+                  </option>
+                  <option value="If I feel FOMO, I wait 48 hours and research first">
+                    Slow down during FOMO
+                  </option>
+                  <option value="I check prices at most once per day">
+                    Limit price checking
+                  </option>
+                  <option value="My crypto position never exceeds 10% of my savings">
+                    Keep crypto under 10%
+                  </option>
+                </select>
               </div>
             </div>
 
             <button
-              onClick={() => setView("plan")}
-              className="mt-8 w-full sm:w-auto min-w-[280px] px-10 py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black text-xl hover:opacity-95 transition-all shadow-lg"
+              disabled={!ready}
+              onClick={async () => {
+                await awardXP(20);
+                setView("week");
+                setDayIdx(0);
+                setPicked(null);
+                setLocked(false);
+                setWeekScore(50);
+                setChoiceLog([]);
+              }}
+              className="mt-5 w-full py-3.5 bg-gradient-to-r from-sky-600 to-violet-600 text-white rounded-2xl font-bold text-base hover:opacity-95 transition-all shadow-lg disabled:bg-slate-200 disabled:text-slate-500"
             >
-              Start Building My Plan
+              Start the 7-Day Crypto Run
             </button>
+
+            {!ready && (
+              <div className="mt-2 text-xs md:text-sm text-slate-500 text-center">
+                Choose your goal, horizon, custody, and rule before starting.
+              </div>
+            )}
           </SectionCard>
-
-          {/* Right info column */}
-          <div className="space-y-5">
-            <SectionCard className="p-6 md:p-7">
-              <div className="text-xs uppercase tracking-widest text-slate-500 font-black mb-4">
-                How this lesson works
-              </div>
-
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-slate-50 border border-slate-200 px-5 py-4 flex items-center justify-between">
-                  <span className="font-bold text-slate-900 text-lg">Plan quality</span>
-                  <span className="font-black text-slate-900 text-lg">25%</span>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 border border-slate-200 px-5 py-4 flex items-center justify-between">
-                  <span className="font-bold text-slate-900 text-lg">7-day choices</span>
-                  <span className="font-black text-slate-900 text-lg">75%</span>
-                </div>
-              </div>
-
-              <p className="text-slate-500 leading-8 text-base mt-5">
-                This is a learning activity, not financial advice. You are practicing habits that help beginners stay safer and think more clearly.
-              </p>
-            </SectionCard>
-
-            <SectionCard className="p-6 md:p-7">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700 flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-
-                <div>
-                  <div className="font-black text-slate-900 text-2xl leading-tight">
-                    Quick tip
-                  </div>
-                  <p className="text-slate-600 text-lg leading-8 mt-2">
-                    Good beginner plans keep crypto small and emergency cash protected.
-                  </p>
-                </div>
-              </div>
-            </SectionCard>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-  if (view === "plan") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50">
-        <BackButton />
-        <Stepper />
-
-        <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
-          <div className="grid xl:grid-cols-[1fr_0.42fr] gap-6">
-            <SectionCard>
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Step 1
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2">
-                    Build Your Crypto Plan
-                  </h2>
-                  <p className="text-slate-600 mt-2 leading-relaxed">
-                    Your goal and time horizon should shape your risk. Shorter timelines usually mean smaller crypto exposure.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 w-fit">
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Plan Score
-                  </div>
-                  <div className={`text-3xl font-black mt-1 ${scoreColor(planScore)}`}>
-                    {planScore}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-7 space-y-7">
-                <div>
-                  <div className="font-black text-slate-900 mb-3 text-lg">1. What is your main goal?</div>
-                  <div className="grid md:grid-cols-3 gap-3">
-                    <OptionPill
-                      active={plan.goal === "learn"}
-                      onClick={() => setPlan((p) => ({ ...p, goal: "learn" }))}
-                      title="Learn safely"
-                      subtitle="Start small and focus on understanding"
-                      icon={<Sparkles className="w-5 h-5" />}
-                    />
-                    <OptionPill
-                      active={plan.goal === "save"}
-                      onClick={() => setPlan((p) => ({ ...p, goal: "save" }))}
-                      title="Protect money"
-                      subtitle="Keep risk low and avoid big swings"
-                      icon={<ShieldCheck className="w-5 h-5" />}
-                    />
-                    <OptionPill
-                      active={plan.goal === "grow"}
-                      onClick={() => setPlan((p) => ({ ...p, goal: "grow" }))}
-                      title="Grow long-term"
-                      subtitle="Think patiently, not emotionally"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-black text-slate-900 mb-3 text-lg">2. What is your time horizon?</div>
-                  <div className="grid md:grid-cols-3 gap-3">
-                    <OptionPill
-                      active={plan.horizon === "1m"}
-                      onClick={() => setPlan((p) => ({ ...p, horizon: "1m" }))}
-                      title="1 month"
-                      subtitle="Very short term, so risk should stay very low"
-                      icon={<Clock3 className="w-5 h-5" />}
-                    />
-                    <OptionPill
-                      active={plan.horizon === "1y"}
-                      onClick={() => setPlan((p) => ({ ...p, horizon: "1y" }))}
-                      title="1 year"
-                      subtitle="Medium term, still cautious"
-                      icon={<Clock3 className="w-5 h-5" />}
-                    />
-                    <OptionPill
-                      active={plan.horizon === "5y"}
-                      onClick={() => setPlan((p) => ({ ...p, horizon: "5y" }))}
-                      title="5+ years"
-                      subtitle="Longer term, but still needs discipline"
-                      icon={<Clock3 className="w-5 h-5" />}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-black text-slate-900 mb-3 text-lg">3. Where will your crypto live?</div>
-                  <div className="grid md:grid-cols-3 gap-3">
-                    <OptionPill
-                      active={plan.custody === "exchange"}
-                      onClick={() => setPlan((p) => ({ ...p, custody: "exchange" }))}
-                      title="Exchange wallet"
-                      subtitle="Convenient, but has platform risk"
-                      icon={<Wallet className="w-5 h-5" />}
-                    />
-                    <OptionPill
-                      active={plan.custody === "self"}
-                      onClick={() => setPlan((p) => ({ ...p, custody: "self" }))}
-                      title="Self-custody"
-                      subtitle="More control, more responsibility"
-                      icon={<ShieldCheck className="w-5 h-5" />}
-                    />
-                    <OptionPill
-                      active={plan.custody === "hybrid"}
-                      onClick={() => setPlan((p) => ({ ...p, custody: "hybrid" }))}
-                      title="Hybrid"
-                      subtitle="A mix of convenience and control"
-                      icon={<Target className="w-5 h-5" />}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-black text-slate-900 mb-3 text-lg">4. Set your sizing</div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                            Emergency Cash
-                          </div>
-                          <div className="text-2xl font-black text-slate-900 mt-1">
-                            {plan.emergencyCashPct}%
-                          </div>
-                        </div>
-                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-slate-200">
-                          🧯
-                        </div>
-                      </div>
-
-                      <input
-                        className="mt-4 w-full"
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={plan.emergencyCashPct}
-                        onChange={(e) => {
-                          const v = Number(e.target.value);
-                          setPlan((p) => ({ ...p, emergencyCashPct: v, cryptoPct: 100 - v }));
-                        }}
-                      />
-
-                      <div className="text-sm text-slate-500 mt-2">
-                        Your safety money outside crypto.
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                            Crypto Portion
-                          </div>
-                          <div className="text-2xl font-black text-slate-900 mt-1">
-                            {plan.cryptoPct}%
-                          </div>
-                        </div>
-                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-slate-200">
-                          🪙
-                        </div>
-                      </div>
-
-                      <input
-                        className="mt-4 w-full"
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={plan.cryptoPct}
-                        onChange={(e) => {
-                          const v = Number(e.target.value);
-                          setPlan((p) => ({ ...p, cryptoPct: v, emergencyCashPct: 100 - v }));
-                        }}
-                      />
-
-                      <div className="text-sm text-slate-500 mt-2">
-                        Beginner rule: small size protects learning.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="font-black text-slate-900 text-lg">5. Pick one rule for volatile days</div>
-                  <p className="text-sm text-slate-600 mt-1">
-                    This is your personal rule for staying calm when markets get emotional.
-                  </p>
-
-                  <select
-                    value={plan.rule}
-                    onChange={(e) => setPlan((p) => ({ ...p, rule: e.target.value }))}
-                    className="mt-4 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-slate-800 font-medium outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-                  >
-                    <option value="">Select a rule</option>
-                    <option value="If crypto drops 20%, I wait 24 hours before deciding anything">
-                      Wait 24 hours during big drops
-                    </option>
-                    <option value="I never invest money I need within 6 months">
-                      Never invest money I need soon
-                    </option>
-                    <option value="If I feel FOMO, I wait 48 hours and research first">
-                      Slow down during FOMO
-                    </option>
-                    <option value="I check prices at most once per day">
-                      Limit price checking
-                    </option>
-                    <option value="My crypto position never exceeds 10% of my savings">
-                      Keep crypto under 10%
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                disabled={!ready}
-                onClick={() => {
-                  setView("week");
-                  setDayIdx(0);
-                  setPicked(null);
-                  setLocked(false);
-                  setWeekScore(50);
-                  setChoiceLog([]);
-                }}
-                className="mt-7 w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black text-lg hover:opacity-95 transition-all shadow-lg disabled:bg-slate-200 disabled:text-slate-500"
-              >
-                Start the 7-Day Crypto Run
-              </button>
-
-              {!ready && (
-                <div className="mt-3 text-sm text-slate-500">
-                  Choose your goal, horizon, custody, and rule before starting.
-                </div>
-              )}
-            </SectionCard>
-
-            <div className="space-y-6">
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">Your Plan Snapshot</div>
-                <div className="grid gap-3 mt-4">
-                  <StatCard
-                    label="Goal"
-                    value={plan.goal ? goalText(plan.goal) : "—"}
-                    icon={<Target className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Horizon"
-                    value={plan.horizon ? horizonText(plan.horizon) : "—"}
-                    icon={<Clock3 className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Custody"
-                    value={plan.custody ? custodyText(plan.custody) : "—"}
-                    icon={<Wallet className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Sizing"
-                    value={`${plan.cryptoPct}% crypto / ${plan.emergencyCashPct}% cash`}
-                    icon={<TrendingUp className="w-5 h-5" />}
-                  />
-                </div>
-              </SectionCard>
-
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">Safety reminders</div>
-                <ul className="mt-4 space-y-3 text-sm text-slate-700">
-                  <li className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
-                    Never share seed phrases or private keys.
-                  </li>
-                  <li className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
-                    Do not click random support links or DMs.
-                  </li>
-                  <li className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
-                    Keep crypto small if your horizon is short.
-                  </li>
-                  <li className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
-                    Fees matter, especially for small transfers.
-                  </li>
-                </ul>
-              </SectionCard>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -968,390 +927,293 @@ export default function L3_Applying({
     const pickedObj = picked ? day.options.find((o) => o.id === picked) : null;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50">
+      <div className="min-h-screen bg-[#F7FAFC] [@media(max-height:850px)]:scale-[0.94] [@media(max-height:850px)]:origin-top">
         <BackButton />
         <Stepper />
 
-        <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
-          <div className="grid xl:grid-cols-[1fr_0.4fr] gap-6">
-            <SectionCard>
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <div
-                    className={[
-                      "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-black tracking-widest uppercase mb-3",
-                      badgeStyle(day.badge),
-                    ].join(" ")}
-                  >
-                    {day.badge}
-                  </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-5 pt-4 pb-4">
+          <div className="text-center mb-4">
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs md:text-sm font-bold mb-2 ${badgeStyle(
+                day.badge
+              )}`}
+            >
+              {day.badge}
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+              {day.title}
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Day {dayIdx + 1} of {EVENTS.length}
+            </p>
+          </div>
 
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    7-Day Run
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2">
-                    {day.title}
-                  </h2>
-                  <div className="text-sm text-slate-500 mt-1">
-                    Day {dayIdx + 1} of {EVENTS.length}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 w-fit">
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Week Score
-                  </div>
-                  <div className={`text-3xl font-black mt-1 ${scoreColor(weekScore)}`}>
-                    {weekScore}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-5">
-                <div className="font-black text-slate-900 mb-2">Situation</div>
-                <p className="text-slate-700 leading-relaxed">{day.situation}</p>
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-blue-50 border border-blue-200 p-5">
-                <div className="font-black text-blue-900 mb-2">Tip</div>
-                <p className="text-blue-900/90 leading-relaxed">{day.tip}</p>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                {day.options.map((o) => (
-                  <ChoiceCard
-                    key={o.id}
-                    id={o.id}
-                    label={o.label}
-                    selected={picked === o.id}
-                    disabled={locked}
-                    onClick={() => setPicked(o.id)}
-                  />
-                ))}
-              </div>
-
-              {locked && pickedObj && (
-                <div
-                  className={[
-                    "mt-6 p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2",
-                    pickedObj.scoreDelta >= 8
-                      ? "bg-emerald-50 border-emerald-200"
-                      : pickedObj.scoreDelta > 0
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-amber-50 border-amber-200",
-                  ].join(" ")}
-                >
-                  <div className="font-black text-slate-900 mb-2 flex items-center gap-2">
-                    {pickedObj.scoreDelta > 0 ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5 text-amber-600" />
-                    )}
-                    {pickedObj.scoreDelta > 0 ? "Good call" : "Better habit"}
-                  </div>
-                  <p className="text-slate-700 leading-relaxed">{pickedObj.why}</p>
-                </div>
-              )}
-
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                {!locked ? (
-                  <button
-                    onClick={() => {
-                      if (!picked) return;
-                      const opt = day.options.find((o) => o.id === picked)!;
-                      setLocked(true);
-                      setWeekScore((s) => clamp(s + opt.scoreDelta, 0, 100));
-                      setChoiceLog((log) => [
-                        ...log,
-                        { day: day.id, badge: day.badge, title: day.title, pick: picked, delta: opt.scoreDelta },
-                      ]);
-                    }}
-                    disabled={!picked}
-                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition-all shadow-lg disabled:bg-slate-200 disabled:text-slate-500"
-                  >
-                    Lock Choice
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setLocked(false);
-                      setPicked(null);
-                      if (dayIdx < EVENTS.length - 1) {
-                        setDayIdx((d) => d + 1);
-                      } else {
-                        setView("reflection");
-                      }
-                    }}
-                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition-all shadow-lg flex items-center justify-center gap-2"
-                  >
-                    {dayIdx < EVENTS.length - 1 ? "Next Day" : "Go to Reflection"}
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    setView("week");
-                    setDayIdx(0);
-                    setPicked(null);
-                    setLocked(false);
-                    setWeekScore(50);
-                    setChoiceLog([]);
-                  }}
-                  className="sm:w-[220px] py-4 bg-slate-100 border border-slate-200 text-slate-700 rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Restart Week
-                </button>
-              </div>
-            </SectionCard>
-
-            <div className="space-y-6">
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">Your Plan</div>
-                <div className="grid gap-3 mt-4">
-                  <StatCard
-                    label="Horizon"
-                    value={plan.horizon ? horizonText(plan.horizon) : "—"}
-                    icon={<Clock3 className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Goal"
-                    value={plan.goal ? goalText(plan.goal) : "—"}
-                    icon={<Target className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Custody"
-                    value={plan.custody ? custodyText(plan.custody) : "—"}
-                    icon={<Wallet className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Crypto Size"
-                    value={`${plan.cryptoPct}%`}
-                    icon={<TrendingUp className="w-5 h-5" />}
-                  />
-                </div>
-
-                <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Your Rule
-                  </div>
-                  <div className="text-sm font-semibold text-slate-800 mt-2 leading-relaxed">
-                    {plan.rule || "—"}
-                  </div>
-                </div>
-              </SectionCard>
-
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">Recent choices</div>
-                <div className="mt-4 space-y-2">
-                  {choiceLog.length === 0 ? (
-                    <div className="text-sm text-slate-500">No locked choices yet.</div>
-                  ) : (
-                    choiceLog.slice(-4).reverse().map((c) => (
-                      <div
-                        key={`${c.day}-${c.pick}-${c.delta}`}
-                        className="rounded-2xl bg-slate-50 border border-slate-200 p-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="font-semibold text-slate-900 text-sm">
-                            Day {c.day}: {c.pick}
-                          </div>
-                          <div
-                            className={`text-sm font-black ${
-                              c.delta >= 0 ? "text-emerald-700" : "text-rose-700"
-                            }`}
-                          >
-                            {c.delta >= 0 ? `+${c.delta}` : c.delta}
-                          </div>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">{c.badge}</div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </SectionCard>
+          <div className="mb-4">
+            <div className="flex justify-between text-xs md:text-sm mb-1.5">
+              <span className="font-bold text-slate-700">Week Progress</span>
+              <span className="text-slate-500">
+                {dayIdx + 1}/{EVENTS.length}
+              </span>
+            </div>
+            <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-sky-500 to-violet-500 transition-all duration-500"
+                style={{
+                  width: `${((dayIdx + 1) / EVENTS.length) * 100}%`,
+                }}
+              />
             </div>
           </div>
+
+          <SectionCard>
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-4">
+              <div className="font-bold text-slate-900 mb-1.5 text-sm md:text-base">
+                Situation
+              </div>
+              <p className="text-sm md:text-base text-slate-700 leading-relaxed">
+                {day.situation}
+              </p>
+            </div>
+
+            <div className="bg-sky-50 rounded-2xl p-4 border border-sky-200 mb-4">
+              <div className="font-bold text-sky-900 mb-1.5 text-sm md:text-base">
+                Tip
+              </div>
+              <p className="text-sm md:text-base text-sky-900/90 leading-relaxed">
+                {day.tip}
+              </p>
+            </div>
+
+            <div className="space-y-2.5 mb-4">
+              {day.options.map((o) => (
+                <ChoiceCard
+                  key={o.id}
+                  id={o.id}
+                  label={o.label}
+                  selected={picked === o.id}
+                  disabled={locked}
+                  onClick={() => !locked && setPicked(o.id)}
+                  scoreDelta={o.scoreDelta}
+                />
+              ))}
+            </div>
+
+            {locked && pickedObj && (
+              <div
+                className={`p-4 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2 mb-4 ${
+                  pickedObj.scoreDelta >= 8
+                    ? "bg-emerald-50 border-emerald-200"
+                    : pickedObj.scoreDelta > 0
+                    ? "bg-sky-50 border-sky-200"
+                    : "bg-amber-50 border-amber-200"
+                }`}
+              >
+                <div className="font-bold text-slate-900 mb-1.5 flex items-center gap-2 text-sm md:text-base">
+                  {pickedObj.scoreDelta > 0 ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  )}
+                  {pickedObj.scoreDelta > 0 ? "Good call" : "Better habit"}
+                </div>
+                <p className="text-sm md:text-base text-slate-700 leading-relaxed">
+                  {pickedObj.why}
+                </p>
+              </div>
+            )}
+
+            {!locked ? (
+              <button
+                onClick={() => {
+                  if (!picked) return;
+                  const opt = day.options.find((o) => o.id === picked)!;
+                  setLocked(true);
+                  setWeekScore((s) => clamp(s + opt.scoreDelta, 0, 100));
+                  setChoiceLog((log) => [
+                    ...log,
+                    {
+                      day: day.id,
+                      badge: day.badge,
+                      title: day.title,
+                      pick: picked,
+                      delta: opt.scoreDelta,
+                    },
+                  ]);
+                }}
+                disabled={!picked}
+                className="w-full py-3.5 bg-gradient-to-r from-sky-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg disabled:bg-slate-200 disabled:text-slate-500"
+              >
+                Lock Choice
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  await awardXP(20);
+                  setLocked(false);
+                  setPicked(null);
+                  if (dayIdx < EVENTS.length - 1) {
+                    setDayIdx((d) => d + 1);
+                  } else {
+                    setView("reflection");
+                  }
+                }}
+                className="w-full py-3.5 bg-gradient-to-r from-sky-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                {dayIdx < EVENTS.length - 1 ? "Next Day" : "Go to Reflection"}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+          </SectionCard>
         </div>
       </div>
     );
   }
 
   if (view === "reflection") {
-    const topMistakes = [...choiceLog]
-      .filter((c) => c.delta < 0)
-      .sort((a, b) => a.delta - b.delta)
-      .slice(0, 2);
-
-    const topWins = [...choiceLog]
+    const goodChoices = [...choiceLog]
       .filter((c) => c.delta > 0)
-      .sort((a, b) => b.delta - a.delta)
-      .slice(0, 2);
+      .sort((a, b) => b.delta - a.delta);
+
+    const badChoices = [...choiceLog]
+      .filter((c) => c.delta < 0)
+      .sort((a, b) => a.delta - b.delta);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50">
+      <div className="min-h-screen bg-[#F7FAFC] [@media(max-height:850px)]:scale-[0.94] [@media(max-height:850px)]:origin-top">
         <BackButton />
         <Stepper />
 
-        <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
-          <div className="grid xl:grid-cols-[1fr_0.42fr] gap-6">
-            <SectionCard>
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Step 4
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2">
-                    Reflect on your habits
-                  </h2>
-                  <p className="text-slate-600 mt-2 leading-relaxed">
-                    Your score matters less than the decision habits you are building.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 w-fit">
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Final Score
-                  </div>
-                  <div className={`text-3xl font-black mt-1 ${scoreColor(finalScore)}`}>
-                    {finalScore}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 mt-6">
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-                  <div className="font-black text-slate-900 mb-3">Top wins</div>
-                  <div className="space-y-2">
-                    {topWins.length === 0 ? (
-                      <div className="text-sm text-slate-700">No positive picks yet.</div>
-                    ) : (
-                      topWins.map((w) => (
-                        <div key={`${w.day}-${w.pick}`} className="rounded-2xl bg-white border border-emerald-100 p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-slate-900 text-sm">
-                              Day {w.day}: {w.pick}
-                            </div>
-                            <div className="font-black text-emerald-700 text-sm">+{w.delta}</div>
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1">{w.badge}</div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                  <div className="font-black text-slate-900 mb-3">Biggest traps</div>
-                  <div className="space-y-2">
-                    {topMistakes.length === 0 ? (
-                      <div className="text-sm text-slate-700">Nice. You avoided the biggest traps.</div>
-                    ) : (
-                      topMistakes.map((m) => (
-                        <div key={`${m.day}-${m.pick}`} className="rounded-2xl bg-white border border-amber-100 p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-slate-900 text-sm">
-                              Day {m.day}: {m.pick}
-                            </div>
-                            <div className="font-black text-rose-700 text-sm">{m.delta}</div>
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1">{m.badge}</div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="font-black text-slate-900 text-lg">Optional reflection</div>
-                <p className="text-sm text-slate-600 mt-1">
-                  Write 2 to 4 sentences about what you learned.
-                </p>
-
-                <div className="grid md:grid-cols-2 gap-3 mt-4 text-sm">
-                  <div className="rounded-2xl bg-white border border-slate-200 p-4">
-                    What rule helped you stay calm?
-                  </div>
-                  <div className="rounded-2xl bg-white border border-slate-200 p-4">
-                    What security habit will you never break?
-                  </div>
-                </div>
-
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Write your reflection here..."
-                  className="mt-4 w-full min-h-[120px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none focus:ring-2 focus:ring-blue-200"
-                />
-
-                <div className="text-xs text-slate-500 mt-2">
-                  Good rules become strong habits.
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => setView("complete")}
-                  className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition-all shadow-lg"
-                >
-                  Finish Lesson
-                </button>
-
-                <button
-                  onClick={() => {
-                    setView("week");
-                    setDayIdx(0);
-                    setPicked(null);
-                    setLocked(false);
-                    setWeekScore(50);
-                    setChoiceLog([]);
-                  }}
-                  className="sm:w-[230px] py-4 bg-slate-100 border border-slate-200 text-slate-700 rounded-2xl font-black hover:bg-slate-200 transition-all"
-                >
-                  Redo 7-Day Run
-                </button>
-              </div>
-            </SectionCard>
-
-            <div className="space-y-6">
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">Your plan snapshot</div>
-                <div className="grid gap-3 mt-4">
-                  <StatCard
-                    label="Goal"
-                    value={plan.goal ? goalText(plan.goal) : "—"}
-                    icon={<Target className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Horizon"
-                    value={plan.horizon ? horizonText(plan.horizon) : "—"}
-                    icon={<Clock3 className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Custody"
-                    value={plan.custody ? custodyText(plan.custody) : "—"}
-                    icon={<Wallet className="w-5 h-5" />}
-                  />
-                  <StatCard
-                    label="Sizing"
-                    value={`${plan.cryptoPct}% crypto / ${plan.emergencyCashPct}% cash`}
-                    icon={<TrendingUp className="w-5 h-5" />}
-                  />
-                </div>
-
-                <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                  <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                    Volatility rule
-                  </div>
-                  <div className="text-sm font-semibold text-slate-800 mt-2 leading-relaxed">
-                    {plan.rule || "—"}
-                  </div>
-                </div>
-              </SectionCard>
-            </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-5 pt-4 pb-4">
+          <div className="text-center mb-5">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+              Reflect on Your Habits
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 mt-1">
+              Review your decisions and learn from the experience
+            </p>
           </div>
+
+          <SectionCard>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <div className="font-bold text-slate-900 mb-1.5 text-base md:text-lg">
+                  ✓ What went well
+                </div>
+                <p className="text-[11px] md:text-xs text-emerald-700 mb-2.5">
+                  These choices helped your crypto journey
+                </p>
+                <div className="space-y-2.5">
+                  {goodChoices.length === 0 ? (
+                    <div className="text-sm text-slate-700 italic">
+                      No positive decisions this round. Try making choices that
+                      prioritize research and safety!
+                    </div>
+                  ) : (
+                    goodChoices.map((w) => {
+                      const eventData = EVENTS.find((e) => e.id === w.day);
+                      const choiceData = eventData?.options.find(
+                        (o) => o.id === w.pick
+                      );
+                      return (
+                        <div
+                          key={`${w.day}-${w.pick}`}
+                          className="rounded-2xl bg-white border border-emerald-200 p-3"
+                        >
+                          <div className="flex items-start justify-between mb-1.5 gap-3">
+                            <div className="font-bold text-sm md:text-base text-slate-900">
+                              {w.title}
+                            </div>
+                            <div className="font-bold text-emerald-700 text-xs bg-emerald-100 px-2 py-1 rounded-lg whitespace-nowrap">
+                              +{w.delta}
+                            </div>
+                          </div>
+                          <div className="text-xs md:text-sm text-slate-600 mb-1.5">
+                            You chose: {choiceData?.label}
+                          </div>
+                          <div className="text-[11px] md:text-xs text-emerald-700 bg-emerald-50 p-2 rounded-lg">
+                            {choiceData?.why}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                <div className="font-bold text-slate-900 mb-1.5 text-base md:text-lg">
+                  ✕ What didn't go well
+                </div>
+                <p className="text-[11px] md:text-xs text-rose-700 mb-2.5">
+                  Learn from these to make better choices next time
+                </p>
+                <div className="space-y-2.5">
+                  {badChoices.length === 0 ? (
+                    <div className="text-sm text-slate-700 italic">
+                      Great! You avoided all the traps and made smart decisions
+                      throughout.
+                    </div>
+                  ) : (
+                    badChoices.map((m) => {
+                      const eventData = EVENTS.find((e) => e.id === m.day);
+                      const choiceData = eventData?.options.find(
+                        (o) => o.id === m.pick
+                      );
+                      return (
+                        <div
+                          key={`${m.day}-${m.pick}`}
+                          className="rounded-2xl bg-white border border-rose-200 p-3"
+                        >
+                          <div className="flex items-start justify-between mb-1.5 gap-3">
+                            <div className="font-bold text-sm md:text-base text-slate-900">
+                              {m.title}
+                            </div>
+                            <div className="font-bold text-rose-700 text-xs bg-rose-100 px-2 py-1 rounded-lg whitespace-nowrap">
+                              {m.delta}
+                            </div>
+                          </div>
+                          <div className="text-xs md:text-sm text-slate-600 mb-1.5">
+                            You chose: {choiceData?.label}
+                          </div>
+                          <div className="text-[11px] md:text-xs text-rose-700 bg-rose-50 p-2 rounded-lg">
+                            {choiceData?.why}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-4">
+              <div className="font-bold text-slate-900 text-base md:text-lg">
+                Optional reflection
+              </div>
+              <p className="text-xs md:text-sm text-slate-600 mt-1">
+                Write 2 to 4 sentences about what you learned.
+              </p>
+
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Write your reflection here..."
+                className="mt-3 w-full min-h-[90px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
+              />
+            </div>
+
+            <button
+              onClick={async () => {
+                await awardXP(
+                  XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE
+                );
+                setView("complete");
+              }}
+              className="w-full py-3.5 bg-gradient-to-r from-sky-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg"
+            >
+              See Final Results
+            </button>
+          </SectionCard>
         </div>
       </div>
     );
@@ -1361,87 +1223,93 @@ export default function L3_Applying({
     const g = gradeLabel(finalScore);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50">
-        <BackButton />
-        <Stepper />
+      <div className="min-h-screen bg-[#F7FAFC] px-4 sm:px-5 pt-5 pb-4 [@media(max-height:850px)]:scale-[0.94] [@media(max-height:850px)]:origin-top">
+        <div className="max-w-2xl mx-auto animate-in zoom-in">
+          <div className="bg-white rounded-[32px] p-6 md:p-7 shadow-2xl border border-slate-100 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-sky-600 to-violet-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
 
-        <div className="max-w-5xl mx-auto px-4 pt-10 pb-12">
-          <div className="grid lg:grid-cols-[1fr_0.5fr] gap-6">
-            <SectionCard>
-              <div className="text-center">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white mx-auto mb-5 shadow-lg">
-                  <Sparkles className="w-10 h-10" />
-                </div>
+            <div className="inline-flex items-center px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full mb-3">
+              <span className="text-xs md:text-sm font-bold">
+                Lesson Complete
+              </span>
+            </div>
 
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900">
-                  Lesson 3 Complete
-                </h2>
-                <p className="text-slate-600 mt-3 max-w-2xl mx-auto leading-relaxed">
-                  {g.desc}
+            <h2 className="text-3xl font-bold text-slate-900 mb-2">
+              {g.title}
+            </h2>
+
+            <div
+              className={`text-5xl md:text-6xl font-black mb-3 ${scoreColor(
+                finalScore
+              )}`}
+            >
+              {finalScore}%
+            </div>
+
+            <p className="text-sm md:text-base text-slate-600 leading-relaxed mb-5">
+              {g.desc}
+            </p>
+
+            <div className="bg-gradient-to-br from-sky-50 via-purple-50 to-pink-50 rounded-3xl p-5 mb-5 border border-sky-100 shadow-inner text-left">
+              <div className="text-center mb-4">
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900">
+                  What you practiced
+                </h3>
+                <p className="text-xs md:text-sm text-slate-500 mt-1">
+                  These are the skills this lesson helped you build.
                 </p>
+              </div>
 
-                <div className="mt-6 inline-flex rounded-3xl border border-slate-200 bg-slate-50 px-8 py-6">
-                  <div>
-                    <div className="text-xs uppercase tracking-widest text-slate-500 font-black">
-                      Your Score
-                    </div>
-                    <div className={`text-5xl font-black mt-2 ${scoreColor(finalScore)}`}>
-                      {finalScore}%
-                    </div>
-                    <div className="text-sm font-black text-slate-900 mt-2">{g.title}</div>
-                  </div>
+              <div className="space-y-2.5">
+                <div className="rounded-2xl bg-white px-4 py-3 border border-slate-100 shadow-sm text-sm md:text-base">
+                  Building a plan with a goal, horizon, custody choice, and
+                  sizing
                 </div>
-
-                <div className="mt-8 space-y-3">
-                  <button
-                    onClick={() => onComplete(finalScore)}
-                    className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg hover:opacity-90 transition-all shadow-lg"
-                  >
-                    Back to Module Overview
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setView("week");
-                      setDayIdx(0);
-                      setPicked(null);
-                      setLocked(false);
-                      setWeekScore(50);
-                      setChoiceLog([]);
-                    }}
-                    className="w-full py-5 bg-white border-2 border-slate-200 text-slate-900 rounded-2xl font-black text-lg hover:bg-slate-50 transition-all"
-                  >
-                    Redo Lesson 3
-                  </button>
+                <div className="rounded-2xl bg-white px-4 py-3 border border-slate-100 shadow-sm text-sm md:text-base">
+                  Handling hype, fear, and confidence without impulsive
+                  decisions
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 border border-slate-100 shadow-sm text-sm md:text-base">
+                  Protecting your wallet from scams and seed phrase traps
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 border border-slate-100 shadow-sm text-sm md:text-base">
+                  Thinking about fees, timing, and safer habits
                 </div>
               </div>
-            </SectionCard>
+            </div>
 
-            <div className="space-y-6">
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">What you practiced</div>
-                <div className="grid gap-3 mt-4">
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                    Building a plan with a goal, horizon, custody choice, and sizing
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                    Handling hype, fear, and confidence without impulsive decisions
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                    Protecting your wallet from scams and seed phrase traps
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                    Thinking about fees, timing, and safer habits
-                  </div>
-                </div>
-              </SectionCard>
+            <div className="space-y-3">
+              <button
+                onClick={() => onComplete(finalScore)}
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-base md:text-lg hover:opacity-90 transition-all shadow-lg"
+              >
+                Complete Module 3
+              </button>
 
-              <SectionCard>
-                <div className="font-black text-slate-900 text-lg">Your reflection</div>
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800 leading-relaxed min-h-[100px]">
-                  {notes.trim().length ? notes : "No reflection saved yet."}
-                </div>
-              </SectionCard>
+              <button
+                onClick={() => {
+                  setView("intro");
+                  setPlan({
+                    horizon: null,
+                    goal: null,
+                    custody: null,
+                    emergencyCashPct: 70,
+                    cryptoPct: 30,
+                    rule: "",
+                  });
+                  setDayIdx(0);
+                  setPicked(null);
+                  setLocked(false);
+                  setWeekScore(50);
+                  setChoiceLog([]);
+                  setNotes("");
+                }}
+                className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
+              >
+                Redo Lesson 3
+              </button>
             </div>
           </div>
         </div>
