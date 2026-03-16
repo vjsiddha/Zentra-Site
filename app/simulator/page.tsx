@@ -11,6 +11,7 @@ import Link from 'next/link';
 import AssetDashboard from './components/AssetDashboard';
 import DSSInsightsPanel from './components/DSSInsightsPanel';
 import PreTradeWarning from './components/PreTradeWarning';
+import MarketEventBanner from './components/MarketEventBanner';
 import {
   computeInsights,
   computeRebalanceFlags,
@@ -55,8 +56,16 @@ async function marketDataCall<T>(endpoint: string): Promise<T> {
   return result.data;
 }
 
-async function getQuote(symbol: string) {return marketDataCall<any>(`/quote/${encodeURIComponent(symbol)}`);
-}async function searchSymbols(query: string)    { return marketDataCall<any[]>(`/search?q=${encodeURIComponent(query)}`); }
+// ── Routes through mock-investor so shock multipliers are applied ──
+async function getQuote(symbol: string, username: string) {
+  const url      = `${MOCK_INVESTOR_API}/metrics/quote/${encodeURIComponent(symbol)}?user=${encodeURIComponent(username)}`;
+  const response = await fetch(url);
+  const result   = await response.json();
+  if (!result.ok) throw new Error(result.error || 'API Error');
+  return result.data;
+}
+
+async function searchSymbols(query: string) { return marketDataCall<any[]>(`/search?q=${encodeURIComponent(query)}`); }
 
 const SECTORS: Record<string, { symbols: string[]; icon: string; description: string; color: string }> = {
   Tech:          { symbols: ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA"], icon: "🧠", description: "Fast-growing tech companies.",           color: '#0B5E8E' },
@@ -138,7 +147,7 @@ function PortfolioValueChart({ portfolio, username }: { portfolio: any; username
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {[{id:'ALL',label:'All Time'},{id:'1y',label:'1 Year'},{id:'3m',label:'3 Months'},{id:'1m',label:'1 Month'}].map(p => (
+        {[{id:'ALL',label:'All Time'},{id:'1m',label:'1 Month'},{id:'3m',label:'3 Months'},{id:'1y',label:'1 Year'}].map(p => (
           <button key={p.id} onClick={() => setPeriod(p.id as any)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${period===p.id?'text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             style={period===p.id?{backgroundColor:COLORS.primary}:{}}>
@@ -171,22 +180,48 @@ function PortfolioValueChart({ portfolio, username }: { portfolio: any; username
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-xs text-slate-400 text-center">📊 Portfolio value from your first trade to today • {chartData.length} data points</p>
+      <p className="text-xs text-slate-400 text-center">📊 Total equity (cash + market value) from your first trade to today • {chartData.length} data points</p>
     </div>
   );
 }
 
 // ── Future Projections ───────────────────────────────────────────────────────
-function FutureProjectionsChart({ currentValue }: { currentValue: number }) {
+function FutureProjectionsChart({ investedValue, cashBalance }: { investedValue: number; cashBalance: number }) {
   const [th, setTh] = useState<1|5|10|20>(10);
-  const fv = (r: number, y: number) => currentValue * Math.pow(1+r,y);
+  const fv = (r: number, y: number) => investedValue * Math.pow(1+r,y);
   const pts = Math.min(th, 20);
   const data = Array.from({length:pts+1},(_,i)=>{
     const y=(th/pts)*i;
-    return {year:y===0?'Now':`${Math.round(y)}y`,conservative:fv(0.05,y),moderate:fv(0.08,y),aggressive:fv(0.10,y)};
+    return {
+      year:         y===0?'Now':`${Math.round(y)}y`,
+      conservative: fv(0.05,y),
+      moderate:     fv(0.08,y),
+      aggressive:   fv(0.10,y),
+      cash:         cashBalance,
+    };
   });
+
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 rounded-xl bg-slate-50 ring-1" style={{borderColor:COLORS.cardBorder}}>
+          <p className="text-xs text-slate-500 mb-1">📈 Invested (being projected)</p>
+          <p className="text-lg font-bold" style={{color:COLORS.primary}}>${investedValue.toLocaleString('en-US',{maximumFractionDigits:0})}</p>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-50 ring-1" style={{borderColor:COLORS.cardBorder}}>
+          <p className="text-xs text-slate-500 mb-1">💵 Cash (not projected)</p>
+          <p className="text-lg font-bold text-slate-400">${cashBalance.toLocaleString('en-US',{maximumFractionDigits:0})}</p>
+        </div>
+      </div>
+
+      {cashBalance > investedValue * 0.3 && (
+        <div className="p-3 rounded-xl bg-amber-50 ring-1 ring-amber-200">
+          <p className="text-xs text-amber-800">
+            ⚠️ <strong>{((cashBalance / (cashBalance + investedValue)) * 100).toFixed(0)}% of your portfolio is uninvested cash</strong> — it earns no returns and is shown as a flat line. Investing more of your cash could significantly improve your long-term outcome.
+          </p>
+        </div>
+      )}
+
       <div className="flex gap-2">
         {[{y:1,l:'1 Year'},{y:5,l:'5 Years'},{y:10,l:'10 Years'},{y:20,l:'20 Years'}].map(o=>(
           <button key={o.y} onClick={()=>setTh(o.y as any)}
@@ -196,37 +231,58 @@ function FutureProjectionsChart({ currentValue }: { currentValue: number }) {
           </button>
         ))}
       </div>
+
       <div className="grid grid-cols-3 gap-4">
-        {[{l:'Conservative (5%/year)',v:fv(0.05,th),bg:'bg-blue-50',t:'text-blue-700'},{l:'Moderate (8%/year)',v:fv(0.08,th),bg:'bg-emerald-50',t:'text-emerald-700'},{l:'Aggressive (10%/year)',v:fv(0.10,th),bg:'bg-purple-50',t:'text-purple-700'}].map(s=>(
+        {[
+          {l:'Conservative (5%/year)', v:fv(0.05,th), bg:'bg-blue-50',   t:'text-blue-700'  },
+          {l:'Moderate (8%/year)',     v:fv(0.08,th), bg:'bg-emerald-50', t:'text-emerald-700'},
+          {l:'Aggressive (10%/year)', v:fv(0.10,th), bg:'bg-purple-50',  t:'text-purple-700' },
+        ].map(s=>(
           <div key={s.l} className={`p-4 rounded-xl ${s.bg}`}>
             <p className="text-xs text-slate-600 mb-1">{s.l}</p>
             <p className={`text-xl font-bold ${s.t}`}>${s.v.toLocaleString('en-US',{maximumFractionDigits:0})}</p>
-            <p className="text-xs text-slate-500 mt-1">+${(s.v-currentValue).toLocaleString('en-US',{maximumFractionDigits:0})}</p>
+            <p className="text-xs text-slate-500 mt-1">+${(s.v - investedValue).toLocaleString('en-US',{maximumFractionDigits:0})} gain</p>
           </div>
         ))}
       </div>
+
       <div className="h-[350px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
             <defs>
               {[['cc','#3b82f6'],['cm','#10b981'],['ca','#8b5cf6']].map(([id,c])=>(
                 <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={c} stopOpacity={0.2}/><stop offset="95%" stopColor={c} stopOpacity={0}/>
+                  <stop offset="5%" stopColor={c} stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor={c} stopOpacity={0}/>
                 </linearGradient>
               ))}
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0"/>
             <XAxis dataKey="year" tick={{fontSize:11}} tickLine={false} axisLine={false}/>
             <YAxis tickFormatter={v=>`$${(v/1000).toFixed(0)}k`} tick={{fontSize:11}} tickLine={false} axisLine={false}/>
-            <Tooltip formatter={(v:any)=>[`$${(isFinite(Number(v))?Number(v):0).toLocaleString('en-US',{maximumFractionDigits:0})}`]} labelFormatter={l=>`Time: ${l}`} contentStyle={{borderRadius:'12px',border:'none',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}/>
-            <Legend verticalAlign="top" height={36} iconType="line" formatter={v=>v==='conservative'?'Conservative (5%)':v==='moderate'?'Moderate (8%)':'Aggressive (10%)'}/>
+            <Tooltip
+              formatter={(v:any, name:string) => {
+                const n = isFinite(Number(v)) ? Number(v) : 0;
+                const label = name==='conservative'?'Conservative (5%)':name==='moderate'?'Moderate (8%)':name==='aggressive'?'Aggressive (10%)':'Uninvested Cash';
+                return [`$${n.toLocaleString('en-US',{maximumFractionDigits:0})}`, label];
+              }}
+              labelFormatter={l=>`Time: ${l}`}
+              contentStyle={{borderRadius:'12px',border:'none',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}
+            />
+            <Legend verticalAlign="top" height={36} iconType="line"
+              formatter={v=>v==='conservative'?'Conservative (5%)':v==='moderate'?'Moderate (8%)':v==='aggressive'?'Aggressive (10%)':'Uninvested Cash'}
+            />
             <Area type="monotone" dataKey="conservative" stroke="#3b82f6" fillOpacity={1} fill="url(#cc)" strokeWidth={2}/>
             <Area type="monotone" dataKey="moderate"     stroke="#10b981" fillOpacity={1} fill="url(#cm)" strokeWidth={2}/>
             <Area type="monotone" dataKey="aggressive"   stroke="#8b5cf6" fillOpacity={1} fill="url(#ca)" strokeWidth={2}/>
+            <Area type="monotone" dataKey="cash" stroke="#94a3b8" strokeDasharray="5 5" fill="none" strokeWidth={2} dot={false}/>
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-xs text-slate-400 text-center">📚 Based on historical S&P 500 average returns • Assumes dividends reinvested</p>
+
+      <p className="text-xs text-slate-400 text-center">
+        📚 Projections apply only to your <strong>${investedValue.toLocaleString('en-US',{maximumFractionDigits:0})}</strong> in invested assets • Cash shown as flat line • Based on historical S&P 500 average returns
+      </p>
     </div>
   );
 }
@@ -294,8 +350,9 @@ export default function SimulatorPage() {
   const [searchLoading,      setSearchLoading]      = useState(false);
   const [tradeLoading,       setTradeLoading]       = useState(false);
   const [tradeError,         setTradeError]         = useState<string|null>(null);
-const [tradeSuccess,  setTradeSuccess]  = useState<string | null>(null);
-const [dssNudge,      setDssNudge]      = useState<string | null>(null);  
+  const [tradeSuccess,       setTradeSuccess]       = useState<string|null>(null);
+  const [dssNudge,           setDssNudge]           = useState<string|null>(null);
+  const [showAllHoldings,    setShowAllHoldings]    = useState(false);
 
   const fetchMarketValue = useCallback(async () => {
     if (!portfolio || !Object.keys(portfolio.positions||{}).length) { setCurrentMarketValue(0); setMonthlyDividends(0); return; }
@@ -337,16 +394,24 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
     return ()=>clearTimeout(t);
   }, [searchQuery]);
 
+  // ── Fetch price via mock-investor so shocks are applied ──
   useEffect(() => {
     if (!selectedSymbol) { setCurrentPrice(null); return; }
-    const run = async()=>{ setPriceLoading(true); try{setCurrentPrice((await getQuote(selectedSymbol)).last);}catch{setCurrentPrice(null);} finally{setPriceLoading(false);} };
-    run(); const t=setInterval(run,30000); return ()=>clearInterval(t);
-  }, [selectedSymbol]);
+    const run = async () => {
+      setPriceLoading(true);
+      try { setCurrentPrice((await getQuote(selectedSymbol, username)).last); }
+      catch { setCurrentPrice(null); }
+      finally { setPriceLoading(false); }
+    };
+    run();
+    const t = setInterval(run, 30000);
+    return () => clearInterval(t);
+  }, [selectedSymbol, username]);
 
   useEffect(() => {
     if (!sellSymbol) { setSellPrice(null); return; }
-    getQuote(sellSymbol).then(q=>setSellPrice(q.last)).catch(()=>setSellPrice(null));
-  }, [sellSymbol]);
+    getQuote(sellSymbol, username).then(q => setSellPrice(q.last)).catch(() => setSellPrice(null));
+  }, [sellSymbol, username]);
 
   const handleSelectStock = (sym: string) => { setSelectedSymbol(sym); setSearchQuery(""); setSearchResults([]); setActiveTab("trade"); };
 
@@ -360,14 +425,11 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
       setBuyQty(0);
       await loadPortfolioData();
       setTimeout(fetchMarketValue, 500);
-
-      // DSS post-trade nudge
       if (preTradImpact?.concentrationWarning) {
         setDssNudge(`⚠️ This trade brought ${preTradImpact.sector} to ${preTradImpact.projectedSectorPct.toFixed(1)}% of your portfolio — exceeding the 40% guideline. Check DSS Insights for details.`);
       } else if (preTradImpact?.riskIncreased) {
         setDssNudge(`📊 This trade increased your portfolio risk level from ${preTradImpact.currentRisk} to ${preTradImpact.projectedRisk}. Check DSS Insights for details.`);
       }
-      
       setTimeout(()=>setSelectedAsset(sym),1000);
     } catch(e){setTradeError(e instanceof Error?e.message:'Trade failed');}
     finally{setTradeLoading(false);}
@@ -414,6 +476,10 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
   const riskLabel     = hhi>=2500?"High Risk":hhi>=1500?"Medium Risk":"Low Risk";
   const riskColor     = hhi>=2500?COLORS.danger:hhi>=1500?COLORS.warning:COLORS.success;
 
+  const COLLAPSED_LIMIT = 5;
+  const visibleHoldings = showAllHoldings ? positionSymbols : positionSymbols.slice(0, COLLAPSED_LIMIT);
+  const hiddenCount     = positionSymbols.length - COLLAPSED_LIMIT;
+
   if (authLoading||loading) return (
     <main className="min-h-screen flex items-center justify-center" style={{backgroundColor:COLORS.background}}>
       <div className="text-center">
@@ -443,22 +509,41 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
           <div className="h-screen overflow-y-auto p-5">
             <Link href="/" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">← Back to Home</Link>
 
-            {positionSymbols.length>0&&(
+            {positionSymbols.length > 0 && (
               <>
                 <div className="mb-6">
-                  <h2 className="text-lg font-bold text-slate-900 mb-3">📦 Your Holdings</h2>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-bold text-slate-900">📦 Your Holdings</h2>
+                    <span className="text-xs text-slate-400 font-medium">{positionSymbols.length} total</span>
+                  </div>
                   <div className="space-y-2">
-                    {positionSymbols.slice(0,5).map(sym=>{
-                      const pos=positions[sym];
+                    {visibleHoldings.map(sym => {
+                      const pos = positions[sym];
                       return (
-                        <button key={sym} onClick={()=>setSelectedAsset(sym)} className="w-full flex items-center justify-between p-3 rounded-xl ring-1 hover:bg-slate-50 transition-colors" style={{borderColor:COLORS.cardBorder}}>
-                          <div className="text-left"><p className="font-semibold" style={{color:COLORS.primary}}>{sym}</p><p className="text-xs text-slate-500">{pos.qty} shares</p></div>
-                          <div className="text-right"><p className="font-semibold text-slate-900">${(pos.qty*pos.avg_cost).toFixed(2)}</p><p className="text-xs text-slate-400">View →</p></div>
+                        <button key={sym} onClick={() => setSelectedAsset(sym)}
+                          className="w-full flex items-center justify-between p-3 rounded-xl ring-1 hover:bg-slate-50 transition-colors"
+                          style={{borderColor:COLORS.cardBorder}}>
+                          <div className="text-left">
+                            <p className="font-semibold" style={{color:COLORS.primary}}>{sym}</p>
+                            <p className="text-xs text-slate-500">{pos.qty} shares</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-slate-900">${(pos.qty*pos.avg_cost).toFixed(2)}</p>
+                            <p className="text-xs text-slate-400">View →</p>
+                          </div>
                         </button>
                       );
                     })}
-                    {positionSymbols.length>5&&<p className="text-xs text-slate-400 text-center mt-2">+{positionSymbols.length-5} more positions</p>}
                   </div>
+                  {positionSymbols.length > COLLAPSED_LIMIT && (
+                    <button
+                      onClick={() => setShowAllHoldings(!showAllHoldings)}
+                      className="w-full mt-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-slate-100"
+                      style={{ color: COLORS.primary, backgroundColor: COLORS.primaryLight }}
+                    >
+                      {showAllHoldings ? '↑ Show less' : `↓ Show ${hiddenCount} more holding${hiddenCount === 1 ? '' : 's'}`}
+                    </button>
+                  )}
                 </div>
                 <Divider/>
               </>
@@ -515,42 +600,44 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
           <nav className="bg-white border-b px-6" style={{borderColor:COLORS.cardBorder}}>
             <div className="max-w-6xl mx-auto flex gap-1">
               {[
-              { id: 'trade',     label: 'Trade',       icon: '📈' },
-              { id: 'portfolio', label: 'Portfolio',   icon: '📊' },
-              { id: 'dss',       label: 'Insights',icon: '🧠' },
-              { id: 'history',   label: 'History',     icon: '📋' },
-            ].map(tab => {
-              const criticalCount = tab.id === 'dss'
-                ? dssInsights.filter(i => i.severity === 'critical' || i.severity === 'warning').length
-                : 0;
-              return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-3 font-medium relative flex items-center gap-1.5 ${activeTab === tab.id ? 'text-slate-900' : 'text-slate-500'}`}>
-                  {tab.icon} {tab.label}
-                  {criticalCount > 0 && activeTab !== 'dss' && (
-                    <span className="text-xs text-white rounded-full w-5 h-5 flex items-center justify-center font-bold"
-                      style={{ backgroundColor: dssInsights.some(i => i.severity === 'critical') ? COLORS.danger : COLORS.warning }}>
-                      {criticalCount}
-                    </span>
-                  )}
-                  {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: COLORS.primary }} />}
-                </button>
-              );
-            })}
+                { id: 'trade',     label: 'Trade',    icon: '📈' },
+                { id: 'portfolio', label: 'Portfolio', icon: '📊' },
+                { id: 'dss',       label: 'Insights',  icon: '🧠' },
+                { id: 'history',   label: 'History',   icon: '📋' },
+              ].map(tab => {
+                const criticalCount = tab.id === 'dss'
+                  ? dssInsights.filter(i => i.severity === 'critical' || i.severity === 'warning').length
+                  : 0;
+                return (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className={`px-5 py-3 font-medium relative flex items-center gap-1.5 ${activeTab === tab.id ? 'text-slate-900' : 'text-slate-500'}`}>
+                    {tab.icon} {tab.label}
+                    {criticalCount > 0 && activeTab !== 'dss' && (
+                      <span className="text-xs text-white rounded-full w-5 h-5 flex items-center justify-center font-bold"
+                        style={{ backgroundColor: dssInsights.some(i => i.severity === 'critical') ? COLORS.danger : COLORS.warning }}>
+                        {criticalCount}
+                      </span>
+                    )}
+                    {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: COLORS.primary }} />}
+                  </button>
+                );
+              })}
             </div>
           </nav>
 
           <div className="p-6">
             <div className="max-w-6xl mx-auto">
+
+              {/* ── MARKET EVENT BANNER ── */}
+              <MarketEventBanner username={username} mockInvestorApi={MOCK_INVESTOR_API} />
+
               {dssNudge && (
                 <div className="mb-4 p-4 rounded-xl ring-1 flex justify-between items-start gap-3"
                   style={{ backgroundColor: COLORS.warningLight, borderColor: '#FDE68A' }}>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-amber-900">{dssNudge}</p>
-                    <button
-                      onClick={() => { setActiveTab('dss'); setDssNudge(null); }}
-                      className="text-xs font-bold mt-1 hover:underline"
-                      style={{ color: COLORS.primary }}>
+                    <button onClick={() => { setActiveTab('dss'); setDssNudge(null); }}
+                      className="text-xs font-bold mt-1 hover:underline" style={{ color: COLORS.primary }}>
                       View DSS Insights →
                     </button>
                   </div>
@@ -564,37 +651,32 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
               {activeTab==='trade'&&(
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card title="Buy Stocks" icon="📈" iconBg={COLORS.successLight} iconColor={COLORS.success}>
-                    {!selectedSymbol?(
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Search for a stock</label>
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search by symbol or name (e.g. AAPL, Tesla)..."
-                        className="w-full px-4 py-3 rounded-xl ring-1 text-sm"
-                        style={{ borderColor: COLORS.cardBorder }}
-                      />
-                      {searchLoading && <p className="text-xs text-slate-500 mt-2">Searching...</p>}
-                      {searchResults.length > 0 && (
-                        <div className="mt-2 max-h-48 overflow-y-auto rounded-xl ring-1" style={{ borderColor: COLORS.cardBorder }}>
-                          {searchResults.map(s => (
-                            <button key={s.symbol} onClick={() => handleSelectStock(s.symbol)}
-                              className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b last:border-b-0 text-sm"
-                              style={{ borderColor: COLORS.cardBorder }}>
-                              <span className="font-bold" style={{ color: COLORS.primary }}>{s.symbol}</span>
-                              <span className="text-slate-500 ml-2">{s.name}</span>
-                            </button>
-                          ))}
+                    {!selectedSymbol ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Search for a stock</label>
+                          <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
+                            placeholder="Search by symbol or name (e.g. AAPL, Tesla)..."
+                            className="w-full px-4 py-3 rounded-xl ring-1 text-sm" style={{borderColor:COLORS.cardBorder}}/>
+                          {searchLoading && <p className="text-xs text-slate-500 mt-2">Searching...</p>}
+                          {searchResults.length > 0 && (
+                            <div className="mt-2 max-h-48 overflow-y-auto rounded-xl ring-1" style={{borderColor:COLORS.cardBorder}}>
+                              {searchResults.map(s=>(
+                                <button key={s.symbol} onClick={()=>handleSelectStock(s.symbol)}
+                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b last:border-b-0 text-sm"
+                                  style={{borderColor:COLORS.cardBorder}}>
+                                  <span className="font-bold" style={{color:COLORS.primary}}>{s.symbol}</span>
+                                  <span className="text-slate-500 ml-2">{s.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50 border border-dashed text-center" style={{ borderColor: COLORS.cardBorder }}>
-                      <p className="text-sm text-slate-500">Or browse sectors in the left sidebar</p>
-                    </div>
-                  </div>
-                ):(
+                        <div className="p-4 rounded-xl bg-slate-50 border border-dashed text-center" style={{borderColor:COLORS.cardBorder}}>
+                          <p className="text-sm text-slate-500">Or browse sectors in the left sidebar</p>
+                        </div>
+                      </div>
+                    ) : (
                       <div className="space-y-4">
                         <div className="p-4 rounded-xl" style={{backgroundColor:COLORS.primaryLight}}>
                           <div className="flex justify-between items-center">
@@ -603,9 +685,14 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
                           </div>
                         </div>
                         <div className="p-4 rounded-xl" style={{backgroundColor:COLORS.successLight}}>
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span className="text-slate-600">Current Price</span>
-                            {priceLoading?<span className="text-slate-400">Loading...</span>:currentPrice?<span className="text-2xl font-bold" style={{color:COLORS.success}}>${currentPrice.toFixed(2)}</span>:<span className="text-red-500">Failed to load</span>}
+                            <div className="text-right">
+                              {priceLoading ? <span className="text-slate-400">Loading...</span>
+                                : currentPrice ? (
+                                  <span className="text-2xl font-bold" style={{color:COLORS.success}}>${currentPrice.toFixed(2)}</span>
+                                ) : <span className="text-red-500">Failed to load</span>}
+                            </div>
                           </div>
                         </div>
                         <div>
@@ -697,16 +784,13 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
                         )}
                       </Card>
 
-                      {/* COMBINED PORTFOLIO ANALYSIS CARD */}
                       <Card title="Portfolio Analysis" icon="🧠">
-                        <div
-                          className="flex items-center gap-4 p-4 rounded-xl ring-1 cursor-pointer hover:opacity-90 transition-opacity"
+                        <div className="flex items-center gap-4 p-4 rounded-xl ring-1 cursor-pointer hover:opacity-90 transition-opacity"
                           onClick={()=>setActiveTab('dss')}
                           style={{
                             backgroundColor: dssScorecard.overallGrade==='A'||dssScorecard.overallGrade==='B'?'#F0FDF4':dssScorecard.overallGrade==='C'?'#FFFBEB':'#FEF2F2',
                             borderColor:     dssScorecard.overallGrade==='A'||dssScorecard.overallGrade==='B'?'#BBF7D0':dssScorecard.overallGrade==='C'?'#FDE68A':'#FECACA',
-                          }}
-                        >
+                          }}>
                           <div className="text-5xl font-black" style={{color:dssScorecard.overallGrade==='A'?'#166534':dssScorecard.overallGrade==='B'?'#1D4ED8':dssScorecard.overallGrade==='C'?'#92400E':'#991B1B'}}>
                             {dssScorecard.overallGrade}
                           </div>
@@ -744,7 +828,7 @@ const [dssNudge,      setDssNudge]      = useState<string | null>(null);
                         <div><p className="font-semibold text-amber-900 mb-1">Educational Projections Only</p><p className="text-sm text-amber-800">These projections are based on historical market averages (5–10% annual returns). <strong>Past performance does not guarantee future results.</strong></p></div>
                       </div>
                     </div>
-                    <FutureProjectionsChart currentValue={totalEquity}/>
+                    <FutureProjectionsChart investedValue={currentMarketValue} cashBalance={cashBalance}/>
                   </Card>
                   <Card title="Transaction History" icon="📋">
                     {!portfolio?.history||portfolio.history.length===0?(

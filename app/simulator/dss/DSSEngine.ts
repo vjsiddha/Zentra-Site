@@ -58,12 +58,13 @@ export interface PortfolioScorecard {
 // ============================================================================
 // CONSTANTS — Guideline thresholds
 // ============================================================================
-const SECTOR_MAX_PCT   = 40;
-const VOLATILE_MAX_PCT = 20;
-const MIN_SECTORS      = 3;
-const CASH_DRAG_MAX_PCT = 30;
-const HHI_LOW  = 1500;
-const HHI_HIGH = 2500;
+const SECTOR_MAX_PCT       = 40;
+const VOLATILE_MAX_PCT     = 20;
+const MIN_SECTORS          = 3;
+const CASH_DRAG_MAX_PCT    = 30;
+const SINGLE_STOCK_MAX_PCT = 25;
+const HHI_LOW              = 1500;
+const HHI_HIGH             = 2500;
 
 const VOLATILE_SECTORS = ["Crypto"];
 const INCOME_SECTORS   = ["Banking", "ETFs"];
@@ -153,7 +154,6 @@ export function computeInsights(
   }
 
   const sectorWeights = computeSectorWeights(positions, liveValues);
-  const hhi           = computeHHI(sectorWeights);
   const numSectors    = Object.keys(sectorWeights).length;
 
   const investedValue = posSymbols.reduce((sum, sym) => {
@@ -161,10 +161,10 @@ export function computeInsights(
   }, 0);
   const totalPortfolioValue = investedValue + cash;
 
-  // --- Sector concentration ---
+  // ── 1. Sector concentration ──────────────────────────────────────────────
   for (const [sector, pct] of Object.entries(sectorWeights)) {
-    const isVolatile    = VOLATILE_SECTORS.includes(sector);
-    const effectiveMax  = isVolatile ? VOLATILE_MAX_PCT : SECTOR_MAX_PCT;
+    const isVolatile   = VOLATILE_SECTORS.includes(sector);
+    const effectiveMax = isVolatile ? VOLATILE_MAX_PCT : SECTOR_MAX_PCT;
 
     if (pct > effectiveMax) {
       const overBy = (pct - effectiveMax).toFixed(1);
@@ -173,14 +173,35 @@ export function computeInsights(
         severity: pct > 60 ? "critical" : "warning",
         category: "concentration",
         title: `Too much invested in ${sector}`,
-        detail: `${pct.toFixed(1)}% of your invested money is in ${sector} — that's ${overBy}% above the recommended ${effectiveMax}% limit for a single sector. If ${sector} drops sharply, a large portion of your portfolio would be affected.`,
+        detail: `${pct.toFixed(1)}% of your invested money is in ${sector} — that's ${overBy}% above the recommended ${effectiveMax}% limit for a single sector. If ${sector} drops sharply, a large portion of your portfolio would be affected. To improve this, try investing in other sectors like Banking or ETFs to bring ${sector}'s share down over time.`,
         metric: `${pct.toFixed(1)}% in ${sector}`,
         threshold: `Recommended: ≤${effectiveMax}%`,
       });
     }
   }
 
-  // --- Volatile asset check ---
+  // ── 2. Single stock dominance ─────────────────────────────────────────────
+  if (investedValue > 0) {
+    for (const sym of posSymbols) {
+      const stockValue = liveValues?.[sym] ?? positions[sym].qty * positions[sym].avg_cost;
+      const stockPct   = (stockValue / investedValue) * 100;
+
+      if (stockPct > SINGLE_STOCK_MAX_PCT) {
+        const overBy = (stockPct - SINGLE_STOCK_MAX_PCT).toFixed(1);
+        insights.push({
+          id: `single-stock-${sym}`,
+          severity: stockPct > 50 ? "critical" : "warning",
+          category: "concentration",
+          title: `${sym} makes up ${stockPct.toFixed(1)}% of your portfolio`,
+          detail: `${sym} represents ${stockPct.toFixed(1)}% of your invested assets — ${overBy}% above the recommended 25% limit for a single stock. If this one company reports bad earnings or faces a scandal, a large chunk of your portfolio is at risk. To reduce this, consider spreading future investments across other stocks rather than adding more ${sym}.`,
+          metric: `${stockPct.toFixed(1)}% in ${sym}`,
+          threshold: `Recommended: ≤${SINGLE_STOCK_MAX_PCT}% per stock`,
+        });
+      }
+    }
+  }
+
+  // ── 3. Volatile asset check ───────────────────────────────────────────────
   const volatileWeight = VOLATILE_SECTORS.reduce(
     (sum, s) => sum + (sectorWeights[s] ?? 0), 0
   );
@@ -190,26 +211,26 @@ export function computeInsights(
       severity: volatileWeight > 40 ? "critical" : "warning",
       category: "risk",
       title: "High-risk assets make up a large portion of your portfolio",
-      detail: `Crypto and other high-volatility assets represent ${volatileWeight.toFixed(1)}% of your invested portfolio. These assets can lose significant value very quickly. Most guidelines suggest keeping high-risk assets below ${VOLATILE_MAX_PCT}% of your portfolio.`,
+      detail: `Crypto and other high-volatility assets represent ${volatileWeight.toFixed(1)}% of your invested portfolio. These assets can lose significant value very quickly. Most guidelines suggest keeping high-risk assets below ${VOLATILE_MAX_PCT}%. To rebalance, consider selling some crypto and reinvesting into more stable assets like ETFs or dividend-paying stocks.`,
       metric: `${volatileWeight.toFixed(1)}% in high-risk assets`,
       threshold: `Recommended: ≤${VOLATILE_MAX_PCT}%`,
     });
   }
 
-  // --- Diversification check ---
+  // ── 4. Diversification check ──────────────────────────────────────────────
   if (numSectors < MIN_SECTORS) {
     insights.push({
       id: "low-diversification",
       severity: numSectors === 1 ? "critical" : "warning",
       category: "diversification",
       title: `Invested in only ${numSectors} sector${numSectors === 1 ? "" : "s"}`,
-      detail: `Your portfolio only covers ${numSectors} sector${numSectors === 1 ? "" : "s"}. Spreading your money across at least ${MIN_SECTORS} different sectors reduces the impact if one industry has a bad period — this is the core idea behind diversification.`,
+      detail: `Your portfolio only covers ${numSectors} sector${numSectors === 1 ? "" : "s"}. Spreading your money across at least ${MIN_SECTORS} different sectors reduces the impact if one industry has a bad period — this is the core idea behind diversification. Try browsing the Banking, ETFs, or Green Energy sectors in the sidebar to add variety.`,
       metric: `${numSectors} sector${numSectors === 1 ? "" : "s"}`,
       threshold: `Recommended: ${MIN_SECTORS}+ sectors`,
     });
   }
 
-  // --- No ETF exposure ---
+  // ── 5. No ETF exposure ────────────────────────────────────────────────────
   const hasETF = posSymbols.some((s) => SECTOR_MAP["ETFs"].includes(s));
   if (!hasETF && numSectors < 3) {
     insights.push({
@@ -217,11 +238,11 @@ export function computeInsights(
       severity: "info",
       category: "diversification",
       title: "No index funds (ETFs) in your portfolio",
-      detail: "Index funds (ETFs) automatically spread your money across hundreds of companies at once. They're one of the most popular ways to diversify without having to pick individual stocks.",
+      detail: "Index funds (ETFs) automatically spread your money across hundreds of companies at once. They're one of the most popular ways to diversify without having to pick individual stocks. Try looking at SPY, VOO, or VTI in the ETFs sector — these track the entire US stock market.",
     });
   }
 
-  // --- Income / dividend check ---
+  // ── 6. No dividend-paying assets ─────────────────────────────────────────
   const hasDividendSector = posSymbols.some((s) =>
     INCOME_SECTORS.some((sec) => SECTOR_MAP[sec]?.includes(s))
   );
@@ -231,11 +252,11 @@ export function computeInsights(
       severity: "info",
       category: "income",
       title: "No dividend-paying assets in your portfolio",
-      detail: "Dividend-paying stocks send you a small cash payment regularly just for holding them. None of your current holdings are in sectors commonly known for dividends (like Banking or ETFs). These can provide steady income on top of any price gains.",
+      detail: "Dividend-paying stocks send you a small cash payment regularly just for holding them. None of your current holdings are in sectors commonly known for dividends. To add dividend income, consider exploring the Banking sector (JPM, BAC) or ETFs (SPY, VOO) which regularly pay dividends to shareholders.",
     });
   }
 
-  // --- Cash drag ---
+  // ── 7. Cash drag ──────────────────────────────────────────────────────────
   const cashPct = (cash / totalPortfolioValue) * 100;
   if (cashPct > CASH_DRAG_MAX_PCT && totalPortfolioValue > 10000) {
     insights.push({
@@ -243,26 +264,13 @@ export function computeInsights(
       severity: "info",
       category: "cash",
       title: "A lot of your money is sitting as uninvested cash",
-      detail: `${cashPct.toFixed(1)}% of your total portfolio ($${cash.toLocaleString()}) is still cash. While it's smart to keep some cash available, holding too much means your money isn't working for you. Investors call this "cash drag."`,
+      detail: `${cashPct.toFixed(1)}% of your total portfolio ($${cash.toLocaleString()}) is still cash. While it's smart to keep some cash available, holding too much means your money isn't working for you. Investors call this "cash drag." Consider putting some of that cash to work — even a broad ETF like SPY gives your money a chance to grow.`,
       metric: `${cashPct.toFixed(1)}% cash`,
       threshold: `Recommended: ≤${CASH_DRAG_MAX_PCT}%`,
     });
   }
 
-  // --- High concentration (HHI-backed, plain English) ---
-  if (hhi >= HHI_HIGH) {
-    insights.push({
-      id: "hhi-high",
-      severity: "critical",
-      category: "concentration",
-      title: "Your portfolio is heavily concentrated",
-      detail: `Most of your invested money is sitting in just one or two sectors. This means if that sector has a bad week, your whole portfolio takes a big hit. Spreading investments across more sectors helps cushion against this risk.`,
-      metric: "Concentration: High",
-      threshold: "Goal: spread across 3+ sectors",
-    });
-  }
-
-  // --- All good ---
+  // ── 8. All good ───────────────────────────────────────────────────────────
   if (insights.filter((i) => i.severity === "critical" || i.severity === "warning").length === 0) {
     insights.push({
       id: "healthy",
@@ -326,8 +334,8 @@ export function computePreTradeImpact(
 
   const projectedPositions = { ...positions };
   if (projectedPositions[symbol]) {
-    const existing = projectedPositions[symbol];
-    const newQty   = existing.qty + qty;
+    const existing   = projectedPositions[symbol];
+    const newQty     = existing.qty + qty;
     const newAvgCost = (existing.qty * existing.avg_cost + qty * price) / newQty;
     projectedPositions[symbol] = { qty: newQty, avg_cost: newAvgCost };
   } else {
@@ -337,9 +345,9 @@ export function computePreTradeImpact(
   const projectedLiveValues = { ...(liveValues ?? {}) };
   projectedLiveValues[symbol] = (projectedLiveValues[symbol] ?? 0) + tradeCost;
 
-  const projectedWeights = computeSectorWeights(projectedPositions, projectedLiveValues);
-  const projectedHHI     = computeHHI(projectedWeights);
-  const projectedRisk    = hhiToRisk(projectedHHI);
+  const projectedWeights   = computeSectorWeights(projectedPositions, projectedLiveValues);
+  const projectedHHI       = computeHHI(projectedWeights);
+  const projectedRisk      = hhiToRisk(projectedHHI);
 
   const currentSectorPct   = currentWeights[sector]   ?? 0;
   const projectedSectorPct = projectedWeights[sector] ?? 0;
@@ -383,19 +391,19 @@ export function computeScorecard(
       overallGrade: "F",
       overallScore: 0,
       components: {
-        diversification: { score: 0,  grade: "F", note: "No positions held"  },
-        riskBalance:     { score: 0,  grade: "F", note: "No positions held"  },
-        sectorSpread:    { score: 0,  grade: "F", note: "No positions held"  },
-        cashUtilization: { score: 50, grade: "C", note: "Fully in cash"      },
+        diversification: { score: 0,  grade: "F", note: "No positions held" },
+        riskBalance:     { score: 0,  grade: "F", note: "No positions held" },
+        sectorSpread:    { score: 0,  grade: "F", note: "No positions held" },
+        cashUtilization: { score: 50, grade: "C", note: "Fully in cash"     },
       },
       topDrag: "No investments have been made yet",
     };
   }
 
-  const sectorWeights = computeSectorWeights(positions, liveValues);
-  const hhi           = computeHHI(sectorWeights);
-  const numSectors    = Object.keys(sectorWeights).length;
-  const investedValue = posSymbols.reduce(
+  const sectorWeights  = computeSectorWeights(positions, liveValues);
+  const hhi            = computeHHI(sectorWeights);
+  const numSectors     = Object.keys(sectorWeights).length;
+  const investedValue  = posSymbols.reduce(
     (sum, sym) => sum + (liveValues?.[sym] ?? positions[sym].qty * positions[sym].avg_cost), 0
   );
   const totalValue     = investedValue + cash;
@@ -443,7 +451,6 @@ export function computeScorecard(
     scores.cashUtilization * 0.15
   );
 
-  // Plain English notes
   const notes = {
     diversification:
       diversScore < 50
@@ -464,10 +471,10 @@ export function computeScorecard(
   };
 
   const componentScores: [string, number][] = [
-    ["Diversification",   scores.diversification],
-    ["Risk Balance",      scores.riskBalance],
-    ["Sector Spread",     scores.sectorSpread],
-    ["Cash Utilization",  scores.cashUtilization],
+    ["Diversification",  scores.diversification],
+    ["Risk Balance",     scores.riskBalance],
+    ["Sector Spread",    scores.sectorSpread],
+    ["Cash Utilization", scores.cashUtilization],
   ];
   const topDragComponent = [...componentScores].sort((a, b) => a[1] - b[1])[0];
   const topDrag = `${topDragComponent[0]} (${topDragComponent[1]}/100) — ${
