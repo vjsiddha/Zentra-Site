@@ -1,120 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { saveToDictionary, removeFromDictionary } from "@/lib/dictionary";
 import {
-  ChevronLeft,
-  BookmarkPlus,
-  BookmarkCheck,
-  Sparkles,
-  ArrowRight,
-  Play,
-} from "lucide-react";
+  saveToDictionary,
+  removeFromDictionary,
+  isInDictionary,
+} from "@/lib/dictionary";
+import { awardXP, XP_REWARDS } from "@/lib/progress";
 
-interface Props {
-  onComplete: (score: number) => void;
-  onBack?: () => void;
-}
-
-type View = "intro" | "learn" | "quiz" | "complete";
-
+// Concept Data
 const CONCEPTS = [
   {
     id: 1,
     term: "Blockchain",
     definition:
       "A blockchain is a shared digital record of transactions stored across many computers. Transactions are grouped into blocks, and each block connects to the one before it, which makes the record difficult to change.",
-    simple: "A public digital record that is hard to fake or erase.",
+    analogy: "A public digital ledger that's nearly impossible to fake or erase.",
     example:
       "When someone sends Bitcoin, that transaction is added to the blockchain. Thousands of computers verify it. If one computer tries to alter the record, the rest reject it.",
     funFact:
-      "Bitcoin’s blockchain stores years of transaction history and keeps growing every day.",
-    imageUrl:
+      "Bitcoin's blockchain stores years of transaction history and keeps growing every day.",
+    image:
       "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=500&fit=crop",
-    imageCredit: "Photo by regularguy.eth on Unsplash",
-    videoUrl: "https://www.youtube.com/watch?v=SSo_EIwHSd4",
-    videoCredit: "3Blue1Brown - YouTube",
   },
   {
     id: 2,
     term: "Wallet",
     definition:
       "A crypto wallet is a tool that stores the keys you need to access and manage your cryptocurrency. Your coins are not inside the wallet itself. They remain on the blockchain while the wallet proves they belong to you.",
-    simple: "It holds your crypto access keys, not the coins themselves.",
+    analogy: "It holds your crypto access keys, not the coins themselves.",
     example:
       "A wallet is more like a keychain than a piggy bank. If you lose the keys, you can lose access to your crypto.",
     funFact:
       "Some wallets are apps, while others are physical devices called hardware wallets.",
-    imageUrl:
+    image:
       "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800&h=500&fit=crop",
-    imageCredit: "Photo by Pierre Borthiry on Unsplash",
-    videoUrl: "https://www.youtube.com/watch?v=d8IBpfs9bf4",
-    videoCredit: "Whiteboard Crypto - YouTube",
   },
   {
     id: 3,
     term: "Private Key",
     definition:
       "A private key is a secret code that gives full control over a crypto wallet. It proves ownership of your funds. Anyone with your private key can move your crypto.",
-    simple: "Your private key is the secret code you must never share.",
+    analogy: "Your private key is the secret code you must never share.",
     example:
       "If someone gets your private key, they can transfer your crypto away in seconds. Unlike a bank password, there is usually no support team that can reverse it.",
     funFact:
       "Private keys are extremely difficult to guess because the number of possible combinations is enormous.",
-    imageUrl:
+    image:
       "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&h=500&fit=crop",
-    imageCredit: "Photo by FLY:D on Unsplash",
-    videoUrl: "https://www.youtube.com/watch?v=GSTiKjnBaes",
-    videoCredit: "99Bitcoins - YouTube",
   },
   {
     id: 4,
     term: "Gas Fees",
     definition:
       "Gas fees are the transaction costs paid to a blockchain network for processing actions. Fees usually rise when the network is busy and fall when it is less crowded.",
-    simple: "You pay a network fee to move or use crypto.",
+    analogy: "You pay a network fee to move or use crypto.",
     example:
       "Sending crypto during a busy time can cost much more than sending it later when fewer people are using the network.",
     funFact:
       "On some blockchains, fees can change a lot within the same day.",
-    imageUrl:
+    image:
       "https://images.unsplash.com/photo-1621504450181-5d356f61d307?w=800&h=500&fit=crop",
-    imageCredit: "Photo by Kanchanara on Unsplash",
-    videoUrl: "https://www.youtube.com/watch?v=Yh8cHUB-KoU",
-    videoCredit: "Finematics - YouTube",
   },
   {
     id: 5,
     term: "Volatility",
     definition:
       "Volatility means prices move up and down quickly and by large amounts. Crypto is known for high volatility, which means prices can rise fast but also fall fast.",
-    simple: "Crypto prices can swing wildly in a short time.",
+    analogy: "Crypto prices can swing wildly in a short time.",
     example:
       "You could go to sleep with your portfolio up and wake up to find it down sharply. That is why crypto can feel exciting and stressful at the same time.",
     funFact:
       "Crypto often moves much more dramatically than most traditional stocks.",
-    imageUrl:
+    image:
       "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop",
-    imageCredit: "Photo by Chris Liverani on Unsplash",
-    videoUrl: "https://www.youtube.com/watch?v=sMWWXn7BdQM",
-    videoCredit: "Coin Bureau - YouTube",
   },
   {
     id: 6,
     term: "FOMO",
     definition:
       "FOMO means Fear Of Missing Out. In crypto, it happens when people rush into buying because they see others making money and do not want to feel left behind.",
-    simple: "FOMO is emotional buying because everyone else seems to be winning.",
+    analogy: "FOMO is emotional buying because everyone else seems to be winning.",
     example:
       "A coin starts trending online and people post huge gains. You feel pressure to buy quickly, even if you do not understand the project. That is FOMO.",
     funFact:
       "FOMO often pushes people to buy late, right before prices drop.",
-    imageUrl:
+    image:
       "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&h=500&fit=crop",
-    imageCredit: "Photo by Executium on Unsplash",
-    videoUrl: "https://www.youtube.com/watch?v=TlMgirJRwOE",
-    videoCredit: "Andrei Jikh - YouTube",
   },
 ];
 
@@ -125,27 +99,23 @@ const QUIZ_QUESTIONS = [
       "Your friend asks for your private key to help set up your wallet. What should you do?",
     options: [
       {
-        id: "A",
+        id: "a",
         text: "Share it because they are trying to help",
         correct: false,
-        feedback:
-          "Never share your private key. Anyone with it can control your crypto.",
       },
       {
-        id: "B",
+        id: "b",
         text: "Refuse because private keys should never be shared",
         correct: true,
-        feedback:
-          "Correct. Your private key gives full control over your crypto.",
       },
       {
-        id: "C",
+        id: "c",
         text: "Share it, but ask them to keep it safe",
         correct: false,
-        feedback:
-          "Still unsafe. Even trusted people or devices can be compromised.",
       },
     ],
+    explanation:
+      "Never share your private key. Anyone with it can control your crypto.",
   },
   {
     id: 2,
@@ -153,27 +123,23 @@ const QUIZ_QUESTIONS = [
       "A coin just pumped 300% in one week and people online say buy now. What is the smartest move?",
     options: [
       {
-        id: "A",
+        id: "a",
         text: "Buy immediately before it is too late",
         correct: false,
-        feedback:
-          "That is usually FOMO. Chasing hype without research is risky.",
       },
       {
-        id: "B",
+        id: "b",
         text: "Research the project before making any decision",
         correct: true,
-        feedback:
-          "Exactly. Good investors slow down, research, and avoid emotional decisions.",
       },
       {
-        id: "C",
+        id: "c",
         text: "Assume every crypto project is fake",
         correct: false,
-        feedback:
-          "Not all crypto projects are scams, but you should always be careful.",
       },
     ],
+    explanation:
+      "Good investors slow down, research, and avoid emotional decisions.",
   },
   {
     id: 3,
@@ -181,27 +147,23 @@ const QUIZ_QUESTIONS = [
       "Gas fees are highest during network congestion. When is a better time to make a transaction?",
     options: [
       {
-        id: "A",
+        id: "a",
         text: "Any time because fees do not matter",
         correct: false,
-        feedback:
-          "Fees can matter a lot, especially for small transactions.",
       },
       {
-        id: "B",
+        id: "b",
         text: "During lower-traffic periods",
         correct: true,
-        feedback:
-          "Correct. Timing your transaction can help reduce fees.",
       },
       {
-        id: "C",
+        id: "c",
         text: "Never make transactions because it is too confusing",
         correct: false,
-        feedback:
-          "You do not need to avoid crypto entirely. You just need to learn how fees work.",
       },
     ],
+    explanation:
+      "Timing your transaction can help reduce fees significantly.",
   },
   {
     id: 4,
@@ -209,26 +171,23 @@ const QUIZ_QUESTIONS = [
       "Someone messages you saying, send 1 ETH and get 10 ETH back. What is this most likely to be?",
     options: [
       {
-        id: "A",
+        id: "a",
         text: "A great opportunity",
         correct: false,
-        feedback:
-          "This is a classic scam. If it sounds too good to be true, it usually is.",
       },
       {
-        id: "B",
+        id: "b",
         text: "A scam that should be ignored and reported",
         correct: true,
-        feedback:
-          "Correct. Real investing does not work like free money giveaways.",
       },
       {
-        id: "C",
+        id: "c",
         text: "Something worth testing with a small amount",
         correct: false,
-        feedback: "Even a small test still loses money if it is a scam.",
       },
     ],
+    explanation:
+      "If it sounds too good to be true, it usually is a scam.",
   },
   {
     id: 5,
@@ -236,27 +195,23 @@ const QUIZ_QUESTIONS = [
       "Your portfolio drops 40% in one day and you start to panic. What should you do first?",
     options: [
       {
-        id: "A",
+        id: "a",
         text: "Sell everything immediately",
         correct: false,
-        feedback:
-          "Panic decisions often lock in losses at the worst moment.",
       },
       {
-        id: "B",
+        id: "b",
         text: "Pause, review your plan, and avoid emotional decisions",
         correct: true,
-        feedback:
-          "Exactly. Volatility is normal in crypto, so your response should be thoughtful, not impulsive.",
       },
       {
-        id: "C",
+        id: "c",
         text: "Buy much more right away without thinking",
         correct: false,
-        feedback:
-          "You should understand why the price fell before making another move.",
       },
     ],
+    explanation:
+      "Volatility is normal in crypto. Your response should be thoughtful, not impulsive.",
   },
   {
     id: 6,
@@ -264,632 +219,624 @@ const QUIZ_QUESTIONS = [
       "You want to store a large amount of crypto long-term. Which option is usually the most secure?",
     options: [
       {
-        id: "A",
+        id: "a",
         text: "Keeping it on an exchange",
         correct: false,
-        feedback:
-          "Exchanges can be hacked, and you do not fully control the keys.",
       },
       {
-        id: "B",
+        id: "b",
         text: "A hardware wallet",
         correct: true,
-        feedback:
-          "Correct. Hardware wallets keep your keys offline, which improves security.",
       },
       {
-        id: "C",
+        id: "c",
         text: "A phone wallet for maximum convenience",
         correct: false,
-        feedback:
-          "Phone wallets are useful, but large long-term holdings are usually safer in cold storage.",
       },
     ],
+    explanation:
+      "Hardware wallets keep your keys offline, which improves security.",
+  },
+  {
+    id: 7,
+    question:
+      "What happens to your crypto if you lose your seed phrase and have no backup?",
+    options: [
+      {
+        id: "a",
+        text: "You can contact support to recover it",
+        correct: false,
+      },
+      {
+        id: "b",
+        text: "Your crypto is likely lost forever",
+        correct: true,
+      },
+      {
+        id: "c",
+        text: "The blockchain automatically creates a new one",
+        correct: false,
+      },
+    ],
+    explanation:
+      "Without your seed phrase, there's usually no way to recover access to your wallet. That's why backup is critical.",
+  },
+  {
+    id: 8,
+    question:
+      "Why do crypto prices often change more dramatically than traditional stocks?",
+    options: [
+      {
+        id: "a",
+        text: "Because crypto markets are newer and less regulated",
+        correct: true,
+      },
+      {
+        id: "b",
+        text: "Because crypto is always a scam",
+        correct: false,
+      },
+      {
+        id: "c",
+        text: "Because people trade crypto more often",
+        correct: false,
+      },
+    ],
+    explanation:
+      "Crypto markets are newer, less regulated, and have higher volatility compared to traditional stock markets.",
+  },
+  {
+    id: 9,
+    question:
+      "What is the main advantage of blockchain technology?",
+    options: [
+      {
+        id: "a",
+        text: "It makes you rich quickly",
+        correct: false,
+      },
+      {
+        id: "b",
+        text: "It creates a transparent, tamper-resistant record",
+        correct: true,
+      },
+      {
+        id: "c",
+        text: "It eliminates all transaction fees",
+        correct: false,
+      },
+    ],
+    explanation:
+      "Blockchain's main advantage is creating a transparent, decentralized record that's very difficult to alter or fake.",
+  },
+  {
+    id: 10,
+    question:
+      "If a cryptocurrency exchange gets hacked and you kept all your crypto there, what might happen?",
+    options: [
+      {
+        id: "a",
+        text: "Nothing, because your crypto is insured",
+        correct: false,
+      },
+      {
+        id: "b",
+        text: "You could lose access to your funds",
+        correct: true,
+      },
+      {
+        id: "c",
+        text: "The government will refund you",
+        correct: false,
+      },
+    ],
+    explanation:
+      "Exchange hacks can result in lost funds. That's why many people use self-custody for long-term holdings.",
   },
 ];
 
-export default function L1_InteractiveLearn({ onComplete, onBack }: Props) {
+export default function L1_Definitions({
+  onComplete,
+  onBack,
+}: {
+  onComplete: (score: number) => void;
+  onBack?: () => void;
+}) {
   const { user } = useAuth();
-  const [view, setView] = useState<View>("intro");
-  const [currentCard, setCurrentCard] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [savedTerms, setSavedTerms] = useState<Set<number>>(new Set());
 
-  const [quizIndex, setQuizIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [quizScore, setQuizScore] = useState(0);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [view, setView] = useState<"intro" | "study" | "quiz" | "results">(
+    "intro"
+  );
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [quizIdx, setQuizIdx] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
 
-  const currentConcept = CONCEPTS[currentCard];
-  const currentQuiz = QUIZ_QUESTIONS[quizIndex];
+  // Dictionary saved state per concept.id
+  const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
+  const [saving, setSaving] = useState(false);
 
-  const toggleSave = async (conceptId: number, term: string, definition: string) => {
+  const currentConcept = useMemo(
+    () => CONCEPTS[currentIndex],
+    [currentIndex]
+  );
+  const currentTermId = useMemo(
+    () => String(currentConcept.id),
+    [currentConcept.id]
+  );
+  const isSaved = Boolean(savedMap[currentConcept.id]);
+
+  // Check if term is saved in dictionary
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkSaved() {
+      if (!user) return;
+      try {
+        const exists = await isInDictionary(user.uid, currentTermId);
+        if (!cancelled) {
+          setSavedMap((prev) => ({ ...prev, [currentConcept.id]: exists }));
+        }
+      } catch {
+        // keep UI stable even if Firestore fails
+      }
+    }
+
+    if (view === "study" && user) checkSaved();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, view, currentConcept.id, currentTermId]);
+
+  const toggleSave = async () => {
     if (!user) return;
+    if (saving) return;
 
-    const alreadySaved = savedTerms.has(conceptId);
+    setSaving(true);
+    try {
+      if (isSaved) {
+        await removeFromDictionary(user.uid, currentTermId);
+        setSavedMap((prev) => ({ ...prev, [currentConcept.id]: false }));
+      } else {
+        await saveToDictionary(user.uid, {
+          id: currentTermId,
+          term: currentConcept.term,
+          definition: currentConcept.definition,
+          analogy: currentConcept.analogy,
+          category: "CRYPTOCURRENCY",
+          moduleId: "module3",
+          lessonId: "L1_Definitions",
+          savedAt: Date.now(),
+        });
+        setSavedMap((prev) => ({ ...prev, [currentConcept.id]: true }));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    if (alreadySaved) {
-      await removeFromDictionary(user.uid, term);
-      setSavedTerms((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(conceptId);
-        return newSet;
-      });
+  const handleBack = () => {
+    if (view === "study") {
+      if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+      else setView("intro");
+    } else if (view === "quiz") {
+      if (quizIdx > 0 && !isSubmitted) {
+        setQuizIdx(quizIdx - 1);
+        setSelectedOption(null);
+        setIsSubmitted(false);
+      } else if (quizIdx === 0 && !isSubmitted) {
+        setView("study");
+        setCurrentIndex(CONCEPTS.length - 1);
+      }
+    }
+  };
+
+  const handleRedoLesson = () => {
+    setView("intro");
+    setCurrentIndex(0);
+    setQuizIdx(0);
+    setSelectedOption(null);
+    setIsSubmitted(false);
+    setScore(0);
+  };
+
+  const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
+
+  const handleNextConcept = async () => {
+    await awardXP(20);
+    if (currentIndex < CONCEPTS.length - 1) setCurrentIndex(currentIndex + 1);
+    else setView("quiz");
+  };
+
+  const handleNextQuestion = async () => {
+    const isCorrect = QUIZ_QUESTIONS[quizIdx].options.find(
+      (o) => o.id === selectedOption
+    )?.correct;
+    const newScore = isCorrect ? score + 10 : score;
+    setScore(newScore);
+
+    if (quizIdx < QUIZ_QUESTIONS.length - 1) {
+      setQuizIdx(quizIdx + 1);
+      setSelectedOption(null);
+      setIsSubmitted(false);
     } else {
-      await saveToDictionary(user.uid, {
-        term,
-        definition,
-        category: "CRYPTOCURRENCY",
-        moduleId: "module3",
-        lessonId: "L1_Learn",
-      });
-      setSavedTerms((prev) => new Set(prev).add(conceptId));
+      await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
+      setView("results");
     }
   };
 
-  const handleAnswerSelect = (optionId: string) => {
-    if (showFeedback) return;
+  const percentage = (score / (QUIZ_QUESTIONS.length * 10)) * 100;
 
-    setSelectedAnswer(optionId);
-    setShowFeedback(true);
-
-    const option = currentQuiz.options.find((o) => o.id === optionId);
-    if (option?.correct) {
-      setQuizScore((prev) => prev + 1);
-    }
+  const getResultFeedback = () => {
+    if (percentage >= 80)
+      return {
+        emoji: "🦁",
+        title: "Crypto Expert!",
+        msg: "You've mastered the cryptocurrency fundamentals!",
+        color: "text-green-600",
+        img: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?q=80&w=400",
+      };
+    if (percentage >= 50)
+      return {
+        emoji: "🦊",
+        title: "Getting There!",
+        msg: "Good progress! Review a few concepts and you'll nail it.",
+        color: "text-sky-600",
+        img: "https://images.unsplash.com/photo-1474511320723-9a5361ad3328?q=80&w=400",
+      };
+    return {
+      emoji: "🐻",
+      title: "Keep Learning!",
+      msg: "Crypto takes time to understand. Review the concepts and try again.",
+      color: "text-red-600",
+      img: "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?q=80&w=400",
+    };
   };
 
-  const nextQuizQuestion = () => {
-    if (quizIndex < QUIZ_QUESTIONS.length - 1) {
-      setQuizIndex((prev) => prev + 1);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
-    } else {
-      setView("complete");
-    }
-  };
+  const feedback = getResultFeedback();
 
+  const BackButton = () => (
+    <button
+      onClick={handleBack}
+      className="fixed top-4 left-6 z-50 flex items-center gap-2 px-4 py-2 text-[#4F7D96] hover:text-[#0B5E8E] font-bold transition-all hover:bg-slate-100 rounded-lg"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+      >
+        <path
+          d="M19 12H5M12 19l-7-7 7-7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      Back
+    </button>
+  );
+
+  // VIEW 1: INTRO
   if (view === "intro") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 p-8">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Back to Modules
-          </button>
-        )}
-
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl p-12 text-center">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
-              <Sparkles className="w-10 h-10 text-white" />
-            </div>
-
-            <h1 className="text-5xl font-black text-gray-900 mb-4">
-              Welcome to Crypto School
-            </h1>
-
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Learn the building blocks of cryptocurrency in a simple, interactive
-              way. You’ll explore how blockchain works, what wallets and private
-              keys do, and how to avoid beginner mistakes.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-6 mb-10">
-              <div className="bg-purple-50 rounded-2xl p-6">
-                <div className="w-12 h-12 mx-auto mb-3 bg-purple-600 rounded-xl flex items-center justify-center">
-                  <BookmarkPlus className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-lg mb-2">Learn</h3>
-                <p className="text-sm text-gray-600">
-                  {CONCEPTS.length} core ideas with examples, visuals, and videos.
-                </p>
-              </div>
-
-              <div className="bg-blue-50 rounded-2xl p-6">
-                <div className="w-12 h-12 mx-auto mb-3 bg-blue-600 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-lg mb-2">Interact</h3>
-                <p className="text-sm text-gray-600">
-                  Flip cards, save terms, and build your crypto vocabulary.
-                </p>
-              </div>
-
-              <div className="bg-green-50 rounded-2xl p-6">
-                <div className="w-12 h-12 mx-auto mb-3 bg-green-600 rounded-xl flex items-center justify-center">
-                  <ArrowRight className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-bold text-lg mb-2">Quiz</h3>
-                <p className="text-sm text-gray-600">
-                  Practice with {QUIZ_QUESTIONS.length} real-world crypto scenarios.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setView("learn")}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-12 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-xl"
-            >
-              Start Learning
-            </button>
+      <div className="relative flex flex-col items-center justify-center max-w-[1000px] mx-auto px-6 py-16 animate-in fade-in slide-in-from-bottom-4">
+        <div className="w-full text-center mb-10">
+          <div className="inline-flex items-center px-5 py-2.5 bg-sky-100 text-sky-700 rounded-full mb-6">
+            <span className="text-sm font-bold uppercase tracking-widest">
+              Lesson 1: The Foundation
+            </span>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (view === "learn") {
-    const progress = ((currentCard + 1) / CONCEPTS.length) * 100;
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 p-4 sm:p-8">
-        <style jsx>{`
-          .flip-card {
-            perspective: 1000px;
-          }
-
-          .flip-card-inner {
-            position: relative;
-            width: 100%;
-            min-height: 680px;
-            text-align: center;
-            transition: transform 0.8s;
-            transform-style: preserve-3d;
-          }
-
-          .flip-card-inner.flipped {
-            transform: rotateY(180deg);
-          }
-
-          .flip-card-front,
-          .flip-card-back {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            border-radius: 24px;
-          }
-
-          .flip-card-back {
-            transform: rotateY(180deg);
-          }
-
-          @media (max-width: 640px) {
-            .flip-card-inner {
-              min-height: 820px;
-            }
-          }
-        `}</style>
-
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => {
-                if (currentCard === 0) {
-                  setView("intro");
-                } else {
-                  setCurrentCard((prev) => prev - 1);
-                  setFlipped(false);
-                }
-              }}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              {currentCard === 0 ? "Back" : "Previous"}
-            </button>
-
-            <div className="text-sm font-bold text-gray-600">
-              {currentCard + 1} / {CONCEPTS.length}
-            </div>
-          </div>
-
-          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto">
-          <div className="flip-card">
-            <div className={`flip-card-inner ${flipped ? "flipped" : ""}`}>
-              <div className="flip-card-front">
-                <div
-                  className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 h-full flex flex-col cursor-pointer hover:shadow-3xl transition-shadow"
-                  onClick={() => setFlipped(true)}
-                >
-                  <div className="relative w-full h-56 sm:h-64 mb-6 rounded-2xl overflow-hidden">
-                    <img
-                      src={currentConcept.imageUrl}
-                      alt={currentConcept.term}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] sm:text-xs px-2 py-1 rounded">
-                      {currentConcept.imageCredit}
-                    </div>
-                  </div>
-
-                  <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-                    {currentConcept.term}
-                  </h2>
-
-                  <p className="text-lg sm:text-xl text-gray-600 mb-6 flex-1 leading-relaxed">
-                    {currentConcept.simple}
-                  </p>
-
-                  <div className="flex items-center justify-center gap-2 text-purple-600 animate-pulse">
-                    <Sparkles className="w-5 h-5" />
-                    <span className="font-bold">Click to flip and learn more</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flip-card-back">
-                <div
-                  className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl shadow-2xl p-6 sm:p-8 h-full cursor-pointer text-white overflow-y-auto flex items-center justify-center"
-                  onClick={() => setFlipped(false)}
-                >
-                  <div className="w-full max-w-2xl flex flex-col justify-center text-center my-auto">
-                    <h3 className="text-2xl font-black mb-4">Definition</h3>
-                    <p className="text-sm sm:text-base mb-6 leading-relaxed opacity-95">
-                      {currentConcept.definition}
-                    </p>
-
-                    <h3 className="text-xl font-black mb-3">Example</h3>
-                    <p className="text-sm sm:text-base mb-6 leading-relaxed opacity-95">
-                      {currentConcept.example}
-                    </p>
-
-                    <div className="bg-white/20 rounded-2xl p-4 mb-6 text-center">
-                      <h4 className="font-bold mb-2 flex items-center justify-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Quick Fact
-                      </h4>
-                      <p className="text-sm opacity-95">{currentConcept.funFact}</p>
-                    </div>
-
-                    <a
-                      href={currentConcept.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white/20 hover:bg-white/30 rounded-xl p-4 flex items-center gap-3 transition-colors text-left"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Play className="w-6 h-6 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-bold">Watch a short explanation</div>
-                        <div className="text-xs opacity-75">
-                          {currentConcept.videoCredit}
-                        </div>
-                      </div>
-                    </a>
-
-                    <div className="text-center mt-6 text-sm opacity-75">
-                      Click anywhere to flip back
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
-            <button
-              onClick={() =>
-                toggleSave(currentConcept.id, currentConcept.term, currentConcept.definition)
-              }
-              disabled={!user}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold transition-all ${
-                savedTerms.has(currentConcept.id)
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              } ${!user ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              {savedTerms.has(currentConcept.id) ? (
-                <>
-                  <BookmarkCheck className="w-5 h-5" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <BookmarkPlus className="w-5 h-5" />
-                  Save to Dictionary
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => {
-                if (currentCard < CONCEPTS.length - 1) {
-                  setCurrentCard((prev) => prev + 1);
-                  setFlipped(false);
-                } else {
-                  setView("quiz");
-                }
-              }}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform shadow-lg"
-            >
-              {currentCard < CONCEPTS.length - 1 ? "Next Concept" : "Take the Quiz"}
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto mt-8 text-center">
-          <p className="text-gray-500 text-sm">
-            Tap each card to flip it, learn the concept, and watch a short video for a deeper explanation.
+          <h1 className="text-[36px] font-bold text-[#0D171C] leading-tight mb-4">
+            Cryptocurrency Fundamentals
+          </h1>
+          <p className="mt-4 text-[#4F7D96] text-lg max-w-2xl mx-auto leading-relaxed">
+            Learn the building blocks of cryptocurrency in a simple, interactive
+            way. You'll explore how blockchain works, what wallets and private
+            keys do, and how to avoid beginner mistakes.
           </p>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 w-full">
+          <div className="flex flex-col items-start bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="w-16 h-16 bg-sky-100 rounded-xl flex items-center justify-center mb-4">
+              <span className="text-3xl">📚</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Learn</h3>
+            <p className="text-sm text-[#4F7D96] leading-relaxed">
+              {CONCEPTS.length} core cryptocurrency concepts with examples and
+              visuals
+            </p>
+          </div>
+
+          <div className="flex flex-col items-start bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
+              <span className="text-3xl">💾</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Save</h3>
+            <p className="text-sm text-[#4F7D96] leading-relaxed">
+              Build your personal crypto dictionary as you learn
+            </p>
+          </div>
+
+          <div className="flex flex-col items-start bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="w-16 h-16 bg-violet-100 rounded-xl flex items-center justify-center mb-4">
+              <span className="text-3xl">✅</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Quiz</h3>
+            <p className="text-sm text-[#4F7D96] leading-relaxed">
+              Test your knowledge with {QUIZ_QUESTIONS.length} real-world
+              scenarios
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setView("study")}
+          className="px-10 py-4 bg-[#0B5E8E] text-white rounded-full font-bold text-lg shadow-lg hover:bg-[#094a72] transition-all"
+        >
+          Start Learning
+        </button>
       </div>
     );
   }
 
-  if (view === "quiz") {
-    const quizProgress = ((quizIndex + 1) / QUIZ_QUESTIONS.length) * 100;
-
+  // VIEW 2: STUDY
+  if (view === "study") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 p-4 sm:p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-black text-gray-900">Quiz Time</h2>
-              <div className="text-sm font-bold text-gray-600">
-                Question {quizIndex + 1} / {QUIZ_QUESTIONS.length}
+      <div className="relative max-w-6xl mx-auto px-6 pb-12">
+        {showBackButton && <BackButton />}
+
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
+          <header className="text-center mb-10">
+            <p className="text-sky-600 font-bold uppercase tracking-widest text-xs mb-2">
+              Lesson 1: The Foundation
+            </p>
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-2">
+              {currentConcept.term}
+            </h2>
+            <p className="text-slate-400 text-sm">
+              Concept {currentIndex + 1} of {CONCEPTS.length}
+            </p>
+          </header>
+
+          <div className="grid md:grid-cols-2 gap-10 items-start bg-white p-8 rounded-3xl shadow-md border border-slate-100">
+            {/* Left Column: Image and Fun Fact */}
+            <div className="space-y-6">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm">
+                <Image
+                  src={currentConcept.image}
+                  alt={currentConcept.term}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Fun Fact below image */}
+              <div className="p-5 bg-amber-50 rounded-2xl border border-amber-100">
+                <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <span>💡</span> Fun Fact
+                </h3>
+                <p className="text-slate-700 leading-relaxed">
+                  {currentConcept.funFact}
+                </p>
               </div>
             </div>
 
-            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-green-500 to-blue-600 transition-all duration-500"
-                style={{ width: `${quizProgress}%` }}
-              />
+            {/* Right Column: Content */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Definition
+                </h3>
+                <p className="text-lg text-slate-700 leading-relaxed">
+                  {currentConcept.definition}
+                </p>
+              </div>
+
+              <div className="p-5 bg-sky-50 rounded-2xl border border-sky-100">
+                <h3 className="text-xs font-bold text-sky-600 uppercase tracking-wider mb-2">
+                  Simple Analogy
+                </h3>
+                <p className="italic text-slate-700 leading-relaxed">
+                  "{currentConcept.analogy}"
+                </p>
+              </div>
+
+              <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">
+                  Real Example
+                </h3>
+                <p className="text-slate-700 leading-relaxed">
+                  {currentConcept.example}
+                </p>
+              </div>
+
+              <button
+                onClick={toggleSave}
+                disabled={!user || saving}
+                className={[
+                  "w-full py-3 rounded-xl font-bold transition-all border-2",
+                  isSaved
+                    ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                    : "bg-[#0B5E8E] border-[#0B5E8E] text-white hover:bg-[#094a72]",
+                  !user || saving ? "opacity-60 cursor-not-allowed" : "",
+                ].join(" ")}
+              >
+                {isSaved
+                  ? "✓ Saved to Dictionary (Click to Remove)"
+                  : "+ Add to My Dictionary"}
+              </button>
+
+              <button
+                onClick={handleNextConcept}
+                className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg transition-all"
+              >
+                {currentIndex === CONCEPTS.length - 1
+                  ? "Start Knowledge Check"
+                  : "Next Concept"}
+              </button>
             </div>
           </div>
+        </section>
+      </div>
+    );
+  }
 
-          <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10">
-            <div className="mb-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-md">
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
-              <p className="text-sm text-gray-500 mb-2">Scenario question</p>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
-                {currentQuiz.question}
-              </h3>
-            </div>
+  // VIEW 3: QUIZ
+  if (view === "quiz") {
+    return (
+      <div className="relative max-w-5xl mx-auto px-4 pb-12">
+        {showBackButton && <BackButton />}
+        <section className="animate-in zoom-in duration-300 max-w-2xl mx-auto pt-16">
+          <header className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              Knowledge Check
+            </h2>
+            <p className="text-slate-500">
+              Question {quizIdx + 1} of {QUIZ_QUESTIONS.length}
+            </p>
+          </header>
 
-            <div className="space-y-4">
-              {currentQuiz.options.map((option) => {
-                const isSelected = selectedAnswer === option.id;
-                const isCorrect = option.correct;
+          <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100">
+            <p className="text-xl font-bold text-slate-800 mb-6">
+              {QUIZ_QUESTIONS[quizIdx].question}
+            </p>
 
-                let buttonClass =
-                  "w-full text-left p-5 sm:p-6 rounded-2xl border-2 transition-all font-semibold";
+            <div className="space-y-3">
+              {QUIZ_QUESTIONS[quizIdx].options.map((opt) => {
+                const isCorrect = opt.correct;
+                const isSelected = selectedOption === opt.id;
 
-                if (!showFeedback) {
-                  buttonClass += isSelected
-                    ? " border-blue-600 bg-blue-50"
-                    : " border-gray-200 hover:border-gray-300 hover:bg-gray-50";
-                } else if (isSelected) {
-                  buttonClass += isCorrect
-                    ? " border-green-600 bg-green-50"
-                    : " border-red-600 bg-red-50";
-                } else if (isCorrect) {
-                  buttonClass += " border-green-600 bg-green-50";
-                } else {
-                  buttonClass += " border-gray-200 opacity-50";
-                }
+                let btnStyle = "border-slate-100";
+                if (isSelected) btnStyle = "border-sky-500 bg-sky-50";
+                if (isSubmitted && isCorrect)
+                  btnStyle = "border-green-500 bg-green-50 text-green-700";
+                if (isSubmitted && isSelected && !isCorrect)
+                  btnStyle = "border-red-500 bg-red-50 text-red-700";
 
                 return (
                   <button
-                    key={option.id}
-                    onClick={() => handleAnswerSelect(option.id)}
-                    disabled={showFeedback}
-                    className={buttonClass}
+                    key={opt.id}
+                    disabled={isSubmitted}
+                    onClick={() => setSelectedOption(opt.id)}
+                    className={`w-full text-left p-4 rounded-xl border-2 font-medium transition-all ${btnStyle} flex justify-between items-center`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold flex-shrink-0">
-                        {option.id}
-                      </div>
-                      <div className="flex-1 text-sm sm:text-base">{option.text}</div>
-                      {showFeedback && isSelected && (
-                        <div className="text-2xl">{isCorrect ? "✓" : "✗"}</div>
-                      )}
-                    </div>
+                    <span>{opt.text}</span>
+                    {isSubmitted && isCorrect && (
+                      <span className="text-green-600 font-bold">✓</span>
+                    )}
+                    {isSubmitted && isSelected && !isCorrect && (
+                      <span className="text-red-600 font-bold">✕</span>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            {showFeedback && selectedAnswer && (
-              <div className="mt-8 p-5 sm:p-6 rounded-2xl bg-blue-50 border-2 border-blue-200">
-                <p className="text-base sm:text-lg leading-relaxed">
-                  {currentQuiz.options.find((o) => o.id === selectedAnswer)?.feedback}
-                </p>
-              </div>
-            )}
-
-            {showFeedback && (
-              <div className="mt-8">
-                <button
-                  onClick={nextQuizQuestion}
-                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform shadow-lg"
-                >
-                  {quizIndex < QUIZ_QUESTIONS.length - 1 ? "Next Question" : "See My Results"}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 text-center text-gray-600">
-            Current Score: {quizScore} / {quizIndex + (showFeedback ? 1 : 0)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (view === "complete") {
-    const finalScore = Math.round((quizScore / QUIZ_QUESTIONS.length) * 100);
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 p-4 sm:p-8 flex items-center justify-center">
-        <style jsx>{`
-          @keyframes trophyBounce {
-            0%,
-            100% {
-              transform: translateY(0) rotate(0deg);
-            }
-            25% {
-              transform: translateY(-14px) rotate(-6deg);
-            }
-            50% {
-              transform: translateY(-24px) rotate(6deg);
-            }
-            75% {
-              transform: translateY(-14px) rotate(-3deg);
-            }
-          }
-
-          @keyframes confettiFall {
-            0% {
-              transform: translateY(-20px) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(420px) rotate(360deg);
-              opacity: 0;
-            }
-          }
-
-          .trophy-animate {
-            animation: trophyBounce 2s ease-in-out infinite;
-          }
-
-          .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            animation: confettiFall 3s linear infinite;
-          }
-        `}</style>
-
-        <div className="max-w-2xl w-full">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 text-center relative overflow-hidden isolate">
-            {[...Array(10)].map((_, i) => (
+            {isSubmitted && (
               <div
-                key={i}
-                className="confetti"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  backgroundColor: ["#FFD700", "#FF8A8A", "#7DD3FC", "#A78BFA", "#FDE68A"][i % 5],
-                  animationDelay: `${Math.random() * 2.5}s`,
-                  top: -10,
-                }}
-              />
-            ))}
-
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-6 trophy-animate">
-              <svg
-                className="w-full h-full"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+                className={`mt-6 p-5 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300 border-2 ${
+                  QUIZ_QUESTIONS[quizIdx].options.find(
+                    (o) => o.id === selectedOption
+                  )?.correct
+                    ? "bg-green-50 border-green-200"
+                    : "bg-red-50 border-red-200"
+                }`}
               >
-                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" className="text-yellow-500" />
-                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" className="text-yellow-500" />
-                <path d="M4 22h16" className="text-yellow-600" />
-                <path
-                  d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"
-                  className="text-yellow-600"
-                />
-                <path
-                  d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"
-                  className="text-yellow-600"
-                />
-                <path
-                  d="M18 2H6v7a6 6 0 0 0 12 0V2Z"
-                  className="text-yellow-500"
-                  fill="#FFD700"
-                />
-              </svg>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">
-              Lesson Complete
-            </h1>
-
-            <p className="text-lg sm:text-xl text-gray-600 mb-3">
-              You scored{" "}
-              <span className="font-black text-green-600 text-3xl">{finalScore}%</span> on the quiz.
-            </p>
-
-            <p className="text-sm text-gray-500 mb-8">
-              Nice work. You’ve finished the lesson and built a strong beginner foundation in crypto.
-            </p>
-
-            <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-6 sm:p-8 mb-8 mx-auto max-w-2xl border border-blue-100 shadow-inner">
-              <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-blue-100 flex items-center justify-center mb-3">
-                  <Sparkles className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">
+                    {QUIZ_QUESTIONS[quizIdx].options.find(
+                      (o) => o.id === selectedOption
+                    )?.correct
+                      ? "✅"
+                      : "❌"}
+                  </span>
+                  <span
+                    className={`font-bold uppercase tracking-wider text-sm ${
+                      QUIZ_QUESTIONS[quizIdx].options.find(
+                        (o) => o.id === selectedOption
+                      )?.correct
+                        ? "text-green-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    {QUIZ_QUESTIONS[quizIdx].options.find(
+                      (o) => o.id === selectedOption
+                    )?.correct
+                      ? "Correct!"
+                      : "Not quite!"}
+                  </span>
                 </div>
-                <h3 className="text-2xl font-black text-gray-900">
-                  You now understand the basics
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Your crypto foundation is getting stronger.
+                <p className="text-slate-700 text-sm leading-relaxed italic">
+                  {QUIZ_QUESTIONS[quizIdx].explanation}
                 </p>
               </div>
+            )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {CONCEPTS.map((c) => (
-                  <div
-                    key={c.id}
-                    className="rounded-2xl bg-white px-4 py-4 text-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <span className="text-sm sm:text-base font-bold text-gray-800">
-                      {c.term}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => onComplete(finalScore)}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-5 rounded-full font-bold hover:scale-105 transition-transform shadow-lg text-lg"
-              >
-                Continue to Practice Games
-              </button>
-
-              <button
-                onClick={() => {
-                  setView("learn");
-                  setCurrentCard(0);
-                  setFlipped(false);
-                  setQuizIndex(0);
-                  setQuizScore(0);
-                  setSelectedAnswer(null);
-                  setShowFeedback(false);
-                }}
-                className="w-full bg-gray-100 text-gray-700 px-8 py-4 rounded-full font-bold hover:bg-gray-200 transition-colors"
-              >
-                Review Concepts Again
-              </button>
-            </div>
+            <button
+              disabled={!selectedOption}
+              onClick={() =>
+                isSubmitted ? handleNextQuestion() : setIsSubmitted(true)
+              }
+              className="mt-8 w-full py-4 bg-[#0B5E8E] text-white rounded-xl font-bold shadow-md hover:bg-[#094a72] transition-all disabled:bg-slate-200 disabled:cursor-not-allowed"
+            >
+              {isSubmitted
+                ? quizIdx === QUIZ_QUESTIONS.length - 1
+                  ? "Finish Quiz"
+                  : "Next Question"
+                : "Check Answer"}
+            </button>
           </div>
-        </div>
+        </section>
       </div>
     );
   }
 
-  return null;
+  // VIEW 4: RESULTS
+  return (
+    <div className="max-w-5xl mx-auto px-4 pb-12">
+      <section className="animate-in zoom-in duration-500 max-w-xl mx-auto text-center pt-10">
+        <div className="bg-white p-10 rounded-[40px] shadow-xl border border-slate-100">
+          <div className="relative w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-4 border-slate-50 shadow-inner">
+            <Image
+              src={feedback.img}
+              alt="result"
+              fill
+              className="object-cover"
+            />
+          </div>
+
+          <h2 className={`text-4xl font-black mb-2 ${feedback.color}`}>
+            {feedback.emoji} {feedback.title}
+          </h2>
+
+          <div className="text-6xl font-black text-slate-900 mb-4">
+            {percentage}%
+          </div>
+          <p className="text-slate-600 text-lg mb-10 leading-relaxed">
+            {feedback.msg}
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => onComplete(score)}
+              className="w-full py-5 bg-sky-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-sky-800 transition-all"
+            >
+              Move on to Lesson 2
+            </button>
+
+            <button
+              onClick={handleRedoLesson}
+              className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"
+            >
+              Redo Lesson 1
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }

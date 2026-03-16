@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { awardXP, XP_REWARDS } from "@/lib/progress";
 import {
   ChevronLeft,
   Wallet,
@@ -10,9 +11,7 @@ import {
   Sparkles,
   CheckCircle2,
   XCircle,
-  Search,
   Clock3,
-  Lock,
   AlertTriangle,
   ArrowRight,
 } from "lucide-react";
@@ -58,7 +57,7 @@ type SecurityCard = {
 const WALLET_SCENARIOS: WalletScenario[] = [
   {
     id: 1,
-    title: "You’re brand new to crypto",
+    title: "You're brand new to crypto",
     image:
       "https://images.unsplash.com/photo-1639322537504-6427a16b0a28?q=80&w=1200",
     prompt:
@@ -90,7 +89,7 @@ const WALLET_SCENARIOS: WalletScenario[] = [
     image:
       "https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?q=80&w=1200",
     prompt:
-      "You plan to hold your crypto for a long time. You want strong protection and do not want one company’s failure to wipe you out.",
+      "You plan to hold your crypto for a long time. You want strong protection and do not want one company's failure to wipe you out.",
     options: [
       {
         id: "custodial",
@@ -201,7 +200,7 @@ const SECURITY_CARDS: SecurityCard[] = [
     image:
       "https://images.unsplash.com/photo-1520975958225-915b0a7f2a68?q=80&w=1200",
     message:
-      "Hi, I’m support. Your wallet is at risk. Send me your seed phrase so I can secure it for you.",
+      "Hi, I'm support. Your wallet is at risk. Send me your seed phrase so I can secure it for you.",
     redFlags: [
       "Unsolicited message",
       "Fear tactic",
@@ -250,7 +249,9 @@ function Pill({
       : "bg-green-50 text-green-700 border-green-100";
 
   return (
-    <div className={`inline-flex items-center px-3 py-1.5 rounded-full border text-sm font-bold ${styles}`}>
+    <div
+      className={`inline-flex items-center px-3 py-1.5 rounded-full border text-sm font-bold ${styles}`}
+    >
       {children}
     </div>
   );
@@ -276,7 +277,9 @@ export default function L2_Interactive({
   const [tradingScore, setTradingScore] = useState(0);
 
   const [securityIdx, setSecurityIdx] = useState(0);
-  const [securityPick, setSecurityPick] = useState<SecurityChoice | null>(null);
+  const [securityPick, setSecurityPick] = useState<SecurityChoice | null>(
+    null
+  );
   const [securityLocked, setSecurityLocked] = useState(false);
   const [securityScore, setSecurityScore] = useState(0);
 
@@ -301,7 +304,8 @@ export default function L2_Interactive({
     if (view === "trading") {
       return (
         33 +
-        ((tradingIdx + (tradingLocked ? 1 : 0)) / TRADING_SCENARIOS.length) * 33
+        ((tradingIdx + (tradingLocked ? 1 : 0)) / TRADING_SCENARIOS.length) *
+          33
       );
     }
     if (view === "security") {
@@ -350,16 +354,18 @@ export default function L2_Interactive({
           return setView("intro");
         }
         if (view === "trading") {
-          if (!tradingLocked && tradingIdx > 0) return setTradingIdx((v) => v - 1);
+          if (!tradingLocked && tradingIdx > 0)
+            return setTradingIdx((v) => v - 1);
           return setView("wallet");
         }
         if (view === "security") {
-          if (!securityLocked && securityIdx > 0) return setSecurityIdx((v) => v - 1);
+          if (!securityLocked && securityIdx > 0)
+            return setSecurityIdx((v) => v - 1);
           return setView("trading");
         }
         return setView("security");
       }}
-      className="fixed top-4 left-4 sm:left-6 z-50 flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 font-bold transition-all hover:bg-white rounded-xl shadow-sm border border-slate-200"
+      className="fixed top-4 left-6 z-50 flex items-center gap-2 px-4 py-2 text-[#4F7D96] hover:text-[#0B5E8E] font-bold transition-all hover:bg-slate-100 rounded-lg"
     >
       <ChevronLeft className="w-5 h-5" />
       Back
@@ -381,12 +387,8 @@ export default function L2_Interactive({
     </div>
   );
 
-  const CardShell = ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }) => (
-    <div className="bg-white rounded-[28px] shadow-xl border border-slate-100 p-6 sm:p-8">
+  const CardShell = ({ children }: { children: React.ReactNode }) => (
+    <div className="bg-white rounded-3xl shadow-md border border-slate-100 p-8">
       {children}
     </div>
   );
@@ -408,9 +410,11 @@ export default function L2_Interactive({
   }) => {
     let styles = "border-slate-200 hover:border-slate-300 hover:bg-slate-50";
     if (!locked && selected) styles = "border-blue-500 bg-blue-50";
-    if (locked && selected && correct) styles = "border-green-400 bg-green-50";
+    if (locked && selected && correct)
+      styles = "border-green-400 bg-green-50";
     if (locked && selected && !correct) styles = "border-red-400 bg-red-50";
-    if (locked && !selected && correct) styles = "border-green-300 bg-green-50/70";
+    if (locked && !selected && correct)
+      styles = "border-green-300 bg-green-50/70";
 
     return (
       <button
@@ -426,72 +430,80 @@ export default function L2_Interactive({
 
   if (view === "intro") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50 px-4 sm:px-6 pt-20 pb-12">
-        <BackButton />
-
-        <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4">
+      <div className="min-h-screen bg-[#F7FAFC] px-6 pt-16 pb-12">
+        <div className="max-w-[1000px] mx-auto animate-in fade-in slide-in-from-bottom-4">
           <div className="text-center mb-10">
-            <Pill tone="blue">Lesson 2: Interactive</Pill>
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mt-5">
+            <div className="inline-flex items-center px-5 py-2.5 bg-sky-100 text-sky-700 rounded-full mb-6">
+              <span className="text-sm font-bold uppercase tracking-widest">
+                Lesson 2: Interactive
+              </span>
+            </div>
+            <h1 className="text-[36px] font-bold text-slate-900 mb-4">
               Make Real Crypto Decisions
             </h1>
-            <p className="text-slate-600 text-lg mt-3 max-w-2xl mx-auto leading-relaxed">
-              Practice choosing wallets, thinking through trades, and spotting scams.
-              This lesson is designed to help you learn by deciding, not just reading.
+            <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed">
+              Practice choosing wallets, thinking through trades, and spotting
+              scams. This lesson is designed to help you learn by deciding, not
+              just reading.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mb-10">
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
-              <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-4">
-                <Wallet className="w-7 h-7 text-blue-600" />
+            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+                <Wallet className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
                 Wallet Decisions
               </h3>
-              <p className="text-slate-600 leading-relaxed">
-                Learn when exchange wallets are useful and when self-custody makes more sense.
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Learn when exchange wallets are useful and when self-custody
+                makes more sense.
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
-              <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center mb-4">
-                <TrendingUp className="w-7 h-7 text-amber-600" />
+            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-16 h-16 rounded-xl bg-amber-100 flex items-center justify-center mb-4">
+                <TrendingUp className="w-8 h-8 text-amber-600" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
                 Trading Scenarios
               </h3>
-              <p className="text-slate-600 leading-relaxed">
-                Practice slowing down, avoiding FOMO, and making smarter investing decisions.
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Practice slowing down, avoiding FOMO, and making smarter
+                investing decisions.
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
-              <div className="w-14 h-14 rounded-2xl bg-rose-100 flex items-center justify-center mb-4">
-                <ShieldAlert className="w-7 h-7 text-rose-600" />
+            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-16 h-16 rounded-xl bg-rose-100 flex items-center justify-center mb-4">
+                <ShieldAlert className="w-8 h-8 text-rose-600" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
                 Scam Detector
               </h3>
-              <p className="text-slate-600 leading-relaxed">
-                Spot common tricks scammers use to steal seed phrases and wallet access.
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Spot common tricks scammers use to steal seed phrases and wallet
+                access.
               </p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-blue-600 to-violet-600 rounded-3xl p-8 text-white text-center shadow-xl">
-            <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-7 h-7" />
+          <div className="bg-gradient-to-r from-blue-600 to-violet-600 rounded-3xl p-8 text-white text-center shadow-lg">
+            <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black mb-3">
+            <h2 className="text-2xl font-bold mb-3">
               Ready to test your instincts?
             </h2>
-            <p className="text-blue-100 max-w-2xl mx-auto mb-6">
-              There are {totalQuestions} decisions in this lesson. Read each situation carefully and choose what you think is safest or smartest.
+            <p className="text-blue-100 max-w-2xl mx-auto mb-6 leading-relaxed">
+              There are {totalQuestions} decisions in this lesson. Read each
+              situation carefully and choose what you think is safest or
+              smartest.
             </p>
             <button
               onClick={() => setView("wallet")}
-              className="px-10 py-4 bg-white text-slate-900 rounded-full font-black hover:scale-105 transition-transform"
+              className="px-10 py-4 bg-white text-slate-900 rounded-full font-bold hover:scale-105 transition-transform shadow-md"
             >
               Start Lesson
             </button>
@@ -505,13 +517,15 @@ export default function L2_Interactive({
     const isCorrect = walletPick && walletPick === wallet.correct;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50 px-4 sm:px-6 pt-20 pb-12">
+      <div className="min-h-screen bg-[#F7FAFC] px-6 pt-16 pb-12">
         <BackButton />
 
         <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4">
           <div className="text-center mb-6">
             <Pill tone="blue">Wallet Decisions</Pill>
-            <h2 className="text-3xl font-black text-slate-900 mt-4">{wallet.title}</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mt-4">
+              {wallet.title}
+            </h2>
             <p className="text-slate-500 mt-2">
               Scenario {walletIdx + 1} of {WALLET_SCENARIOS.length}
             </p>
@@ -520,9 +534,13 @@ export default function L2_Interactive({
           <ProgressBar />
 
           <CardShell>
-            <div className="relative h-56 sm:h-64 rounded-3xl overflow-hidden mb-6">
-              <Image src={wallet.image} alt={wallet.title} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+            <div className="relative h-56 rounded-2xl overflow-hidden mb-6">
+              <Image
+                src={wallet.image}
+                alt={wallet.title}
+                fill
+                className="object-cover"
+              />
             </div>
 
             <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
@@ -550,10 +568,12 @@ export default function L2_Interactive({
             {walletLocked && (
               <div
                 className={`rounded-2xl border-2 p-5 mb-6 animate-in fade-in slide-in-from-top-2 ${
-                  isCorrect ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
+                  isCorrect
+                    ? "bg-green-50 border-green-200"
+                    : "bg-amber-50 border-amber-200"
                 }`}
               >
-                <div className="flex items-center gap-2 font-black text-slate-900 mb-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900 mb-2">
                   {isCorrect ? (
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                   ) : (
@@ -561,7 +581,9 @@ export default function L2_Interactive({
                   )}
                   {isCorrect ? "Correct choice" : "Better choice"}
                 </div>
-                <p className="text-slate-700 text-sm leading-relaxed">{wallet.explain}</p>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  {wallet.explain}
+                </p>
               </div>
             )}
 
@@ -570,16 +592,18 @@ export default function L2_Interactive({
                 onClick={() => {
                   if (!walletPick) return;
                   setWalletLocked(true);
-                  if (walletPick === wallet.correct) setWalletScore((s) => s + 1);
+                  if (walletPick === wallet.correct)
+                    setWalletScore((s) => s + 1);
                 }}
                 disabled={!walletPick}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition disabled:bg-slate-200 disabled:text-slate-500"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition disabled:bg-slate-200 disabled:text-slate-500"
               >
                 Lock Answer
               </button>
             ) : (
               <button
-                onClick={() => {
+                onClick={async () => {
+                  await awardXP(20);
                   setWalletPick(null);
                   setWalletLocked(false);
                   if (walletIdx < WALLET_SCENARIOS.length - 1) {
@@ -588,7 +612,7 @@ export default function L2_Interactive({
                     setView("trading");
                   }
                 }}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition flex items-center justify-center gap-2"
               >
                 {walletIdx < WALLET_SCENARIOS.length - 1
                   ? "Next Scenario"
@@ -606,13 +630,15 @@ export default function L2_Interactive({
     const isCorrect = tradingPick && tradingPick === trading.correct;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-blue-50 px-4 sm:px-6 pt-20 pb-12">
+      <div className="min-h-screen bg-[#F7FAFC] px-6 pt-16 pb-12">
         <BackButton />
 
         <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4">
           <div className="text-center mb-6">
             <Pill tone="amber">Trading Scenarios</Pill>
-            <h2 className="text-3xl font-black text-slate-900 mt-4">{trading.title}</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mt-4">
+              {trading.title}
+            </h2>
             <p className="text-slate-500 mt-2">
               Decision {tradingIdx + 1} of {TRADING_SCENARIOS.length}
             </p>
@@ -621,28 +647,34 @@ export default function L2_Interactive({
           <ProgressBar />
 
           <CardShell>
-            <div className="relative h-56 sm:h-64 rounded-3xl overflow-hidden mb-6">
-              <Image src={trading.image} alt={trading.title} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+            <div className="relative h-56 rounded-2xl overflow-hidden mb-6">
+              <Image
+                src={trading.image}
+                alt={trading.title}
+                fill
+                className="object-cover"
+              />
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4 mb-6">
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-5">
-                <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest font-black mb-2">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest font-bold mb-2">
                   <TrendingUp className="w-4 h-4" />
                   Current Price
                 </div>
-                <div className="text-2xl font-black text-slate-900">
+                <div className="text-2xl font-bold text-slate-900">
                   ${trading.currentPrice.toLocaleString()}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-5">
-                <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest font-black mb-2">
+              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest font-bold mb-2">
                   <Sparkles className="w-4 h-4" />
                   Market Cap
                 </div>
-                <div className="text-2xl font-black text-slate-900">{trading.marketCap}</div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {trading.marketCap}
+                </div>
               </div>
             </div>
 
@@ -651,7 +683,9 @@ export default function L2_Interactive({
                 <TrendingUp className="w-5 h-5" />
                 Situation
               </div>
-              <p className="text-slate-700 leading-relaxed">{trading.prompt}</p>
+              <p className="text-slate-700 leading-relaxed">
+                {trading.prompt}
+              </p>
             </div>
 
             <div className="space-y-3 mb-6">
@@ -671,18 +705,22 @@ export default function L2_Interactive({
             {tradingLocked && (
               <div
                 className={`rounded-2xl border-2 p-5 mb-6 animate-in fade-in slide-in-from-top-2 ${
-                  isCorrect ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
+                  isCorrect
+                    ? "bg-green-50 border-green-200"
+                    : "bg-amber-50 border-amber-200"
                 }`}
               >
-                <div className="flex items-center gap-2 font-black text-slate-900 mb-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900 mb-2">
                   {isCorrect ? (
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                   ) : (
-                    <Search className="w-5 h-5 text-amber-600" />
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
                   )}
                   {isCorrect ? "Smart move" : "Better approach"}
                 </div>
-                <p className="text-slate-700 text-sm leading-relaxed">{trading.explain}</p>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  {trading.explain}
+                </p>
               </div>
             )}
 
@@ -691,16 +729,18 @@ export default function L2_Interactive({
                 onClick={() => {
                   if (!tradingPick) return;
                   setTradingLocked(true);
-                  if (tradingPick === trading.correct) setTradingScore((s) => s + 1);
+                  if (tradingPick === trading.correct)
+                    setTradingScore((s) => s + 1);
                 }}
                 disabled={!tradingPick}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition disabled:bg-slate-200 disabled:text-slate-500"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition disabled:bg-slate-200 disabled:text-slate-500"
               >
                 Lock Decision
               </button>
             ) : (
               <button
-                onClick={() => {
+                onClick={async () => {
+                  await awardXP(20);
                   setTradingPick(null);
                   setTradingLocked(false);
                   if (tradingIdx < TRADING_SCENARIOS.length - 1) {
@@ -709,7 +749,7 @@ export default function L2_Interactive({
                     setView("security");
                   }
                 }}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition flex items-center justify-center gap-2"
               >
                 {tradingIdx < TRADING_SCENARIOS.length - 1
                   ? "Next Decision"
@@ -726,7 +766,11 @@ export default function L2_Interactive({
   if (view === "security") {
     const isCorrect = securityPick && securityPick === security.correct;
 
-    const securityOption = (id: SecurityChoice, label: string, icon: React.ReactNode) => {
+    const securityOption = (
+      id: SecurityChoice,
+      label: string,
+      icon: React.ReactNode
+    ) => {
       const selected = securityPick === id;
       let styles = "border-slate-200 hover:border-slate-300 hover:bg-slate-50";
       if (!securityLocked && selected) styles = "border-blue-500 bg-blue-50";
@@ -749,20 +793,24 @@ export default function L2_Interactive({
               {icon}
               <span className="font-bold text-slate-900">{label}</span>
             </div>
-            <span className="text-xs font-bold text-slate-500 uppercase">{id}</span>
+            <span className="text-xs font-bold text-slate-500 uppercase">
+              {id}
+            </span>
           </div>
         </button>
       );
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-orange-50 px-4 sm:px-6 pt-20 pb-12">
+      <div className="min-h-screen bg-[#F7FAFC] px-6 pt-16 pb-12">
         <BackButton />
 
         <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4">
           <div className="text-center mb-6">
             <Pill tone="rose">Scam Detector</Pill>
-            <h2 className="text-3xl font-black text-slate-900 mt-4">{security.title}</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mt-4">
+              {security.title}
+            </h2>
             <p className="text-slate-500 mt-2">
               Message {securityIdx + 1} of {SECURITY_CARDS.length}
             </p>
@@ -771,28 +819,34 @@ export default function L2_Interactive({
           <ProgressBar />
 
           <CardShell>
-            <div className="relative h-56 sm:h-64 rounded-3xl overflow-hidden mb-6">
-              <Image src={security.image} alt={security.title} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+            <div className="relative h-56 rounded-2xl overflow-hidden mb-6">
+              <Image
+                src={security.image}
+                alt={security.title}
+                fill
+                className="object-cover"
+              />
             </div>
 
-            <div className="bg-slate-900 text-white rounded-3xl p-6 mb-6">
-              <div className="text-xs uppercase tracking-widest text-white/70 font-black mb-2">
+            <div className="bg-slate-900 text-white rounded-2xl p-6 mb-6">
+              <div className="text-xs uppercase tracking-widest text-white/70 font-bold mb-2">
                 Incoming Message
               </div>
-              <p className="text-lg font-black leading-relaxed">{security.message}</p>
+              <p className="text-lg font-bold leading-relaxed">
+                {security.message}
+              </p>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 mb-6">
-              <div className="flex items-center gap-2 text-amber-900 font-black mb-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+              <div className="flex items-center gap-2 text-amber-900 font-bold mb-3">
                 <AlertTriangle className="w-5 h-5" />
                 Red flags to notice
               </div>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {security.redFlags.map((flag) => (
                   <div
                     key={flag}
-                    className="bg-white/80 rounded-2xl px-4 py-3 text-sm font-semibold text-amber-900 border border-amber-100"
+                    className="bg-white/80 rounded-xl px-4 py-3 text-sm font-semibold text-amber-900 border border-amber-100"
                   >
                     {flag}
                   </div>
@@ -821,18 +875,22 @@ export default function L2_Interactive({
             {securityLocked && (
               <div
                 className={`rounded-2xl border-2 p-5 mb-6 animate-in fade-in slide-in-from-top-2 ${
-                  isCorrect ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
+                  isCorrect
+                    ? "bg-green-50 border-green-200"
+                    : "bg-amber-50 border-amber-200"
                 }`}
               >
-                <div className="flex items-center gap-2 font-black text-slate-900 mb-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900 mb-2">
                   {isCorrect ? (
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                   ) : (
-                    <Lock className="w-5 h-5 text-amber-600" />
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
                   )}
                   {isCorrect ? "Correct" : "Not safe"}
                 </div>
-                <p className="text-slate-700 text-sm leading-relaxed">{security.explain}</p>
+                <p className="text-slate-700 text-sm leading-relaxed">
+                  {security.explain}
+                </p>
               </div>
             )}
 
@@ -841,16 +899,18 @@ export default function L2_Interactive({
                 onClick={() => {
                   if (!securityPick) return;
                   setSecurityLocked(true);
-                  if (securityPick === security.correct) setSecurityScore((s) => s + 1);
+                  if (securityPick === security.correct)
+                    setSecurityScore((s) => s + 1);
                 }}
                 disabled={!securityPick}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition disabled:bg-slate-200 disabled:text-slate-500"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition disabled:bg-slate-200 disabled:text-slate-500"
               >
                 Lock Choice
               </button>
             ) : (
               <button
-                onClick={() => {
+                onClick={async () => {
+                  await awardXP(20);
                   setSecurityPick(null);
                   setSecurityLocked(false);
                   if (securityIdx < SECURITY_CARDS.length - 1) {
@@ -859,7 +919,7 @@ export default function L2_Interactive({
                     setView("results");
                   }
                 }}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-black hover:opacity-95 transition flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-2xl font-bold hover:opacity-95 transition flex items-center justify-center gap-2"
               >
                 {securityIdx < SECURITY_CARDS.length - 1
                   ? "Next Message"
@@ -903,22 +963,20 @@ export default function L2_Interactive({
   })();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 px-4 sm:px-6 pt-20 pb-12">
-      <BackButton />
-
+    <div className="min-h-screen bg-[#F7FAFC] px-6 pt-16 pb-12">
       <div className="max-w-3xl mx-auto animate-in zoom-in">
-        <div className="bg-white rounded-[36px] p-8 sm:p-10 shadow-2xl border border-slate-100 text-center">
+        <div className="bg-white rounded-[36px] p-10 shadow-2xl border border-slate-100 text-center">
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center mx-auto mb-6 shadow-lg">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
 
           <Pill tone={resultMsg.tone}>Lesson Complete</Pill>
 
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-5 mb-3">
+          <h2 className="text-4xl font-bold text-slate-900 mt-5 mb-3">
             {resultMsg.title}
           </h2>
 
-          <div className="text-6xl sm:text-7xl font-black text-slate-900 mb-4">
+          <div className="text-7xl font-black text-slate-900 mb-4">
             {finalPercent}%
           </div>
 
@@ -926,9 +984,9 @@ export default function L2_Interactive({
             {resultMsg.desc}
           </p>
 
-          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-6 sm:p-8 mb-8 border border-blue-100 shadow-inner text-left">
+          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-8 mb-8 border border-blue-100 shadow-inner text-left">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-black text-slate-900">
+              <h3 className="text-2xl font-bold text-slate-900">
                 What you practiced
               </h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -936,7 +994,7 @@ export default function L2_Interactive({
               </p>
             </div>
 
-            <div className="grid gap-3">
+            <div className="space-y-3">
               <div className="rounded-2xl bg-white px-4 py-4 border border-slate-100 shadow-sm">
                 <div className="font-bold text-slate-900 mb-1">
                   Wallet choices
@@ -968,17 +1026,20 @@ export default function L2_Interactive({
 
           <div className="space-y-4">
             <button
-              onClick={() => onComplete(finalPercent)}
-              className="w-full py-5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-2xl font-black text-lg shadow-lg hover:opacity-95 transition"
+              onClick={async () => {
+                await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
+                onComplete(finalPercent);
+              }}
+              className="w-full py-6 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:opacity-95 transition"
             >
               Continue to Lesson 3
             </button>
 
             <button
               onClick={resetLesson}
-              className="w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-black text-lg hover:bg-slate-200 transition"
+              className="w-full py-5 bg-slate-100 text-slate-700 rounded-2xl font-bold text-lg hover:bg-slate-200 transition"
             >
-              Redo Lesson
+              Redo Lesson 2
             </button>
           </div>
         </div>
