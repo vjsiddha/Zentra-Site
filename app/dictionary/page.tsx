@@ -38,22 +38,29 @@ export default function DictionaryPage() {
     }
 
     async function fetchTerms() {
-      if (!user) return; // Type guard for async function
-      
-      try {
-        setLoading(true);
-        const terms = await listDictionary(user.uid);
-        // Filter out any terms without an id (shouldn't happen, but be safe)
-        const termsWithId = terms.filter((t): t is DictionaryTermWithId => !!t.id);
-        setAllTerms(termsWithId);
-        setFilteredTerms(termsWithId);
-      } catch (error) {
-        console.error("Error fetching dictionary:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  if (!user) return;
+  try {
+    setLoading(true);
+    const terms = await listDictionary(user.uid);
+    const termsWithId = terms.filter((t): t is DictionaryTermWithId => !!t.id);
+    setAllTerms(termsWithId);
+    setFilteredTerms(termsWithId);
 
+    // ✅ Seed mastery state from Firestore
+    const initialMastered = new Set<string>();
+    const initialPractice = new Set<string>();
+    for (const t of termsWithId) {
+      if ((t as any).mastered === true) initialMastered.add(t.id);
+      if ((t as any).needsPractice === true) initialPractice.add(t.id);
+    }
+    setMasteredTerms(initialMastered);
+    setNeedsPractice(initialPractice);
+  } catch (error) {
+    console.error("Error fetching dictionary:", error);
+  } finally {
+    setLoading(false);
+  }
+}
     fetchTerms();
   }, [user, authLoading, router]);
 
@@ -102,6 +109,7 @@ const getCategoryLabel = (category?: string) => {
       const { db } = await import("@/lib/firebase");
       await updateDoc(doc(db, "users", user.uid, "dictionary", currentTerm.id), {
         mastered: true,
+        needsPractice: false,  // ← add this line
       });
     } catch (e) {
       console.error("Failed to save mastered status", e);
@@ -122,18 +130,24 @@ const getCategoryLabel = (category?: string) => {
     nextCard();
   };
 
-  const handleNeedsPractice = () => {
-    const currentTerm = filteredTerms[currentCardIndex];
-    if (!currentTerm) return;
+  const handleNeedsPractice = async () => {
+  const currentTerm = filteredTerms[currentCardIndex];
+  if (!currentTerm || !user) return;
 
-    setNeedsPractice((prev) => {
-      const next = new Set(prev);
-      next.add(currentTerm.id);
-      return next;
+  try {
+    const { doc, updateDoc } = await import("firebase/firestore");
+    const { db } = await import("@/lib/firebase");
+    await updateDoc(doc(db, "users", user.uid, "dictionary", currentTerm.id), {
+      mastered: false,
+      needsPractice: true,
     });
+  } catch (e) {
+    console.error("Failed to save needsPractice status", e);
+  }
 
-    nextCard();
-  };
+  setNeedsPractice((prev) => { const next = new Set(prev); next.add(currentTerm.id); return next; });
+  nextCard();
+};
 
   const nextCard = () => {
     setIsFlipped(false);

@@ -3,18 +3,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  LineChart, Line, XAxis, YAxis, Tooltip, 
-  ResponsiveContainer, CartesianGrid, Scatter
-} from 'recharts';
-
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Scatter } from 'recharts';
 import { cleanUserInput, sanitizeResponse, generateFollowUpQuestions } from '@/services/chatbot/utilsService';
 import { extractSimulationParams, calculateSimulation, type SimulationResult } from '@/services/chatbot/simulationService';
 
 const COLORS = {
   primary: '#0E5B87',
   primaryLight: '#0E5B87',
-  primaryBg: 'rgba(14, 91, 135, 0.2)',
+  primaryBg: 'rgba(14, 91, 135, 0.2)', 
   avatarBg: '#DBEAFE',
   background: '#F7FAFC',
   cardBorder: '#E8EEF6',
@@ -37,11 +36,17 @@ function InvestmentChart({ data, title }: { data: { month: number; value: number
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
             <XAxis dataKey="month" label={{ value: 'Month', position: 'insideBottom', offset: -5 }} tick={{ fontSize: 11 }} />
-            <YAxis label={{ value: 'Portfolio Value ($)', angle: -90, position: 'insideLeft' }} tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(value: number | undefined) => {
-              if (typeof value === 'number') return [`$${value.toLocaleString()}`, 'Portfolio Value'];
-              return ['', 'Portfolio Value'];
-            }} />
+            <YAxis
+              label={{ value: 'Portfolio Value ($)', angle: -90, position: 'insideLeft' }}
+              tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+              tick={{ fontSize: 11 }}
+            />
+            <Tooltip
+              formatter={(value: number | undefined) => {
+                if (typeof value === 'number') return [`$${value.toLocaleString()}`, 'Portfolio Value'];
+                return ['', 'Portfolio Value'];
+              }}
+            />
             <Line type="monotone" dataKey="value" stroke="#4F8EF7" strokeWidth={3} dot={false} />
             <Scatter data={milestones} dataKey="value" fill={COLORS.warning} />
           </LineChart>
@@ -52,15 +57,49 @@ function InvestmentChart({ data, title }: { data: { month: number; value: number
 }
 
 export default function ChatbotPage() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<Record<string, Record<string, boolean>>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); };
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Fetch lesson progress once user is available
+  useEffect(() => {
+    if (!user?.uid) return;
+    const fetchProgress = async () => {
+      try {
+        const progressSnap = await getDoc(doc(db, 'users', user.uid, 'lessonProgress', 'all'));
+        // lessonProgress is stored per-module as subcollection docs — fetch all module docs
+        // Structure: users/{uid}/lessonProgress/{moduleId} -> { L1_Definitions: true, ... }
+        // We need to load each module doc individually; fetch the known 10 modules
+        const moduleIds = Array.from({ length: 10 }, (_, i) => `module${i + 1}`);
+        const results: Record<string, Record<string, boolean>> = {};
+        await Promise.all(
+          moduleIds.map(async (moduleId) => {
+            const snap = await getDoc(doc(db, 'users', user.uid, 'lessonProgress', moduleId));
+            if (snap.exists()) {
+              results[moduleId] = snap.data() as Record<string, boolean>;
+            }
+          })
+        );
+        setLessonProgress(results);
+      } catch (err) {
+        console.error('Failed to fetch lesson progress for ZenBot:', err);
+      }
+    };
+    fetchProgress();
+  }, [user?.uid]);
 
   const handleSendMessage = async (messageText?: string) => {
     const textToSend = messageText || input;
@@ -76,8 +115,12 @@ export default function ChatbotPage() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages,
+          lessonProgress,                // <-- passed to API
+        }),
       });
+
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
@@ -113,7 +156,7 @@ export default function ChatbotPage() {
           <Link href="/" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-4">
             ← Back to Home
           </Link>
-          <h1 className="text-2xl font-extrabold text-slate-900"> What-If Investment Simulator</h1>
+          <h1 className="text-2xl font-extrabold text-slate-900">What-If Investment Simulator</h1>
           <p className="text-slate-500 text-sm mt-1">Ask Benny about investment scenarios</p>
         </div>
       </header>
@@ -151,22 +194,30 @@ export default function ChatbotPage() {
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-4" style={{ backgroundColor: COLORS.avatarBg }}>
+                      <div
+                        className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-4"
+                        style={{ backgroundColor: COLORS.avatarBg }}
+                      >
                         <img src="/benny_avatar.png" alt="Benny" className="w-full h-full object-contain" />
                       </div>
                     )}
-                    <div className={`max-w-[75%] px-4 py-3 ${
-                      msg.role === 'user'
-                        ? 'bg-gray-100 text-gray-900 rounded-l-2xl rounded-tr-2xl'
-                        : 'bg-blue-50 text-gray-900 rounded-r-2xl rounded-tl-2xl'
-                    }`}>
+                    <div
+                      className={`max-w-[75%] px-4 py-3 ${
+                        msg.role === 'user'
+                          ? 'bg-gray-100 text-gray-900 rounded-l-2xl rounded-tr-2xl'
+                          : 'bg-blue-50 text-gray-900 rounded-r-2xl rounded-tl-2xl'
+                      }`}
+                    >
                       <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                     </div>
                   </div>
                 ))}
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-4" style={{ backgroundColor: COLORS.avatarBg }}>
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-4"
+                      style={{ backgroundColor: COLORS.avatarBg }}
+                    >
                       <img src="/zentra_logo.png" alt="Benny" className="w-full h-full object-contain" />
                     </div>
                     <div className="bg-blue-50 px-4 py-3 rounded-r-2xl rounded-tl-2xl">
@@ -207,7 +258,7 @@ export default function ChatbotPage() {
         {/* Follow-up Questions */}
         {followUpQuestions.length > 0 && (
           <div className="mt-6 bg-white rounded-2xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-700 mb-4">🤔 Suggested follow-up questions:</h3>
+            <h3 className="text-sm font-bold text-slate-700 mb-4">Suggested follow-up questions:</h3>
             <div className="space-y-3">
               {followUpQuestions.map((question, idx) => (
                 <button
@@ -227,9 +278,9 @@ export default function ChatbotPage() {
         {/* Simulation Chart */}
         {simulation && (
           <div className="mt-6 bg-white rounded-2xl p-8 shadow-sm space-y-6">
-            <InvestmentChart data={simulation.data} title="📊 Projection Chart" />
+            <InvestmentChart data={simulation.data} title="Projection Chart" />
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4">💡 Summary</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Summary</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-5 rounded-xl bg-slate-50">
                   <p className="text-xs text-slate-500 mb-2">Total Invested</p>
@@ -249,8 +300,7 @@ export default function ChatbotPage() {
             </div>
             <div className="p-5 rounded-xl" style={{ backgroundColor: '#FEF3C7' }}>
               <p className="text-sm text-slate-700">
-                <strong>Note:</strong> This is a simplified simulation using 7% annual returns. 
-                Real investment returns vary and are not guaranteed. For educational purposes only.
+                <strong>Note:</strong> This is a simplified simulation using 7% annual returns. Real investment returns vary and are not guaranteed. For educational purposes only.
               </p>
             </div>
           </div>
