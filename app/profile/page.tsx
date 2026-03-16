@@ -384,7 +384,7 @@ export default function ProfilePage() {
 
                   <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border-2 border-white/30">
                     <div className="text-sm font-medium text-blue-100 mb-1">LEVEL</div>
-                    <div className="text-4xl font-bold">{userLevel}</div>
+                    <div className="text-4xl font-bold">{modulesCompleted}</div>
                   </div>
                 </div>
               </section>
@@ -458,43 +458,6 @@ export default function ProfilePage() {
                 </div>
               </section>
 
-              {/* XP */}
-              <section>
-                <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
-                  Experience Points
-                </h3>
-
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <div className="text-sm font-medium text-gray-600 mb-1">
-                        Current XP
-                      </div>
-                      <div className="text-3xl font-bold text-purple-700">
-                        {Number(userXP).toLocaleString()} XP
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-600 mb-1">
-                        Next Level
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {Math.max(0, xpToNextLevel - userXP)} XP to go
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="h-4 bg-white rounded-full overflow-hidden border border-purple-200">
-                    <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all"
-                      style={{
-                        width: `${Math.min(100, (userXP / xpToNextLevel) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </section>
-
             {/* Unlocked Avatars */}
 <section>
   <h3 className="text-lg font-semibold uppercase tracking-wider text-gray-900 mb-6">
@@ -503,8 +466,8 @@ export default function ProfilePage() {
 
   <div className="bg-white rounded-xl border border-gray-200 p-6">
     <div className="grid grid-cols-8 gap-4">
-      {AVATARS.map((avatar, idx) => {
-  const isUnlocked = modulesCompleted >= avatar.modulesRequired;
+      {AVATARS.filter((a) => modulesCompleted >= a.modulesRequired).slice(0, 4).map((avatar, idx) => {
+  const isUnlocked = true;
   return (
           <div key={idx} className="text-center">
             <div

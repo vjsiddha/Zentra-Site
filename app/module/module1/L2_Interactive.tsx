@@ -8,7 +8,7 @@ import chartAnim from "@/public/lottie/chart.json";
 import lightningAnim from "@/public/lottie/lightning.json";
 import targetAnim from "@/public/lottie/target.json";
 import lightbulbAnim from "@/public/lottie/lightbulb.json";
-import { awardXP, XP_REWARDS } from "@/lib/progress"; 
+
   
 interface L2Props {
   onComplete: (score: number) => void;
@@ -254,7 +254,6 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
       remainingSavings: budget.savings,
       remainingFun: budget.fun
     });
-    await awardXP(20);
     setView("stress_intro");
   };
 
@@ -360,7 +359,6 @@ export default function L2_Interactive({ onComplete, onBack }: L2Props) {
   };
 
   const handleComplete = async () => {
-            await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
             onComplete(scores.overall);
           };
 

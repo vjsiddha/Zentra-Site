@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image"; 
-import { awardXP, XP_REWARDS } from "@/lib/progress";
+
   
 type L3Props = {
   onComplete: (score: number) => void;
@@ -359,18 +359,15 @@ export default function L3_Applying({ onComplete, }: L3Props) {
   };
 
   const handleComplete = async () => {
-    await awardXP(XP_REWARDS.COMPLETE_STEP + XP_REWARDS.COMPLETE_MODULE);
     onComplete(totalScore);
   };
 
   const handleDecisionsComplete = async () => {
-  await awardXP(20); // XP for completing decisions step
   setDecisionScore(calculateDecisionScore());
   setView("invest");
 };
 
   const handleInvestComplete = async () => {
-  await awardXP(20); // XP for completing investment step
   setInvestScore(calculateInvestScore());
   setView("prioritize");
 };
