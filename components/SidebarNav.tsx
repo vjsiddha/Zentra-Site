@@ -82,7 +82,7 @@ export default function SidebarNav({ onProfileClick }: SidebarNavProps) {
             <span className="text-sm">Profile</span>
           </button>
 
-          <NavItem href="/settings" icon="ti-settings" label="Settings" />
+          <NavItem href="/faq" icon="ti-help" label="FAQ" />
 
           {/* Logout placeholder */}
           <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 text-red-500 transition cursor-pointer">
