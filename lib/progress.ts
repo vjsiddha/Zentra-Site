@@ -99,7 +99,7 @@ export async function loadLessonProgress(
   return snap.exists() ? (snap.data() as LessonProgress) : null;
 }
 
-// ✅ load everything for rendering module page progress bars
+// load everything for rendering module page progress bars
 export async function loadAllLessonProgress(): Promise<Record<string, LessonProgress>> {
   const user = await getAuthedUser();
   if (!user) return {};
@@ -120,10 +120,6 @@ export const XP_REWARDS = {
   COMPLETE_MODULE: 500,
 };
 
-/**
- * Awards XP to the current user, recomputes level & avatars, writes to Firestore.
- * Call this whenever a step or module is completed.
- */
 export async function awardXP(amount: number): Promise<void> {
   const user = await getAuthedUser();
   if (!user) return;

@@ -99,6 +99,7 @@ const getCategoryLabel = (category?: string) => {
   return category && category.trim() ? category : "GENERAL";
 };
 
+
   const handleMastered = async () => {
     const currentTerm = filteredTerms[currentCardIndex];
     if (!currentTerm || !user) return;
@@ -201,7 +202,7 @@ const getCategoryLabel = (category?: string) => {
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
-  Back to Dashboard
+  Back to Dashboard 
 </button>
             <h1 className="text-3xl font-bold text-slate-900">Your Personal Dictionary</h1>
           </div>
