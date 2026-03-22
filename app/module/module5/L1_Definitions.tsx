@@ -184,6 +184,8 @@ export default function L1_Definitions({
     return Math.round((correct / QUIZ.length) * 100);
   }, [answers]);
 
+  const passedLesson = score >= 50;
+
   const BackButton = () => (
     <button
       onClick={() => {
@@ -581,12 +583,29 @@ export default function L1_Definitions({
             </p>
           </div>
 
-          <button
-            onClick={() => onComplete(score)}
-            className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-emerald-700 transition-all"
-          >
-            Continue to Lesson 2
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                if (passedLesson) onComplete(score);
+              }}
+              disabled={!passedLesson}
+              className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+                passedLesson
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
+              }`}
+            >
+              {passedLesson ? "Continue to Lesson 2" : "Score 50% to Unlock Lesson 2"}
+            </button>
+
+            {!passedLesson && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Keep going:</strong> You need at least <strong>50%</strong> on the Lesson 1 quiz before moving to Lesson 2.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>

@@ -238,7 +238,6 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
     }
   };
 
-  // Back navigation handler
   const handleBack = () => {
     if (view === "intro") {
       onBack?.();
@@ -260,7 +259,6 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
     }
   };
 
-  // Reset lesson to start over
   const handleRedoLesson = () => {
     setView("intro");
     setCurrentIndex(0);
@@ -270,13 +268,11 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
     setScore(0);
   };
 
-  // Check if back button should be visible
-  const showBackButton = 
+  const showBackButton =
     (view === "intro") ||
-    (view === "study") || 
+    (view === "study") ||
     (view === "quiz" && !isSubmitted);
 
-  // Handler for navigating definitions
   const handleNextDefinition = () => {
     if (currentIndex < DEFINITIONS.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -300,6 +296,7 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
   };
 
   const percentage = (score / (QUIZ_QUESTIONS.length * 10)) * 100;
+  const passedLesson = percentage >= 50;
 
   const getAnimalFeedback = () => {
     if (percentage >= 80) return {
@@ -314,7 +311,7 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
       title: "Clever Fox!",
       msg: "Great start! You're getting the hang of passive vs active investing. A quick review might help solidify the concepts.",
       color: "text-sky-600",
-      img: "https://images.unsplash.com/photo-1474511320723-9a5361ad3328?q=80&w=400"
+      img: "https://images.unsplash.com/photo-1543832923-44667a44c804?q=80&w=400"
     };
     return {
       emoji: "🐻",
@@ -327,7 +324,6 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
 
   const feedback = getAnimalFeedback();
 
-  // Back Button Component
   const BackButton = () => (
     <button
       onClick={handleBack}
@@ -398,7 +394,6 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
                 <p className="italic text-slate-600">"{DEFINITIONS[currentIndex].analogy}"</p>
               </div>
 
-              {/* Dictionary Save Button */}
               <button
                 onClick={toggleSave}
                 disabled={!user || saving}
@@ -510,15 +505,30 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: (sc
           <h2 className={`text-4xl font-black mb-2 ${feedback.color}`}>{feedback.emoji} {feedback.title}</h2>
           <div className="text-6xl font-black text-slate-900 mb-4">{percentage}%</div>
           <p className="text-slate-600 text-lg mb-10 leading-relaxed">{feedback.msg}</p>
-          
-          {/* Two buttons: Redo and Continue */}
+
           <div className="space-y-3">
-            <button 
-              onClick={() => onComplete(score)} 
-              className="w-full py-5 bg-sky-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-sky-800 transition-all"
+            <button
+              onClick={() => {
+                if (passedLesson) onComplete(score);
+              }}
+              disabled={!passedLesson}
+              className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+                passedLesson
+                  ? "bg-sky-700 text-white hover:bg-sky-800"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
+              }`}
             >
-              Complete Module 8
+              {passedLesson ? "Complete Module 8" : "Score 50% to Unlock Module Completion"}
             </button>
+
+            {!passedLesson && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Keep going:</strong> You need at least <strong>50%</strong> on the Lesson 1 quiz before completing the module.
+                </p>
+              </div>
+            )}
+
             <button 
               onClick={handleRedoLesson} 
               className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"

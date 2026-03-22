@@ -13,36 +13,36 @@ import {
 const DEFINITIONS = [
   {
     id: 1,
-    term: "The \"Best Days\" Gap",
-    definition: "The statistical phenomenon where a significant portion of long-term stock market returns occurs on just a handful of trading days. If an investor is \"waiting on the sidelines\" to time the market and misses the 10 best days of a decade, their total wealth could be up to 50% lower than someone who stayed invested.",
+    term: 'The "Best Days" Gap',
+    definition: 'The statistical phenomenon where a significant portion of long-term stock market returns occurs on just a handful of trading days. If an investor is "waiting on the sidelines" to time the market and misses the 10 best days of a decade, their total wealth could be up to 50% lower than someone who stayed invested.',
     analogy: "It's like skipping random school days thinking they won't matter—but those days happened to be when the teacher gave out free A's. You can't predict which days will be the winners, so you have to show up every day.",
     image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=1200"
   },
   {
     id: 2,
     term: "The Two-Decision Requirement",
-    definition: "The mathematical trap of market timing. To successfully time the market, an investor must be right twice: once when they sell at the \"top\" and once when they buy back in at the \"bottom.\" Statistically, the odds of being right twice in a row are significantly lower than the odds of the market simply going up over time.",
+    definition: 'The mathematical trap of market timing. To successfully time the market, an investor must be right twice: once when they sell at the "top" and once when they buy back in at the "bottom." Statistically, the odds of being right twice in a row are significantly lower than the odds of the market simply going up over time.',
     analogy: "It's like trying to perfectly time both exits in a revolving door—you need to jump out at exactly the right moment AND jump back in at exactly the right moment. Miss either one and you're stuck outside or spinning in circles.",
     image: "https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=1200"
   },
   {
     id: 3,
     term: "Volatility vs. Permanent Loss",
-    definition: "Volatility is the temporary \"bumpy ride\" of prices moving up and down. Permanent Loss is what happens when you panic-sell during a dip. Time in the market transforms volatility into a distraction, while timing the market often turns volatility into a permanent loss.",
+    definition: "Volatility is the temporary 'bumpy ride' of prices moving up and down. Permanent Loss is what happens when you panic-sell during a dip. Time in the market transforms volatility into a distraction, while timing the market often turns volatility into a permanent loss.",
     analogy: "Volatility is like a roller coaster—scary drops, but you always return to the station safely if you stay in your seat. Jumping out mid-ride (panic selling) is when temporary fear becomes permanent injury.",
     image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=1200"
   },
   {
     id: 4,
     term: "The Cost of Hesitation",
-    definition: "The specific amount of potential growth lost for every year a student waits to start. Because compounding is \"back-loaded\" (most growth happens in the final years), the \"cost\" of waiting from age 18 to 28 is much higher than the cost of waiting from age 48 to 58.",
+    definition: 'The specific amount of potential growth lost for every year a student waits to start. Because compounding is "back-loaded" (most growth happens in the final years), the "cost" of waiting from age 18 to 28 is much higher than the cost of waiting from age 48 to 58.',
     analogy: "It's like compound interest is a rocket launch—the early years are building the fuel tanks. Wait too long to start, and you're trying to reach orbit with half the fuel you needed.",
     image: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=1200"
   },
   {
     id: 5,
     term: "Market Cycle Neutrality",
-    definition: "A mindset where an investor ignores whether the economy is in a \"Bull Market\" (rising) or a \"Bear Market\" (falling), based on the historical fact that every market downturn in history has been followed by an eventual recovery to new all-time highs.",
+    definition: 'A mindset where an investor ignores whether the economy is in a "Bull Market" (rising) or a "Bear Market" (falling), based on the historical fact that every market downturn in history has been followed by an eventual recovery to new all-time highs.',
     analogy: "It's like knowing the ocean has tides—sometimes high, sometimes low, but the water always comes back. Fighting the tide exhausts you; riding it out gets you home safely.",
     image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=1200"
   },
@@ -57,7 +57,7 @@ const DEFINITIONS = [
     id: 7,
     term: "Dollar-Cost Averaging",
     definition: "Investing a fixed amount of money at regular intervals (like monthly) regardless of whether the market is up, down, or sideways. This ensures you're always in the market and removes the temptation to time your investments based on market predictions.",
-    analogy: "It's like buying groceries every week at whatever the price is, rather than trying to predict when bananas will be cheapest. Sometimes you pay more, sometimes less, but you never go hungry waiting for the \"perfect\" price.",
+    analogy: "It's like buying groceries every week at whatever the price is, rather than trying to predict when bananas will be cheapest. Sometimes you pay more, sometimes less, but you never go hungry waiting for the 'perfect' price.",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200"
   },
   {
@@ -271,9 +271,9 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
   };
 
   // Check if back button should be visible
-  const showBackButton = 
+  const showBackButton =
     (view === "intro") ||
-    (view === "study") || 
+    (view === "study") ||
     (view === "quiz" && !isSubmitted);
 
   // Handler for navigating definitions
@@ -300,6 +300,7 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
   };
 
   const percentage = (score / (QUIZ_QUESTIONS.length * 10)) * 100;
+  const passedLesson = percentage >= 50;
 
   const getAnimalFeedback = () => {
     if (percentage >= 80) return {
@@ -510,14 +511,29 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
           <div className="text-6xl font-black text-slate-900 mb-4">{percentage}%</div>
           <p className="text-slate-600 text-lg mb-10 leading-relaxed">{feedback.msg}</p>
           
-          {/* Two buttons: Continue and Redo */}
           <div className="space-y-3">
-            <button 
-              onClick={() => onComplete()} 
-              className="w-full py-5 bg-sky-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-sky-800 transition-all"
+            <button
+              onClick={() => {
+                if (passedLesson) onComplete();
+              }}
+              disabled={!passedLesson}
+              className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+                passedLesson
+                  ? "bg-sky-700 text-white hover:bg-sky-800"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
+              }`}
             >
-              Continue to Interactive Lesson
+              {passedLesson ? "Continue to Interactive Lesson" : "Score 50% to Unlock the Next Lesson"}
             </button>
+
+            {!passedLesson && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Keep going:</strong> You need at least <strong>50%</strong> on the Lesson 1 quiz before moving on.
+                </p>
+              </div>
+            )}
+
             <button 
               onClick={handleRedoLesson} 
               className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"

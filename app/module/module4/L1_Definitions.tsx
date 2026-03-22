@@ -56,7 +56,7 @@ const DEFINITIONS = [
     term: "Volatility",
     definition: "The degree of price fluctuation in an investment. High volatility means big swings up and down; low volatility means stable, gradual changes.",
     analogy: "Like a roller coaster versus a train—both get you somewhere, but one is way bumpier than the other.",
-    image: "https://images.unsplash.com/photo-1620315969580-a62a8ec93e99?q=80&w=1200",
+    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=1200",
     keyTakeaway: "Volatility is not the same as risk. Short-term volatility is normal; long-term trends matter more."
   },
   {
@@ -300,6 +300,7 @@ export default function L1_Definitions({ onComplete }: { onComplete: (score: num
   };
 
   const percentage = (score / (QUIZ_QUESTIONS.length * 10)) * 100;
+  const passedLesson = percentage >= 50;
 
   const getFeedback = () => {
     if (percentage >= 80) return {
@@ -532,11 +533,27 @@ export default function L1_Definitions({ onComplete }: { onComplete: (score: num
           
           <div className="space-y-3">
             <button 
-              onClick={() => onComplete(score)} 
-              className="w-full py-5 bg-rose-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-rose-700 transition-all"
+              onClick={() => {
+                if (passedLesson) onComplete(score);
+              }}
+              disabled={!passedLesson}
+              className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+                passedLesson
+                  ? "bg-rose-600 text-white hover:bg-rose-700"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
+              }`}
             >
-              Continue to Lesson 2 →
+              {passedLesson ? "Continue to Lesson 2 →" : "Score 50% to Unlock Lesson 2"}
             </button>
+
+            {!passedLesson && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Keep going:</strong> You need at least <strong>50%</strong> on the Lesson 1 quiz before moving to Lesson 2.
+                </p>
+              </div>
+            )}
+
             <button 
               onClick={handleRedoLesson} 
               className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"

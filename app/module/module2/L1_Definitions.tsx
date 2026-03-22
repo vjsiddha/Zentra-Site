@@ -300,6 +300,8 @@ export default function L1_Definitions({
     return Math.round((score / max) * 100);
   }, [score]);
 
+  const passedLesson = percentage >= 50;
+
   const feedback = useMemo(() => {
     if (percentage >= 85) {
       return {
@@ -327,7 +329,7 @@ export default function L1_Definitions({
       msg:
         "Totally normal at the start. Re-run definitions and pay attention to time horizon + fee drag — those concepts unlock the rest of the module.",
       color: "text-red-600",
-      img: "https://images.unsplash.com/photo-1516632664305-eda5d0bb39b5?q=80&w=400",
+      img: "https://images.unsplash.com/photo-1543832923-44667a44c804?q=80&w=400",
       };
   }, [percentage]);
 
@@ -624,13 +626,27 @@ export default function L1_Definitions({
           <p className="text-slate-600 text-lg mb-10 leading-relaxed">{feedback.msg}</p>
 
           <div className="space-y-3">
-            {/* IMPORTANT: your module page expects % */}
             <button
-              onClick={() => onComplete(percentage)}
-              className="w-full py-5 bg-sky-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-sky-800 transition-all"
+              onClick={() => {
+                if (passedLesson) onComplete(percentage);
+              }}
+              disabled={!passedLesson}
+              className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+                passedLesson
+                  ? "bg-sky-700 text-white hover:bg-sky-800"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
+              }`}
             >
-              Continue to Lesson 2
+              {passedLesson ? "Continue to Lesson 2" : "Score 50% to Unlock Lesson 2"}
             </button>
+
+            {!passedLesson && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Keep going:</strong> You need at least <strong>50%</strong> on Lesson 1 before moving to Lesson 2.
+                </p>
+              </div>
+            )}
 
             <button
               onClick={handleRedoLesson}

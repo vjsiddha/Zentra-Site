@@ -21,24 +21,24 @@ function ModuleTenContent() {
 
   const [hydrated, setHydrated] = useState(false);
 
-useEffect(() => {
-  const step = searchParams.get("step");
-  if (step) {
-    const stepNum = parseInt(step, 10);
-    if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
-  }
-  setHydrated(true);
-}, [searchParams]);
+  useEffect(() => {
+    const step = searchParams.get("step");
+    if (step) {
+      const stepNum = parseInt(step, 10);
+      if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
+    }
+    setHydrated(true);
+  }, [searchParams]);
 
-useEffect(() => {
-  if (!hydrated) return;
-  const lastPath = `/module/module10?step=${activeStep}`;  
-  saveLessonProgress("module10", activeStep, {
-    totalSteps: 4,
-    lastPath,
-    isComplete: activeStep === 4,
-  });
-}, [activeStep, hydrated]);
+  useEffect(() => {
+    if (!hydrated) return;
+    const lastPath = `/module/module10?step=${activeStep}`;
+    saveLessonProgress("module10", activeStep, {
+      totalSteps: 4,
+      lastPath,
+      isComplete: activeStep === 4,
+    });
+  }, [activeStep, hydrated]);
 
   const goToStep = (step: number) => {
     setActiveStep(step);
@@ -47,7 +47,6 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
-      {/* Back to Modules */}
       {activeStep !== 4 && (
         <div className="fixed top-0 right-0 z-50 p-6">
           <button
@@ -66,18 +65,16 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Lesson 1 */}
       {activeStep === 1 && (
         <L1_Definitions
           onComplete={(score) => {
             setLesson1Score(score);
             goToStep(2);
           }}
-          onBack={() => router.push("/lesson")}
+          onBack={() => router.push("/module")}
         />
       )}
 
-      {/* Lesson 2 */}
       {activeStep === 2 && (
         <L2_Interactive
           onComplete={(score) => {
@@ -88,7 +85,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Lesson 3 */}
       {activeStep === 3 && (
         <L3_Applying
           onComplete={(score) => {
@@ -99,7 +95,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Module Complete */}
       {activeStep === 4 && (
         <section className="min-h-screen flex items-center justify-center px-6">
           <div className="max-w-xl w-full bg-white p-12 rounded-[40px] shadow-xl border border-slate-100 text-center animate-in zoom-in duration-500">
@@ -114,7 +109,6 @@ useEffect(() => {
               Understanding how psychology shapes decisions helps investors stay calmer, more disciplined, and more rational.
             </p>
 
-            {/* Score Summary */}
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="bg-pink-50 rounded-xl p-4">
                 <p className="text-xs text-pink-600 uppercase font-bold">Lesson 1</p>
@@ -132,7 +126,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Progress */}
             <div className="mb-8">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-bold text-slate-700">Module 10 Progress</span>
@@ -145,7 +138,7 @@ useEffect(() => {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push("/lesson")}
+                onClick={() => router.push("/module")}
                 className="w-full py-5 bg-[#0D171C] text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
               >
                 Back to All Modules

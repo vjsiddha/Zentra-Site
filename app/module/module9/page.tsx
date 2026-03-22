@@ -21,24 +21,24 @@ function ModuleNineContent() {
 
   const [hydrated, setHydrated] = useState(false);
 
-useEffect(() => {
-  const step = searchParams.get("step");
-  if (step) {
-    const stepNum = parseInt(step, 10);
-    if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
-  }
-  setHydrated(true);
-}, [searchParams]);
+  useEffect(() => {
+    const step = searchParams.get("step");
+    if (step) {
+      const stepNum = parseInt(step, 10);
+      if (stepNum >= 1 && stepNum <= 4) setActiveStep(stepNum);
+    }
+    setHydrated(true);
+  }, [searchParams]);
 
-useEffect(() => {
-  if (!hydrated) return;
-  const lastPath = `/module/module9?step=${activeStep}`; // module10 for the other
-  saveLessonProgress("module9", activeStep, {
-    totalSteps: 4,
-    lastPath,
-    isComplete: activeStep === 4,
-  });
-}, [activeStep, hydrated]); 
+  useEffect(() => {
+    if (!hydrated) return;
+    const lastPath = `/module/module9?step=${activeStep}`;
+    saveLessonProgress("module9", activeStep, {
+      totalSteps: 4,
+      lastPath,
+      isComplete: activeStep === 4,
+    });
+  }, [activeStep, hydrated]);
 
   const goToStep = (step: number) => {
     setActiveStep(step);
@@ -47,8 +47,6 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#F7FAFC] font-manrope text-[#0D171C]">
-
-      {/* Back to Modules */}
       {activeStep !== 4 && (
         <div className="fixed top-0 right-0 z-50 p-6">
           <button
@@ -56,25 +54,27 @@ useEffect(() => {
             className="px-6 py-3 bg-white text-[#0B5E8E] rounded-full font-bold text-sm hover:bg-slate-50 transition-all shadow-lg border border-slate-200 flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
             </svg>
             Back to Modules
           </button>
         </div>
       )}
 
-      {/* Lesson 1 */}
       {activeStep === 1 && (
         <L1_Definitions
           onComplete={(score) => {
             setLesson1Score(score);
             goToStep(2);
           }}
-          onBack={() => router.push("/lesson")}
+          onBack={() => router.push("/module")}
         />
       )}
 
-      {/* Lesson 2 */}
       {activeStep === 2 && (
         <L2_Interactive
           onComplete={(score) => {
@@ -85,7 +85,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Lesson 3 */}
       {activeStep === 3 && (
         <L3_Applying
           onComplete={(score) => {
@@ -96,7 +95,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Module Complete */}
       {activeStep === 4 && (
         <section className="min-h-screen flex items-center justify-center px-6">
           <div className="max-w-xl w-full bg-white p-12 rounded-[40px] shadow-xl border border-slate-100 text-center animate-in zoom-in duration-500">
@@ -111,7 +109,6 @@ useEffect(() => {
               Understanding these signals helps investors anticipate shifts in economic cycles and market trends.
             </p>
 
-            {/* Score Summary */}
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="bg-sky-50 rounded-xl p-4">
                 <p className="text-xs text-sky-600 uppercase font-bold">Lesson 1</p>
@@ -129,7 +126,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Progress */}
             <div className="mb-8">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-bold text-slate-700">Module 9 Progress</span>
@@ -142,7 +138,7 @@ useEffect(() => {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push("/lesson")}
+                onClick={() => router.push("/module")}
                 className="w-full py-5 bg-[#0D171C] text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
               >
                 Back to All Modules

@@ -320,6 +320,7 @@ const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
   };
 
   const percentage = (score / (QUIZ_QUESTIONS.length * 10)) * 100;
+  const passedLesson = percentage >= 50;
 
   const getAnimalFeedback = () => {
     if (percentage >= 80)
@@ -332,12 +333,12 @@ const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
       };
     if (percentage >= 50)
       return {
-        emoji: "🦊",
-        title: "Clever Fox!",
-        msg: "Great start! You're getting the hang of this, but a quick review might help.",
-        color: "text-sky-600",
-        img: "https://images.unsplash.com/photo-1474511320723-9a5361ad3328?q=80&w=400",
-      };
+  emoji: "🦊",
+  title: "Clever Fox!",
+  msg: "Great start! You're getting the hang of this, but a quick review might help.",
+  color: "text-sky-600",
+  img: "https://images.unsplash.com/photo-1543832923-44667a44c804?q=80&w=400",
+};
     return {
       emoji: "🐻",
       title: "Hibernating Bear...",
@@ -569,11 +570,26 @@ const showBackButton = view === "study" || (view === "quiz" && !isSubmitted);
 
           <div className="space-y-3">
             <button
-              onClick={() => onComplete(score)}
-              className="w-full py-5 bg-sky-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-sky-800 transition-all"
+              onClick={() => {
+                if (passedLesson) onComplete(score);
+              }}
+              disabled={!passedLesson}
+              className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+                passedLesson
+                  ? "bg-sky-700 text-white hover:bg-sky-800"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none"
+              }`}
             >
-              Move on to Lesson 2
+              {passedLesson ? "Move on to Lesson 2" : "Score 50% to Unlock Lesson 2"}
             </button>
+
+            {!passedLesson && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Keep going:</strong> You need at least <strong>50%</strong> on the Lesson 1 quiz before moving to Lesson 2.
+                </p>
+              </div>
+            )}
 
             <button
               onClick={handleRedoLesson}
