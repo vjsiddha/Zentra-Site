@@ -12,7 +12,7 @@ type Sector = {
 };
 
 type EventImpact = {
-  [sectorId: string]: number; // percent return for that event
+  [sectorId: string]: number;
 };
 
 type NewsEvent = {
@@ -21,6 +21,7 @@ type NewsEvent = {
   tag: "Rates" | "Inflation" | "Recession" | "Tech" | "Energy" | "Health" | "Policy" | "Sentiment";
   blurb: string;
   prompt: string;
+  optimalIndex: number; // index of the correct/best option
   options: {
     label: string;
     explanation: string;
@@ -112,7 +113,8 @@ const EVENTS: NewsEvent[] = [
     tag: "Rates",
     blurb:
       "The central bank hikes rates more than expected. Borrowing costs rise and investors re-price risk.",
-    prompt: "What’s the most likely immediate market reaction?",
+    prompt: "What's the most likely immediate market reaction?",
+    optimalIndex: 0,
     options: [
       {
         label: "Growth gets hit; defensives hold up better",
@@ -153,6 +155,7 @@ const EVENTS: NewsEvent[] = [
     blurb:
       "CPI comes in below expectations. Investors think rate cuts may arrive sooner.",
     prompt: "Which sectors usually benefit most from cooling inflation expectations?",
+    optimalIndex: 0,
     options: [
       {
         label: "Rate-sensitive growth & themes rebound",
@@ -192,7 +195,8 @@ const EVENTS: NewsEvent[] = [
     tag: "Tech",
     blurb:
       "Large tech firms report strong earnings and raise guidance. Markets cheer AI-driven productivity gains.",
-    prompt: "What’s the most likely sector impact?",
+    prompt: "What's the most likely sector impact?",
+    optimalIndex: 0,
     options: [
       {
         label: "Tech and AI theme surge; rest follows modestly",
@@ -233,6 +237,7 @@ const EVENTS: NewsEvent[] = [
     blurb:
       "A geopolitical disruption reduces supply. Oil prices spike sharply in a single week.",
     prompt: "Which statement fits typical sector behavior?",
+    optimalIndex: 0,
     options: [
       {
         label: "Energy tends to pop; some cyclicals may wobble on cost pressure",
@@ -273,6 +278,7 @@ const EVENTS: NewsEvent[] = [
     blurb:
       "Multiple indicators point to slowing demand. Investors debate whether a recession is coming.",
     prompt: "If recession risk rises, what often happens to cyclicals vs defensives?",
+    optimalIndex: 0,
     options: [
       {
         label: "Defensives usually hold up better; cyclicals get hit harder",
@@ -290,7 +296,7 @@ const EVENTS: NewsEvent[] = [
         },
       },
       {
-        label: "Cyclicals rally because prices are “cheap”",
+        label: "Cyclicals rally because prices are "cheap"",
         explanation:
           "Sometimes markets look ahead, but rising recession risk more commonly pressures cyclicals first.",
         impacts: {
@@ -312,7 +318,8 @@ const EVENTS: NewsEvent[] = [
     tag: "Policy",
     blurb:
       "A new policy package boosts incentives for renewables, grid upgrades, and EV supply chains.",
-    prompt: "What’s the most realistic impact profile?",
+    prompt: "What's the most realistic impact profile?",
+    optimalIndex: 0,
     options: [
       {
         label: "Clean energy theme benefits most; some spillover to Industrials/Utilities",
@@ -377,18 +384,24 @@ export default function L2_Interactive({
 }) {
   const [view, setView] = useState<"intro" | "build" | "events" | "results">("intro");
 
-  // Portfolio build
   const [picks, setPicks] = useState<string[]>([]);
   const [weights, setWeights] = useState<Record<string, number>>({});
 
-  // Event sim
   const [eventIndex, setEventIndex] = useState(0);
   const [chosenOptionIndex, setChosenOptionIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
   const [portfolioValue, setPortfolioValue] = useState(10000);
   const [history, setHistory] = useState<
-    { eventId: number; title: string; optionLabel: string; portfolioReturn: number; valueAfter: number }[]
+    {
+      eventId: number;
+      title: string;
+      optionLabel: string;
+      optimalLabel: string;
+      wasOptimal: boolean;
+      portfolioReturn: number;
+      valueAfter: number;
+    }[]
   >([]);
 
   const picksSum = useMemo(() => picks.reduce((acc, id) => acc + (weights[id] ?? 0), 0), [picks, weights]);
@@ -405,7 +418,6 @@ export default function L2_Interactive({
 
   const currentEvent = EVENTS[eventIndex];
 
-  // ✅ FIX: move breakdown/useMemo OUTSIDE conditional view blocks
   const selectedOption = useMemo(() => {
     if (view !== "events") return null;
     if (chosenOptionIndex == null) return null;
@@ -471,7 +483,6 @@ export default function L2_Interactive({
       if (prev.length >= 3) return prev;
       return [...prev, id];
     });
-
     setWeights((prev) => {
       if (prev[id] != null) return prev;
       return { ...prev, [id]: 0 };
@@ -512,12 +523,11 @@ export default function L2_Interactive({
   };
 
   const computePortfolioReturn = (impacts: EventImpact) => {
-    const total = picks.reduce((acc, id) => {
+    return picks.reduce((acc, id) => {
       const w = (weights[id] ?? 0) / 100;
       const r = impacts[id] ?? 0;
       return acc + w * r;
     }, 0);
-    return total; // percent
   };
 
   const submitEventAnswer = () => {
@@ -527,6 +537,8 @@ export default function L2_Interactive({
     const impacts = currentEvent.options[chosenOptionIndex].impacts;
     const portfolioRet = computePortfolioReturn(impacts);
     const nextValue = Math.round(portfolioValue * (1 + portfolioRet / 100));
+    const wasOptimal = chosenOptionIndex === currentEvent.optimalIndex;
+    const optimalLabel = currentEvent.options[currentEvent.optimalIndex].label;
 
     setPortfolioValue(nextValue);
     setHistory((prev) => [
@@ -535,6 +547,8 @@ export default function L2_Interactive({
         eventId: currentEvent.id,
         title: currentEvent.title,
         optionLabel: currentEvent.options[chosenOptionIndex].label,
+        optimalLabel,
+        wasOptimal,
         portfolioReturn: portfolioRet,
         valueAfter: nextValue,
       },
@@ -555,12 +569,12 @@ export default function L2_Interactive({
     return ((portfolioValue - 10000) / 10000) * 100;
   }, [portfolioValue]);
 
+  const optimalCount = useMemo(() => history.filter((h) => h.wasOptimal).length, [history]);
+
   const performanceScore = useMemo(() => {
     if (history.length === 0) return 0;
-
     const worst = Math.min(...history.map((h) => h.portfolioReturn));
     const stability = clamp(100 - Math.max(0, Math.abs(Math.min(0, worst)) - 2) * 12.5, 0, 100);
-
     return Math.round(0.6 * diversificationScore + 0.4 * stability);
   }, [diversificationScore, history]);
 
@@ -568,7 +582,6 @@ export default function L2_Interactive({
   if (view === "intro") {
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
-
         <div className="w-full text-center mb-8">
           <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs mb-2">Lesson 2: Apply</p>
           <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Build a 3-Sector Portfolio</h1>
@@ -582,7 +595,7 @@ export default function L2_Interactive({
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Choose Your Exposure</h3>
             <p className="text-sm text-[#4F7D96]">
-              Pick 3 sectors/themes and allocate weights that sum to 100%. You’re building your own mini ETF.
+              Pick 3 sectors/themes and allocate weights that sum to 100%. You're building your own mini ETF.
             </p>
           </div>
 
@@ -592,7 +605,7 @@ export default function L2_Interactive({
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">News Event Simulator</h3>
             <p className="text-sm text-[#4F7D96]">
-              Six rounds of economic news. Your picks will react differently — and so will your portfolio.
+              Six rounds of economic news. Predict reactions, then see how your portfolio responds — plus the optimal answer for each.
             </p>
           </div>
         </div>
@@ -600,9 +613,9 @@ export default function L2_Interactive({
         <div className="bg-gradient-to-r from-sky-50 to-emerald-50 p-6 rounded-2xl border border-sky-100 mb-8 w-full max-w-2xl">
           <h3 className="font-bold text-slate-900 mb-2">🎯 Your goal:</h3>
           <ul className="text-sm text-slate-700 space-y-2">
-            <li>• Build a portfolio that isn’t overly concentrated</li>
+            <li>• Build a portfolio that isn't overly concentrated</li>
             <li>• Survive shocks (rates, recession risk, policy changes)</li>
-            <li>• Learn how cyclicals, defensives, and themes behave</li>
+            <li>• Learn the optimal reaction to each news event</li>
           </ul>
         </div>
 
@@ -660,16 +673,13 @@ export default function L2_Interactive({
                             </div>
                           </div>
                         </div>
-
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${
                           active ? "bg-[#0B5E8E] text-white" : "bg-slate-100 text-slate-500"
                         }`}>
                           {active ? "✓" : "+"}
                         </div>
                       </div>
-
                       <p className="text-sm text-slate-600 mt-3 leading-relaxed">{s.description}</p>
-
                       <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                         <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Typical drivers</p>
                         <div className="flex flex-wrap gap-2">
@@ -696,11 +706,9 @@ export default function L2_Interactive({
                     Select 3 sectors to begin.
                   </div>
                 )}
-
                 {picks.map((id) => {
                   const s = SECTORS.find((x) => x.id === id)!;
                   const w = weights[id] ?? 0;
-
                   return (
                     <div key={id} className="p-4 rounded-2xl border border-slate-200 bg-white">
                       <div className="flex items-center justify-between">
@@ -710,7 +718,6 @@ export default function L2_Interactive({
                         </div>
                         <span className="text-xs font-bold text-slate-500">{s.vibe.toUpperCase()}</span>
                       </div>
-
                       <div className="mt-3">
                         <div className="flex justify-between text-xs text-slate-500 mb-1">
                           <span>Weight</span>
@@ -738,10 +745,7 @@ export default function L2_Interactive({
                     {picksSum}%
                   </p>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Must equal <span className="font-bold">100%</span> to start the simulator.
-                </p>
-
+                <p className="text-xs text-slate-500 mt-1">Must equal <span className="font-bold">100%</span> to start.</p>
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={autoBalance}
@@ -751,10 +755,7 @@ export default function L2_Interactive({
                     Auto-Balance
                   </button>
                   <button
-                    onClick={() => {
-                      setPicks([]);
-                      setWeights({});
-                    }}
+                    onClick={() => { setPicks([]); setWeights({}); }}
                     className="py-2.5 px-3 rounded-xl border-2 border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all"
                   >
                     Reset
@@ -797,6 +798,7 @@ export default function L2_Interactive({
   if (view === "events") {
     const progressPct = ((eventIndex + (showFeedback ? 1 : 0)) / EVENTS.length) * 100;
     const option = selectedOption;
+    const isOptimal = chosenOptionIndex === currentEvent.optimalIndex;
 
     return (
       <div className="relative max-w-5xl mx-auto px-4 pb-12">
@@ -810,10 +812,7 @@ export default function L2_Interactive({
           </header>
 
           <div className="w-full h-2 bg-slate-100 rounded-full mb-8 overflow-hidden">
-            <div
-              className="h-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
-            />
+            <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
@@ -834,13 +833,14 @@ export default function L2_Interactive({
               <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200">
                 <p className="text-sm font-black text-slate-900">{currentEvent.prompt}</p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Your answer doesn’t need to be “perfect.” The goal is to learn patterns.
+                  Your answer doesn't need to be "perfect." The goal is to learn patterns.
                 </p>
               </div>
 
               <div className="mt-6 grid grid-cols-1 gap-3">
                 {currentEvent.options.map((o, idx) => {
                   const picked = chosenOptionIndex === idx;
+                  const isOptimalOption = idx === currentEvent.optimalIndex;
 
                   return (
                     <button
@@ -848,18 +848,23 @@ export default function L2_Interactive({
                       onClick={() => setChosenOptionIndex(idx)}
                       disabled={showFeedback}
                       className={[
-                        "text-left p-5 rounded-2xl border transition-all",
+                        "text-left p-5 rounded-2xl border transition-all relative",
                         picked ? "border-[#0B5E8E] bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50",
                         showFeedback ? "cursor-default" : "cursor-pointer",
                       ].join(" ")}
                     >
+                      {/* Show optimal badge after submission */}
+                      {showFeedback && isOptimalOption && (
+                        <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          ✓ Best Answer
+                        </span>
+                      )}
                       <div className="flex items-start gap-3">
-                        <div
-                          className={[
-                            "w-8 h-8 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0",
-                            picked ? "bg-[#0B5E8E] text-white" : "bg-slate-100 text-slate-600",
-                          ].join(" ")}
-                        >
+                        <div className={[
+                          "w-8 h-8 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0",
+                          picked ? "bg-[#0B5E8E] text-white" : "bg-slate-100 text-slate-600",
+                          showFeedback && isOptimalOption ? "bg-emerald-500 text-white" : "",
+                        ].join(" ")}>
                           {String.fromCharCode(65 + idx)}
                         </div>
                         <div>
@@ -889,30 +894,39 @@ export default function L2_Interactive({
                 </button>
               )}
 
+              {/* Feedback panel */}
               {showFeedback && option && (
-                <div className="mt-6 p-6 rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">📌</span>
-                    <span className="font-black uppercase tracking-wider text-sm text-amber-800">
-                      What happened to your portfolio
+                <div className={`mt-6 p-6 rounded-3xl border animate-in fade-in slide-in-from-top-2 duration-300 ${
+                  isOptimal ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xl">{isOptimal ? "✅" : "💡"}</span>
+                    <span className={`font-black uppercase tracking-wider text-sm ${isOptimal ? "text-emerald-700" : "text-amber-800"}`}>
+                      {isOptimal ? "Optimal choice!" : `Better answer: Option A`}
                     </span>
                   </div>
 
-                  <p className="text-sm text-slate-700 leading-relaxed">
-                    Your chosen reaction produced a portfolio move of{" "}
+                  {!isOptimal && (
+                    <div className="mb-4 p-4 bg-white rounded-2xl border border-emerald-200">
+                      <p className="text-xs font-bold text-emerald-700 uppercase mb-1">✓ Best Answer</p>
+                      <p className="text-sm font-bold text-slate-900">{currentEvent.options[currentEvent.optimalIndex].label}</p>
+                      <p className="text-sm text-slate-700 mt-1">{currentEvent.options[currentEvent.optimalIndex].explanation}</p>
+                    </div>
+                  )}
+
+                  <p className="text-sm text-slate-700 leading-relaxed mb-4">
+                    Your portfolio moved{" "}
                     <span className={`font-black ${portfolioRetPreview >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                       {formatPct(portfolioRetPreview)}
                     </span>
-                    . This comes from each holding’s weight × its sector reaction.
+                    {" "}— here's the breakdown by holding:
                   </p>
 
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {breakdown.map((b) => (
                       <div key={b.id} className="bg-white rounded-2xl p-4 border border-amber-200">
                         <div className="flex items-center justify-between">
-                          <p className="font-bold text-slate-900 text-sm">
-                            {b.emoji} {b.name}
-                          </p>
+                          <p className="font-bold text-slate-900 text-sm">{b.emoji} {b.name}</p>
                           <p className="text-xs font-black text-slate-500">{b.weightPct}%</p>
                         </div>
                         <p className={`mt-2 text-lg font-black ${b.eventReturn >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
@@ -928,6 +942,7 @@ export default function L2_Interactive({
               )}
             </div>
 
+            {/* Sidebar HUD */}
             <aside className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md h-fit sticky top-20">
               <h3 className="font-black text-slate-900">Portfolio HUD</h3>
               <p className="text-sm text-slate-500 mt-1">Starting at $10,000</p>
@@ -964,27 +979,41 @@ export default function L2_Interactive({
                 </div>
               </div>
 
+              {/* Event log with optimal answer column */}
               <div className="mt-4 p-4 rounded-2xl border border-slate-200 bg-white">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Event log</p>
                 {history.length === 0 ? (
                   <p className="text-sm text-slate-500">No events applied yet.</p>
                 ) : (
-                  <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
-                    {history
-                      .slice()
-                      .reverse()
-                      .map((h) => (
-                        <div key={h.eventId} className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                          <p className="text-xs font-bold text-slate-700">{h.title}</p>
-                          <p className="text-xs text-slate-500 mt-1">{h.optionLabel}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className={`text-xs font-black ${h.portfolioReturn >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
-                              {formatPct(h.portfolioReturn)}
-                            </span>
-                            <span className="text-xs font-bold text-slate-700">${h.valueAfter.toLocaleString()}</span>
-                          </div>
+                  <div className="space-y-3 max-h-[320px] overflow-auto pr-1">
+                    {history.slice().reverse().map((h) => (
+                      <div key={h.eventId} className={`p-3 rounded-xl border ${
+                        h.wasOptimal ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                      }`}>
+                        <p className="text-xs font-bold text-slate-700">{h.title}</p>
+
+                        {/* What they picked */}
+                        <div className="mt-1.5 flex items-start gap-1.5">
+                          <span className="text-[10px] font-black text-slate-500 uppercase mt-0.5 flex-shrink-0">You:</span>
+                          <p className="text-xs text-slate-700 leading-snug">{h.optionLabel}</p>
                         </div>
-                      ))}
+
+                        {/* Optimal answer — always shown */}
+                        <div className="mt-1 flex items-start gap-1.5">
+                          <span className="text-[10px] font-black text-emerald-600 uppercase mt-0.5 flex-shrink-0">Best:</span>
+                          <p className={`text-xs leading-snug ${h.wasOptimal ? "text-emerald-700 font-bold" : "text-slate-600"}`}>
+                            {h.wasOptimal ? "✓ Same as your choice" : h.optimalLabel}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200">
+                          <span className={`text-xs font-black ${h.portfolioReturn >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                            {formatPct(h.portfolioReturn)}
+                          </span>
+                          <span className="text-xs font-bold text-slate-700">${h.valueAfter.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1037,10 +1066,49 @@ export default function L2_Interactive({
             </div>
           </div>
 
+          {/* Journey with optimal answers */}
+          <div className="bg-slate-50 rounded-2xl p-5 mb-6 text-left">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-slate-900">Your Journey</h3>
+              <span className="text-sm font-bold text-slate-600">
+                {optimalCount}/{EVENTS.length} optimal
+              </span>
+            </div>
+            <div className="space-y-3">
+              {history.map((h) => (
+                <div key={h.eventId} className={`p-3 rounded-xl border ${
+                  h.wasOptimal ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                }`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-bold text-slate-700 flex-1">{h.title}</p>
+                    <span className={`text-xs font-black flex-shrink-0 ${h.portfolioReturn >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                      {formatPct(h.portfolioReturn)}
+                    </span>
+                  </div>
+
+                  <div className="mt-1.5 flex items-start gap-1.5">
+                    <span className="text-[10px] font-black text-slate-500 uppercase mt-0.5 flex-shrink-0">You:</span>
+                    <p className="text-xs text-slate-700 leading-snug">{h.optionLabel}</p>
+                  </div>
+
+                  {!h.wasOptimal && (
+                    <div className="mt-1 flex items-start gap-1.5">
+                      <span className="text-[10px] font-black text-emerald-600 uppercase mt-0.5 flex-shrink-0">Best:</span>
+                      <p className="text-xs text-slate-600 leading-snug">{h.optimalLabel}</p>
+                    </div>
+                  )}
+                  {h.wasOptimal && (
+                    <p className="text-xs text-emerald-600 font-bold mt-1">✓ Optimal choice</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="bg-slate-50 rounded-2xl p-5 mb-6 text-left">
             <h3 className="font-bold text-slate-900 mb-3">What this taught you</h3>
             <ul className="space-y-2 text-sm text-slate-700">
-              <li>• Different news hits different sectors — “market up/down” is too simple.</li>
+              <li>• Different news hits different sectors — "market up/down" is too simple.</li>
               <li>• Concentration makes volatility louder (especially with themes).</li>
               <li>• Defensives can act like shock absorbers, not shields.</li>
             </ul>

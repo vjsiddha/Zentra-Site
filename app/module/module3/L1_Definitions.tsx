@@ -90,6 +90,32 @@ const CONCEPTS = [
     image:
       "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&h=500&fit=crop",
   },
+  {
+    id: 7,
+    term: "Bitcoin (BTC)",
+    definition:
+      "Bitcoin is the first and most well-known cryptocurrency, created in 2009 by an anonymous person or group using the name Satoshi Nakamoto. It runs on its own blockchain and has a fixed maximum supply of 21 million coins — meaning no more can ever be created beyond that limit.",
+    analogy: "Bitcoin is often called 'digital gold' — scarce, decentralized, and used as a store of value rather than for everyday purchases.",
+    example:
+      "If a government prints too much money, inflation can erode its value over time. Bitcoin's fixed supply means no central authority can create more of it, which is why some people hold it as a hedge against inflation.",
+    funFact:
+      "The first real-world Bitcoin transaction was for two pizzas in 2010, valued at 10,000 BTC — worth hundreds of millions of dollars today.",
+    image:
+      "https://images.unsplash.com/photo-1523961131990-5ea7c61b2107?w=800&h=500&fit=crop",
+  },
+  {
+    id: 8,
+    term: "Ethereum (ETH)",
+    definition:
+      "Ethereum is a blockchain platform that goes beyond just sending money. It allows developers to build and run decentralized applications (dApps) and smart contracts — self-executing agreements written in code that run automatically without a middleman.",
+    analogy: "If Bitcoin is digital gold, Ethereum is more like a programmable digital computer that anyone in the world can build on.",
+    example:
+      "A smart contract on Ethereum could automatically send payment to a freelancer the moment a client confirms work is done — no bank, lawyer, or middleman needed. This is the foundation of DeFi (Decentralized Finance).",
+    funFact:
+      "Ethereum switched from an energy-intensive mining model to a more efficient 'proof of stake' system in 2022, reducing its energy use by over 99%.",
+    image:
+      "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=800&h=500&fit=crop",
+  },
 ];
 
 const QUIZ_QUESTIONS = [
@@ -536,7 +562,7 @@ export default function L1_Definitions({
           <p className="mt-4 text-[#4F7D96] text-lg max-w-2xl mx-auto leading-relaxed">
             Learn the building blocks of cryptocurrency in a simple, interactive
             way. You'll explore how blockchain works, what wallets and private
-            keys do, and how to avoid beginner mistakes.
+            keys do, what Bitcoin and Ethereum are, and how to avoid beginner mistakes.
           </p>
         </div>
 
