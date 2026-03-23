@@ -296,7 +296,7 @@ const EVENTS: NewsEvent[] = [
         },
       },
       {
-        label: "Cyclicals rally because prices are "cheap"",
+        label: "Cyclicals rally because prices are \"cheap\"",
         explanation:
           "Sometimes markets look ahead, but rising recession risk more commonly pressures cyclicals first.",
         impacts: {
