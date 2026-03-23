@@ -9,7 +9,6 @@ import {
   isInDictionary,
 } from "@/lib/dictionary";
 
-// Data arrays outside the component
 const DEFINITIONS = [
   {
     id: 1,
@@ -66,6 +65,13 @@ const DEFINITIONS = [
     definition: "The historical fact that every bear market, crash, and financial crisis in stock market history has eventually been followed by a recovery to new all-time highs. Investors who stayed invested through downturns captured these recoveries; those who sold and waited missed them.",
     analogy: "It's like the sun after a storm. No matter how dark the clouds get or how long the rain lasts, the sun has always come back out. The only people who stay wet are those who gave up and went inside.",
     image: "https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?q=80&w=1200"
+  },
+  {
+    id: 9,
+    term: "Buffett's Golden Rule",
+    definition: "Warren Buffett — one of the greatest investors of all time — built his $100+ billion fortune using two simple rules: (1) never lose money, and (2) never forget rule number one. His secret isn't stock-picking genius. It's patience. He started investing at age 11, but 99% of his wealth was built after his 50th birthday — entirely because of compounding. He calls compounding 'the eighth wonder of the world.'",
+    analogy: "Imagine a snowball rolling down a very long, snowy hill. At first it's tiny. But the longer it rolls, the bigger it gets — and the bigger it gets, the faster it grows. Buffett's secret is simple: he found a long hill and started rolling early. Time is the hill. Compounding is the snow.",
+    image: "https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=1200"
   }
 ];
 
@@ -171,28 +177,27 @@ const QUIZ_QUESTIONS = [
   },
   {
     id: 10,
-    question: "Based on what you've learned, which statement is TRUE?",
+    question: "Warren Buffett built 99% of his wealth after age 50. What does this best illustrate?",
     options: [
-      { id: "a", text: "Professional investors can consistently time the market", correct: false },
-      { id: "b", text: "Staying invested beats trying to time the market", correct: true },
-      { id: "c", text: "You should sell when markets drop to avoid losses", correct: false },
-      { id: "d", text: "Market timing requires being right only once", correct: false },
+      { id: "a", text: "You should wait until you're older to start investing", correct: false },
+      { id: "b", text: "Compounding is back-loaded — time in the market is everything", correct: true },
+      { id: "c", text: "Only older investors can beat the market", correct: false },
+      { id: "d", text: "Stock-picking skill improves with age", correct: false },
     ],
-    explanation: "The evidence is overwhelming: staying invested through all market conditions (time IN the market) beats trying to predict when to get in and out (TIMING the market)."
+    explanation: "Buffett started at age 11 and let compounding run for decades. The fact that 99% of his wealth came after 50 shows how dramatically compounding accelerates over time — the earlier you start, the more time your money has to snowball."
   }
 ];
 
 export default function L1_Definitions({ onComplete, onBack }: { onComplete: () => void; onBack?: () => void }) {
   const { user } = useAuth();
 
-  const [view, setView] = useState<"intro" | "study" | "quiz" | "results">("intro");
+  const [view, setView] = useState<"intro" | "buffett" | "study" | "quiz" | "results">("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [quizIdx, setQuizIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
-  // Dictionary saved state per definition.id
   const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
   const [saving, setSaving] = useState(false);
 
@@ -238,15 +243,16 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
     }
   };
 
-  // Back navigation handler
   const handleBack = () => {
     if (view === "intro") {
       onBack?.();
+    } else if (view === "buffett") {
+      setView("intro");
     } else if (view === "study") {
       if (currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
       } else {
-        setView("intro");
+        setView("buffett");
       }
     } else if (view === "quiz") {
       if (quizIdx > 0 && !isSubmitted) {
@@ -260,7 +266,6 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
     }
   };
 
-  // Reset lesson to start over
   const handleRedoLesson = () => {
     setView("intro");
     setCurrentIndex(0);
@@ -270,13 +275,12 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
     setScore(0);
   };
 
-  // Check if back button should be visible
   const showBackButton =
-    (view === "intro") ||
-    (view === "study") ||
+    view === "intro" ||
+    view === "buffett" ||
+    view === "study" ||
     (view === "quiz" && !isSubmitted);
 
-  // Handler for navigating definitions
   const handleNextDefinition = () => {
     if (currentIndex < DEFINITIONS.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -328,7 +332,6 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
 
   const feedback = getAnimalFeedback();
 
-  // Back Button Component
   const BackButton = () => (
     <button
       onClick={handleBack}
@@ -341,14 +344,30 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
     </button>
   );
 
-  // VIEW 1: WHAT YOU'LL BE DOING (INTRO)
+  // VIEW 1: INTRO
   if (view === "intro") {
     return (
       <div className="relative flex flex-col items-center justify-center max-w-[960px] mx-auto px-6 pt-16 animate-in fade-in slide-in-from-bottom-4">
         <div className="w-full text-center mb-6">
           <p className="text-sky-600 font-bold uppercase tracking-widest text-xs mb-2">Module 7</p>
           <h1 className="text-[28px] font-bold text-[#0D171C] leading-[35px]">Time IN the Market Beats TIMING the Market</h1>
+          <p className="text-slate-500 text-sm mt-2">The strategy behind the world's greatest investors</p>
         </div>
+
+        {/* Buffett teaser banner */}
+        <div className="w-full max-w-2xl mb-8 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-6 flex items-center gap-5">
+          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-3xl flex-shrink-0">
+            🧙‍♂️
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-amber-700 mb-1">Your investing role model</p>
+            <p className="font-bold text-slate-900 text-base">
+              Warren Buffett turned $10,000 into $100+ billion — not by outsmarting the market, but by <span className="text-amber-700">never leaving it.</span>
+            </p>
+            <p className="text-sm text-slate-600 mt-1">You'll learn his exact approach in this module.</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="flex flex-col items-start">
             <img src="https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=600" className="w-full h-[250px] object-cover rounded-xl mb-3" alt="Learn" />
@@ -366,11 +385,110 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
             <p className="text-sm text-[#4F7D96]">"What's the cost of missing the best days?"</p>
           </div>
         </div>
+
         <p className="text-center mb-10 max-w-2xl text-[#0D171C]">
-          Discover why trying to predict market highs and lows is a losing game. Learn how staying invested through all market conditions—bull markets, bear markets, and crashes—is the proven path to long-term wealth.
+          Discover why trying to predict market highs and lows is a losing game. Learn how staying invested through all market conditions — bull markets, bear markets, and crashes — is the proven path to long-term wealth.
         </p>
-        <button onClick={() => setView("study")} className="px-10 py-4 bg-[#0B5E8E] text-white rounded-full font-bold">
-          Start Learning
+
+        <button onClick={() => setView("buffett")} className="px-10 py-4 bg-[#0B5E8E] text-white rounded-full font-bold hover:bg-[#094a72] transition-all">
+          Meet Your Role Model First
+        </button>
+      </div>
+    );
+  }
+
+  // VIEW 1.5: BUFFETT PROFILE
+  if (view === "buffett") {
+    return (
+      <div className="relative max-w-3xl mx-auto px-6 pt-16 pb-12 animate-in fade-in slide-in-from-bottom-4">
+        <BackButton />
+
+        <div className="text-center mb-8">
+          <p className="text-amber-600 font-bold uppercase tracking-widest text-xs mb-2">Your Investing Role Model</p>
+          <h1 className="text-3xl font-extrabold text-slate-900">Warren Buffett</h1>
+          <p className="text-slate-500 mt-2">The world's most successful long-term investor</p>
+        </div>
+
+        {/* Hero stat */}
+        <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-3xl p-8 mb-6 text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-amber-700 mb-3">The snowball in numbers</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-2xl p-4 border border-amber-100">
+              <p className="text-3xl font-black text-amber-700">11</p>
+              <p className="text-xs text-slate-600 mt-1">Age he started investing</p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 border border-amber-100">
+              <p className="text-3xl font-black text-amber-700">99%</p>
+              <p className="text-xs text-slate-600 mt-1">Of his wealth made after age 50</p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 border border-amber-100">
+              <p className="text-3xl font-black text-amber-700">$100B+</p>
+              <p className="text-xs text-slate-600 mt-1">Built without timing the market</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Story cards */}
+        <div className="space-y-4 mb-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-widest text-sky-600 mb-2">🧒 Age 11 — The Start</p>
+            <p className="text-slate-700 leading-relaxed">
+              Buffett bought his first stock at age 11 — three shares of Cities Service Preferred at $38 each. He didn't have insider information. He didn't try to predict a crash. He just started early and <strong>kept going.</strong>
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-600 mb-2">❄️ The Snowball Rule</p>
+            <p className="text-slate-700 leading-relaxed">
+              Buffett describes wealth-building as rolling a snowball down a hill. <strong>"The trick is to have a very long hill"</strong> — meaning: start early, invest consistently, and let compounding do the heavy lifting. The snowball starts small. But it never stops growing.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-widest text-violet-600 mb-2">📅 The 99% Lesson</p>
+            <p className="text-slate-700 leading-relaxed">
+              Here's the wild part: Buffett is worth over $100 billion. But <strong>99% of that wealth came after his 50th birthday</strong> — despite starting at age 11. That's not luck. That's compounding. The longer money grows, the faster it grows. The first $10,000 is the hardest. The last $10 billion basically takes care of itself.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-widest text-rose-600 mb-2">🚫 What He Doesn't Do</p>
+            <p className="text-slate-700 leading-relaxed">
+              Buffett doesn't day-trade. He doesn't panic during crashes. He doesn't try to predict the next recession. During the 2008 financial crisis — when banks were collapsing and everyone was selling — Buffett was <strong>buying.</strong> He famously said: <em>"Be fearful when others are greedy and greedy when others are fearful."</em>
+            </p>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+            <p className="text-xs font-black uppercase tracking-widest text-amber-700 mb-2">💬 His Two Rules</p>
+            <div className="space-y-2">
+              <div className="flex items-start gap-3">
+                <span className="text-amber-600 font-black text-lg">1.</span>
+                <p className="text-slate-800 font-bold">Never lose money.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-amber-600 font-black text-lg">2.</span>
+                <p className="text-slate-800 font-bold">Never forget rule number one.</p>
+              </div>
+              <p className="text-sm text-slate-600 mt-3">
+                This isn't about avoiding all risk — it's about <strong>not panic-selling</strong> and turning temporary market drops into permanent losses.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Takeaway */}
+        <div className="bg-gradient-to-r from-sky-50 to-emerald-50 border border-sky-100 rounded-2xl p-6 mb-8">
+          <h3 className="font-bold text-slate-900 mb-2">🎯 What this means for you</h3>
+          <p className="text-slate-700 text-sm leading-relaxed">
+            You don't need to be a genius. You don't need to watch the market every day. You just need to start investing, keep investing, and <strong>never panic-sell.</strong> That's the Buffett playbook. The earlier you start rolling your snowball, the longer the hill — and the bigger the fortune at the bottom.
+          </p>
+        </div>
+
+        <button
+          onClick={() => { setCurrentIndex(0); setView("study"); }}
+          className="w-full py-4 bg-[#0B5E8E] text-white rounded-full font-bold hover:bg-[#094a72] transition-all"
+        >
+          Start Learning the Key Concepts
         </button>
       </div>
     );
@@ -398,7 +516,16 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
                 <p className="italic text-slate-600">"{DEFINITIONS[currentIndex].analogy}"</p>
               </div>
 
-              {/* Dictionary Save Button */}
+              {/* Buffett badge for the Buffett card */}
+              {DEFINITIONS[currentIndex].id === 9 && (
+                <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center gap-3">
+                  <span className="text-2xl">🧙‍♂️</span>
+                  <p className="text-sm text-amber-800 font-medium">
+                    Buffett started this at age 11. His wealth at age 30 was ~$1M. At 50, ~$300M. At 93, $100B+. <strong>Same strategy. More time.</strong>
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={toggleSave}
                 disabled={!user || saving}
@@ -433,7 +560,7 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
             <h2 className="text-2xl font-bold text-slate-900">Knowledge Check</h2>
             <p className="text-slate-500">Question {quizIdx + 1} of {QUIZ_QUESTIONS.length}</p>
           </header>
-          
+
           <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100">
             <p className="text-xl font-bold text-slate-800 mb-6">
               {QUIZ_QUESTIONS[quizIdx].question}
@@ -443,7 +570,7 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
               {QUIZ_QUESTIONS[quizIdx].options.map(opt => {
                 const isCorrect = opt.correct;
                 const isSelected = selectedOption === opt.id;
-                
+
                 let btnStyle = "border-slate-100";
                 if (isSelected) btnStyle = "border-sky-500 bg-sky-50";
                 if (isSubmitted && isCorrect) btnStyle = "border-green-500 bg-green-50 text-green-700";
@@ -466,9 +593,9 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
 
             {isSubmitted && (
               <div className={`mt-6 p-5 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300 border-2 ${
-                QUIZ_QUESTIONS[quizIdx].options.find(o => o.id === selectedOption)?.correct 
-                ? 'bg-green-50 border-green-200' 
-                : 'bg-red-50 border-red-200'
+                QUIZ_QUESTIONS[quizIdx].options.find(o => o.id === selectedOption)?.correct
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-red-50 border-red-200'
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">
@@ -485,7 +612,7 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
                 </p>
               </div>
             )}
-            
+
             <button
               disabled={!selectedOption}
               onClick={() => isSubmitted ? handleNextQuestion() : setIsSubmitted(true)}
@@ -509,8 +636,15 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
           </div>
           <h2 className={`text-4xl font-black mb-2 ${feedback.color}`}>{feedback.emoji} {feedback.title}</h2>
           <div className="text-6xl font-black text-slate-900 mb-4">{percentage}%</div>
-          <p className="text-slate-600 text-lg mb-10 leading-relaxed">{feedback.msg}</p>
-          
+          <p className="text-slate-600 text-lg mb-6 leading-relaxed">{feedback.msg}</p>
+
+          {/* Buffett reminder */}
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
+            <p className="text-sm text-amber-800">
+              <strong>🧙‍♂️ Remember Buffett's lesson:</strong> He didn't build $100B by timing the market. He built it by never leaving it — and letting compounding run for decades. Start your snowball rolling today.
+            </p>
+          </div>
+
           <div className="space-y-3">
             <button
               onClick={() => {
@@ -534,8 +668,8 @@ export default function L1_Definitions({ onComplete, onBack }: { onComplete: () 
               </div>
             )}
 
-            <button 
-              onClick={handleRedoLesson} 
+            <button
+              onClick={handleRedoLesson}
               className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
               Redo Lesson
