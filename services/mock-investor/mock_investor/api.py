@@ -118,7 +118,7 @@ def _get_simulation_start(user_id: int) -> Optional[str]:
             "SELECT started_at FROM simulation_starts WHERE user_id = ?",
             (user_id,),
         )
-        row = con.fetchone() if False else cur.fetchone()
+        row = cur.fetchone()
         con.close()
         if row:
             return row[0]
@@ -334,9 +334,8 @@ def get_mtm(user: Optional[str] = Query(None)):
 
     simulated = is_market_simulated(sim_start)
 
-    # How many trades until simulation starts (for UI feedback)
-    total_trades         = len(p.history)
-    trades_until_sim     = max(0, 5 - total_trades) if sim_start is None else 0
+    total_trades     = len(p.history)
+    trades_until_sim = max(0, 5 - total_trades) if sim_start is None else 0
 
     return ok({
         "total_equity":      p.cash + total_market_value,
@@ -378,13 +377,15 @@ def get_equity_curve(
     except ValueError as e:
         return fail(str(e))
 
-    p    = load_user_portfolio(u["id"])
-    syms = sorted(set(t.ticker for t in p.history if t.ticker))
+    p         = load_user_portfolio(u["id"])
+    sim_start = _get_simulation_start(u["id"])
+    syms      = sorted(set(t.ticker for t in p.history if t.ticker))
 
     if not syms:
         from datetime import datetime
         return ok([{"ts": datetime.now().isoformat(), "equity": p.cash}])
 
+    # Fetch historical closes from Finnhub
     closes = {}
     for sym in syms:
         try:
@@ -397,14 +398,19 @@ def get_equity_curve(
         except DomainError:
             continue
 
-    series = equity_curve(p.history, closes)
+    # Fetch live shocked prices as fallback for recent dates where
+    # Finnhub free tier returns no candle data
+    live_prices = {}
+    for sym in syms:
+        fallback = p.positions[sym].avg_cost if sym in p.positions else 0.0
+        live_prices[sym] = get_shocked_price(sym, fallback=fallback, sim_start=sim_start)
+
+    series = equity_curve(p.history, closes, avg_costs_map=live_prices)
     return ok([{"ts": ts.isoformat(), "equity": float(val)} for ts, val in series.items()])
 
 
 # ---------------------------------------------------------------------------
 # Market status proxy
-# Passes the user's simulation start time to market_data_api so it can
-# compute the correct event phase for this specific user.
 # ---------------------------------------------------------------------------
 
 @app.get("/market/status")
@@ -415,13 +421,12 @@ def proxy_market_status(user: Optional[str] = Query(None)):
     After 72h from sim start, returns inactive (simulation complete).
     """
     try:
-        u         = _resolve_user(user)
-        sim_start = _get_simulation_start(u["id"])
-        p         = load_user_portfolio(u["id"])
+        u            = _resolve_user(user)
+        sim_start    = _get_simulation_start(u["id"])
+        p            = load_user_portfolio(u["id"])
         total_trades = len(p.history)
 
         if sim_start is None:
-            # Not started yet — tell the frontend how many trades remain
             return ok({
                 "active":            False,
                 "event":             None,
@@ -429,7 +434,6 @@ def proxy_market_status(user: Optional[str] = Query(None)):
                 "trades_until_sim":  max(0, 5 - total_trades),
             })
 
-        # Pass sim_start to market_data_api
         res  = req_lib.get(
             f"{MARKET_DATA_API}/market/status",
             params={"sim_start": sim_start},
@@ -437,7 +441,6 @@ def proxy_market_status(user: Optional[str] = Query(None)):
         )
         data = res.json()
 
-        # Inject extra context for the frontend
         if data.get("ok") and data.get("data"):
             data["data"]["simulation_active"] = True
             data["data"]["trades_until_sim"]  = 0

@@ -25,15 +25,15 @@ const SCENARIOS = [
     name: "Carlos",
     age: 19,
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400",
-    description: "Carlos just saved $2,000 from his summer job. He wants to invest it but is worried because he keeps hearing that 'a market crash is coming.' His plan is to wait on the sidelines until after the crash, then invest everything.",
-    situation: "Markets are currently near all-time highs, and many experts are warning about overvaluation.",
+    description: "Carlos just saved $2,000 from his summer job. He wants to invest it, but he keeps hearing that 'a market crash is coming.' Before deciding, Carlos did his own research: he identified a broad-market index fund that has historically recovered from every crash, and he confirmed the companies inside it are fundamentally strong — many are expanding into new markets with high growth probability. His plan is clear: invest the $2,000 now and never touch it for 10+ years.",
+    situation: "Markets are currently near all-time highs, and many experts are warning about overvaluation. But Carlos has done his homework — his chosen index fund is well-diversified, and he's investing with a long time horizon, not looking for quick gains.",
     question: "What should Carlos do?",
     options: [
-      { id: "stay", text: "Invest Now - Put the money in the market today", label: "INVEST NOW" },
+      { id: "stay", text: "Invest Now - Put the money in the market today based on his research", label: "INVEST NOW" },
       { id: "time", text: "Wait for a Crash - Keep cash until markets drop", label: "WAIT FOR CRASH" }
     ],
     correctAnswer: "stay",
-    explanation: "Carlos should invest now! Market timing is a trap. Nobody can predict when crashes will happen, and markets can stay 'overvalued' for years while continuing to climb. By waiting, he misses compound growth. Even if a crash happens next month, history shows patient investors who stay invested through crashes come out ahead of those who waited."
+    explanation: "Carlos should invest now! He's already done what a smart investor does: research, identify fundamentally sound investments, and commit to a long time horizon. His index fund holds companies with real growth potential breaking into new markets — waiting doesn't make those fundamentals stronger, it just delays compounding. Nobody can predict exactly when crashes happen, and markets can stay 'overvalued' for years while continuing to rise. Even if a correction happens next month, Carlos's 10+ year horizon means he'd recover and come out ahead of those who waited. His research is his edge — now he needs time to be his engine."
   },
   {
     id: 3,
@@ -141,30 +141,23 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
-  
+
   // Simulator state
   const [investmentYears, setInvestmentYears] = useState(30);
   const [initialInvestment, setInitialInvestment] = useState(10000);
   const [monthlyContribution, setMonthlyContribution] = useState(300);
   const [hasUsedSimulator, setHasUsedSimulator] = useState(false);
 
-  // Calculate returns - staying invested vs missing best days
   const calculateFullyInvested = (initial: number, monthly: number, years: number, returnRate: number) => {
     const monthlyRate = returnRate / 100 / 12;
     let balance = initial;
-    
     for (let month = 1; month <= years * 12; month++) {
       balance = balance * (1 + monthlyRate) + monthly;
     }
-    
     return Math.round(balance);
   };
 
-  // Missing best days significantly reduces returns
   const calculateMissingBestDays = (initial: number, monthly: number, years: number, baseReturn: number, daysMissed: number) => {
-    // Missing 10 best days reduces annualized return by ~3-4%
-    // Missing 20 best days reduces it by ~5-6%
-    // Missing 30 best days reduces it by ~7-8%
     const returnReduction = daysMissed === 10 ? 3.5 : daysMissed === 20 ? 5.5 : 7.5;
     const reducedReturn = baseReturn - returnReduction;
     return calculateFullyInvested(initial, monthly, years, reducedReturn);
@@ -174,13 +167,12 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
   const missing10Days = calculateMissingBestDays(initialInvestment, monthlyContribution, investmentYears, 10, 10);
   const missing20Days = calculateMissingBestDays(initialInvestment, monthlyContribution, investmentYears, 10, 20);
   const missing30Days = calculateMissingBestDays(initialInvestment, monthlyContribution, investmentYears, 10, 30);
-  
+
   const totalContributed = initialInvestment + (monthlyContribution * 12 * investmentYears);
   const loss10Days = fullyInvestedResult - missing10Days;
   const loss20Days = fullyInvestedResult - missing20Days;
   const loss30Days = fullyInvestedResult - missing30Days;
 
-  // Back navigation
   const handleBack = () => {
     if (view === "intro") {
       onBack?.();
@@ -204,9 +196,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
 
   const handleSubmitAnswer = () => {
     const isCorrect = selectedAnswer === SCENARIOS[currentScenario].correctAnswer;
-    if (isCorrect) {
-      setScore(score + 1);
-    }
+    if (isCorrect) setScore(score + 1);
     setAnswers([...answers, isCorrect]);
     setShowFeedback(true);
   };
@@ -227,10 +217,8 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
   };
 
   const percentage = Math.round((score / SCENARIOS.length) * 100);
-
   const showBackButton = view === "intro" || (view === "scenarios" && !showFeedback) || view === "simulator";
 
-  // Back Button Component
   const BackButton = () => (
     <button
       onClick={handleBack}
@@ -263,7 +251,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
               Read about 8 different investors facing tough decisions. Should they stay invested or try to time the market? Apply what you learned about market psychology.
             </p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
               <span className="text-2xl">📊</span>
@@ -285,8 +273,8 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
           </ul>
         </div>
 
-        <button 
-          onClick={() => setView("scenarios")} 
+        <button
+          onClick={() => setView("scenarios")}
           className="px-10 py-4 bg-[#0B5E8E] text-white rounded-full font-bold hover:bg-[#094a72] transition-all"
         >
           Start the Challenge
@@ -298,11 +286,11 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
   // VIEW 2: SCENARIOS
   if (view === "scenarios") {
     const scenario = SCENARIOS[currentScenario];
-    
+
     return (
       <div className="relative max-w-4xl mx-auto px-4 pb-12">
         {showBackButton && <BackButton />}
-        
+
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
           <header className="text-center mb-6">
             <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs">Apply Your Knowledge</p>
@@ -312,9 +300,8 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
             <p className="text-slate-400 text-sm mt-2">Scenario {currentScenario + 1} of {SCENARIOS.length}</p>
           </header>
 
-          {/* Progress bar */}
           <div className="w-full h-2 bg-slate-100 rounded-full mb-8 overflow-hidden">
-            <div 
+            <div
               className="h-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${((currentScenario + (showFeedback ? 1 : 0)) / SCENARIOS.length) * 100}%` }}
             />
@@ -341,24 +328,17 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
             {/* Question */}
             <div className="mb-6">
               <h4 className="font-bold text-[#0B5E8E] text-lg mb-4">{scenario.question}</h4>
-              
-              {/* Answer buttons */}
+
               <div className="space-y-3">
                 {scenario.options.map((option) => {
                   const isSelected = selectedAnswer === option.id;
                   const isCorrect = option.id === scenario.correctAnswer;
-                  
+
                   let buttonStyle = "border-slate-200 bg-white hover:bg-slate-50";
-                  if (isSelected && !showFeedback) {
-                    buttonStyle = "border-[#0B5E8E] bg-sky-50";
-                  }
-                  if (showFeedback && isCorrect) {
-                    buttonStyle = "border-green-500 bg-green-50";
-                  }
-                  if (showFeedback && isSelected && !isCorrect) {
-                    buttonStyle = "border-red-500 bg-red-50";
-                  }
-                  
+                  if (isSelected && !showFeedback) buttonStyle = "border-[#0B5E8E] bg-sky-50";
+                  if (showFeedback && isCorrect) buttonStyle = "border-green-500 bg-green-50";
+                  if (showFeedback && isSelected && !isCorrect) buttonStyle = "border-red-500 bg-red-50";
+
                   return (
                     <button
                       key={option.id}
@@ -403,7 +383,6 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
               </div>
             )}
 
-            {/* Action button */}
             {!showFeedback ? (
               <button
                 onClick={handleSubmitAnswer}
@@ -431,7 +410,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
     return (
       <div className="relative max-w-5xl mx-auto px-4 pb-12">
         {showBackButton && <BackButton />}
-        
+
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-16">
           <header className="text-center mb-8">
             <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs">Best Days Impact Simulator</p>
@@ -443,8 +422,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
             {/* Controls */}
             <div className="bg-white p-8 rounded-3xl shadow-md border border-slate-100">
               <h3 className="font-bold text-slate-900 mb-6">Your Investment Scenario</h3>
-              
-              {/* Presets */}
+
               <div className="mb-6">
                 <p className="text-sm text-slate-500 mb-2">Quick scenarios:</p>
                 <div className="flex flex-wrap gap-2">
@@ -466,9 +444,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Starting Amount
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Starting Amount</label>
                   <input
                     type="range"
                     min="1000"
@@ -478,15 +454,11 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                     onChange={(e) => setInitialInvestment(Number(e.target.value))}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0B5E8E]"
                   />
-                  <p className="text-2xl font-bold text-[#0B5E8E] mt-2">
-                    ${initialInvestment.toLocaleString()}
-                  </p>
+                  <p className="text-2xl font-bold text-[#0B5E8E] mt-2">${initialInvestment.toLocaleString()}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Monthly Contribution
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Monthly Contribution</label>
                   <input
                     type="range"
                     min="0"
@@ -496,15 +468,11 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                     onChange={(e) => setMonthlyContribution(Number(e.target.value))}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0B5E8E]"
                   />
-                  <p className="text-2xl font-bold text-[#0B5E8E] mt-2">
-                    ${monthlyContribution.toLocaleString()}/month
-                  </p>
+                  <p className="text-2xl font-bold text-[#0B5E8E] mt-2">${monthlyContribution.toLocaleString()}/month</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Investment Timeline
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Investment Timeline</label>
                   <input
                     type="range"
                     min="10"
@@ -514,9 +482,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                     onChange={(e) => setInvestmentYears(Number(e.target.value))}
                     className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0B5E8E]"
                   />
-                  <p className="text-2xl font-bold text-[#0B5E8E] mt-2">
-                    {investmentYears} years
-                  </p>
+                  <p className="text-2xl font-bold text-[#0B5E8E] mt-2">{investmentYears} years</p>
                 </div>
 
                 <div className="bg-slate-50 rounded-xl p-4">
@@ -528,19 +494,15 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
 
             {/* Results */}
             <div className="space-y-6">
-              {/* Fully invested baseline */}
               <div className="bg-green-50 rounded-2xl p-6 border-2 border-green-200">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">✅</span>
                   <h3 className="font-bold text-green-900">Stayed Fully Invested</h3>
                 </div>
-                <p className="text-4xl font-black text-green-700 mb-1">
-                  ${fullyInvestedResult.toLocaleString()}
-                </p>
+                <p className="text-4xl font-black text-green-700 mb-1">${fullyInvestedResult.toLocaleString()}</p>
                 <p className="text-sm text-green-600">Never tried to time the market</p>
               </div>
 
-              {/* Missing best days scenarios */}
               <div className="space-y-3">
                 <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
                   <div className="flex justify-between items-center mb-1">
@@ -573,7 +535,6 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                 </div>
               </div>
 
-              {/* Visual comparison */}
               <div className="bg-white rounded-2xl p-6 border border-slate-200">
                 <h4 className="font-bold text-slate-900 mb-4 text-sm">Visual Impact</h4>
                 <div className="space-y-3">
@@ -592,9 +553,9 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                       <span className="text-orange-700 font-bold">${missing10Days.toLocaleString()}</span>
                     </div>
                     <div className="h-6 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-orange-400 rounded-full transition-all duration-500" 
-                        style={{ width: `${(missing10Days / fullyInvestedResult) * 100}%` }} 
+                      <div
+                        className="h-full bg-orange-400 rounded-full transition-all duration-500"
+                        style={{ width: `${(missing10Days / fullyInvestedResult) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -604,23 +565,21 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                       <span className="text-red-700 font-bold">${missing20Days.toLocaleString()}</span>
                     </div>
                     <div className="h-6 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-red-400 rounded-full transition-all duration-500" 
-                        style={{ width: `${(missing20Days / fullyInvestedResult) * 100}%` }} 
+                      <div
+                        className="h-full bg-red-400 rounded-full transition-all duration-500"
+                        style={{ width: `${(missing20Days / fullyInvestedResult) * 100}%` }}
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Key insight */}
               <div className="bg-amber-50 rounded-2xl p-5 border border-amber-200">
                 <p className="text-sm text-amber-900">
                   <strong>💡 Key Insight:</strong> The best market days are impossible to predict and often happen during volatile periods. By trying to time the market, you risk missing these crucial days and losing hundreds of thousands in potential wealth.
                 </p>
               </div>
 
-              {/* Total contributed reference */}
               <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <p className="text-xs text-slate-500 mb-1">Your Total Contributions</p>
                 <p className="text-2xl font-bold text-slate-700">${totalContributed.toLocaleString()}</p>
@@ -650,20 +609,19 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-100 flex items-center justify-center">
             <span className="text-4xl">{percentage >= 75 ? "🎯" : percentage >= 50 ? "📈" : "⏰"}</span>
           </div>
-          
+
           <h2 className={`text-3xl font-black mb-2 ${
             percentage >= 75 ? "text-emerald-600" : percentage >= 50 ? "text-sky-600" : "text-amber-600"
           }`}>
             {percentage >= 75 ? "Market Veteran!" : percentage >= 50 ? "Getting There!" : "Keep Practicing!"}
           </h2>
-          
+
           <div className="text-6xl font-black text-slate-900 mb-2">{score}/{SCENARIOS.length}</div>
           <p className="text-slate-500 mb-6">scenarios answered correctly</p>
 
-          {/* Score breakdown */}
           <div className="grid grid-cols-4 gap-2 mb-6">
             {answers.map((correct, idx) => (
-              <div 
+              <div
                 key={idx}
                 className={`h-2 rounded-full ${correct ? "bg-emerald-500" : "bg-red-400"}`}
               />
@@ -671,9 +629,9 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
           </div>
 
           <p className="text-slate-600 text-lg mb-8 leading-relaxed">
-            {percentage >= 75 
-              ? "Excellent! You understand why staying invested beats trying to time the market. You'll avoid the costly mistakes most investors make!" 
-              : percentage >= 50 
+            {percentage >= 75
+              ? "Excellent! You understand why staying invested beats trying to time the market. You'll avoid the costly mistakes most investors make!"
+              : percentage >= 50
                 ? "Good progress! Remember: even professionals can't consistently time the market. Stay invested through the ups and downs."
                 : "Keep learning! The key lesson: market timing sounds smart but almost always underperforms buy-and-hold investing."
             }
@@ -682,19 +640,19 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
           {hasUsedSimulator && (
             <div className="bg-amber-50 rounded-xl p-4 mb-6 text-left">
               <p className="text-sm text-amber-800">
-                <strong>💡 From the simulator:</strong> You saw how missing just 10-30 best market days can cost you tens or hundreds of thousands. Since you can't predict when those days will happen, stay invested!
+                <strong>💡 From the simulator:</strong> You saw how missing just 10–30 best market days can cost you tens or hundreds of thousands. Since you can't predict when those days will happen, stay invested!
               </p>
             </div>
           )}
-          
+
           <div className="space-y-3">
-            <button 
-              onClick={() => onComplete()} 
+            <button
+              onClick={() => onComplete()}
               className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-emerald-700 transition-all"
             >
               Continue to Lesson 3
             </button>
-            <button 
+            <button
               onClick={() => {
                 setView("intro");
                 setCurrentScenario(0);
@@ -702,7 +660,7 @@ export default function L2_Interactive({ onComplete, onBack }: { onComplete: () 
                 setShowFeedback(false);
                 setScore(0);
                 setAnswers([]);
-              }} 
+              }}
               className="w-full py-4 bg-transparent border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
               Try Again

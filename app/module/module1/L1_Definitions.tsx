@@ -14,42 +14,51 @@ import {
 const DEFINITIONS = [
   {
     id: 1,
-    term: "Net Pay (The $1,800)",
+    term: "Gross Income vs. Net Pay",
     definition:
-      "This is your 'take-home pay'—the money that actually hits your bank account after taxes have been taken out.",
+      "Gross Income is your full salary before any deductions — for example, a $60,000/year job pays $5,000/month gross. Net Pay is your 'take-home pay' after federal & provincial taxes, CPP, and EI are deducted. At $60,000, you'd actually take home roughly $42,000/year (~$3,500/month).",
     analogy:
-      "If your salary is a whole pizza, Net Pay is the number of slices you actually get to eat.",
+      "If your salary is a whole pizza, Gross Income is the full pie — but Net Pay is the slices left after the government takes their portion.",
     image: "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?q=80&w=1200",
   },
   {
     id: 2,
-    term: "Fixed Expenses (Rent)",
+    term: "Fixed Expenses",
     definition:
-      "Costs that stay the same every single month. These are the easiest to budget for because they are predictable.",
+      "Costs that stay the same every single month — the easiest to budget for because they are fully predictable. Examples include rent, insurance premiums, loan payments, and internet bills. For instance, if your rent is $1,200/month, that number never surprises you.",
     analogy:
-      "Like a Netflix subscription—you know exactly what's coming out of your pocket every month.",
+      "Like a Netflix subscription — you know exactly what's coming out of your pocket every month, no guessing required.",
     image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200",
   },
   {
     id: 3,
-    term: "Variable Expenses (Groceries & Fun)",
+    term: "Variable Expenses",
     definition:
-      "Costs that change based on your behavior. You have more control over these, but they are the most common places where people overspend.",
+      "Costs that change based on your choices and behaviour each month. You have more control over these than fixed expenses, but they are the most common places where people overspend. Examples include groceries, dining out, entertainment, clothing, and gas — your grocery bill might be $200 one month and $280 the next.",
     analogy:
-      "Like the volume on your phone—you can turn it up or down depending on how much 'noise' you can afford that week.",
+      "Like the volume on your phone — you can turn it up or down depending on how much 'noise' you can afford that week.",
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1200",
   },
   {
     id: 4,
     term: "Savings vs. Investing",
     definition:
-      "Savings is money set aside for emergencies or short-term goals (safe but slow). Investing is putting money into assets like stocks to grow wealth over time.",
+      "Savings is money set aside for emergencies or short-term goals — it's safe, accessible, but grows slowly. Investing is putting money into assets like stocks or index funds to grow wealth over time, with some risk involved. A common thumb rule: save at least 10–20% of your net income (start with an emergency fund of 3–6 months of expenses), then invest what you can afford to leave untouched for 5+ years.",
     analogy:
-      "Savings is a shield to protect you today; Investing is a seed to grow a tree for tomorrow.",
+      "Savings is a shield to protect you today; Investing is a seed you plant to grow a tree for tomorrow.",
     image: "https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=1200",
   },
   {
     id: 5,
+    term: "Inflation",
+    definition:
+      "Inflation is the gradual rise in the price of goods and services over time, which means your money buys less than it used to. Canada's target inflation rate is around 2% per year — so something that costs $100 today could cost $102 next year and $122 in ten years.",
+    analogy:
+      "Imagine your paycheck is a bucket of water. Inflation is a slow leak at the bottom — even if you don't spend anything, the bucket gets emptier over time.",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=1200",
+  },
+  {
+    id: 6,
     term: "Emergency Fund",
     definition:
       "A 'safety net' specifically for unexpected events like car repairs. Aiming for $1,000 is a great first step.",
@@ -58,7 +67,7 @@ const DEFINITIONS = [
     image: "https://images.unsplash.com/photo-1565514020179-026b92b84bb6?q=80&w=1200",
   },
   {
-    id: 6,
+    id: 7,
     term: "Cash Flow Balance",
     definition:
       "The difference between money coming in and money going out. Positive means you have money left over.",
@@ -67,7 +76,7 @@ const DEFINITIONS = [
     image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1200",
   },
   {
-    id: 7,
+    id: 8,
     term: "Budget Stability",
     definition:
       "A measure of how sustainable your spending is without relying on credit cards to survive the month.",
@@ -76,7 +85,7 @@ const DEFINITIONS = [
     image: "https://images.unsplash.com/photo-1543286386-713bdd548da4?q=80&w=1200",
   },
   {
-    id: 8,
+    id: 9,
     term: "The 50/30/20 Rule",
     definition:
       "A simple plan: 50% on Needs ($900), 30% on Wants ($540), and 20% on Savings/Debt ($360).",
