@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": [
         "./*"
@@ -11,7 +12,7 @@
       "dom.iterable",
       "es6"
     ],
-    "allowJs": true,
+    "allowJs": true,  
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,

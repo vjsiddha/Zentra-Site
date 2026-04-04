@@ -1,103 +1,106 @@
-// app/simulator/components/MarketEventBanner.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { mockInvestorApi } from "@/lib/api";
 
 const SECTOR_ICONS: Record<string, string> = {
-  Tech:           "🧠",
-  ETFs:           "💼",
-  Banking:        "🏦",
+  Tech: "🧠",
+  ETFs: "💼",
+  Banking: "🏦",
   "Green Energy": "🌱",
-  Crypto:         "💎",
-  Other:          "📦",
+  Crypto: "💎",
+  Other: "📦",
 };
 
 interface SectorImpact {
   multiplier: number;
   pct_change: number;
-  direction:  "up" | "down";
+  direction: "up" | "down";
 }
 
 interface MarketEvent {
-  id:             string;
-  name:           string;
-  description:    string;
-  phase:          "crash" | "recovery";
-  progress:       number;
+  id: string;
+  name: string;
+  description: string;
+  phase: "crash" | "recovery";
+  progress: number;
   sector_impacts: Record<string, SectorImpact>;
 }
 
 interface MarketStatus {
-  active:            boolean;
-  event:             MarketEvent | null;
+  active: boolean;
+  event: MarketEvent | null;
   simulation_active: boolean;
-  trades_until_sim:  number;
+  trades_until_sim: number;
 }
 
-interface Props {
-  username:        string;
-  mockInvestorApi: string;
-}
-
-export default function MarketEventBanner({ username, mockInvestorApi }: Props) {
-  const [status,   setStatus]   = useState<MarketStatus | null>(null);
+export default function MarketEventBanner() {
+  const [status, setStatus] = useState<MarketStatus | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchStatus = async () => {
       try {
-        const res  = await fetch(
-          `${mockInvestorApi}/market/status?user=${encodeURIComponent(username)}`
-        );
-        const data = await res.json();
-        if (data.ok) setStatus(data.data);
+        const data = await mockInvestorApi.getMarketStatus();
+        if (!cancelled) setStatus(data);
       } catch (err) {
-        console.error("Failed to fetch market status:", err);
+        if (!cancelled) {
+          console.error("Failed to fetch market status:", err);
+        }
       }
     };
 
     fetchStatus();
     const interval = setInterval(fetchStatus, 30000);
-    return () => clearInterval(interval);
-  }, [username, mockInvestorApi]);
 
-  // ── Nothing to show ──
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
   if (!status) return null;
 
-  // ── Show trades remaining hint (subtle, non-intrusive) ──
   if (!status.simulation_active && status.trades_until_sim > 0) {
     return (
       <div className="mb-4 px-4 py-2.5 rounded-xl bg-slate-50 ring-1 ring-slate-200 flex items-center gap-2">
         <span className="text-base">📊</span>
         <p className="text-xs text-slate-500">
-          Place <strong>{status.trades_until_sim} more trade{status.trades_until_sim === 1 ? "" : "s"}</strong> to unlock the market simulation experience.
+          Place{" "}
+          <strong>
+            {status.trades_until_sim} more trade
+            {status.trades_until_sim === 1 ? "" : "s"}
+          </strong>{" "}
+          to unlock the market simulation experience.
         </p>
       </div>
     );
   }
 
-  // ── No active event (simulation done or between events) ──
   if (!status.active || !status.event) return null;
 
-  const event      = status.event;
-  const isCrash    = event.phase === "crash";
+  const event = status.event;
+  const isCrash = event.phase === "crash";
   const isRecovery = event.phase === "recovery";
-  const impacts    = Object.entries(event.sector_impacts);
+  const impacts = Object.entries(event.sector_impacts);
 
-  const bannerBg     = isCrash    ? "#FEF2F2" : isRecovery ? "#FFFBEB" : "#F0FDF4";
-  const bannerBorder = isCrash    ? "#FECACA" : isRecovery ? "#FDE68A" : "#BBF7D0";
-  const bannerText   = isCrash    ? "#991B1B" : isRecovery ? "#92400E" : "#166534";
-  const phaseIcon    = isCrash    ? "📉"      : isRecovery ? "📈"      : "✅";
-  const phaseLabel   = isCrash    ? "MARKET CRASH IN PROGRESS"
-                     : isRecovery ? "MARKET RECOVERING"
-                     : "MARKET NORMALISED";
+  const bannerBg = isCrash ? "#FEF2F2" : isRecovery ? "#FFFBEB" : "#F0FDF4";
+  const bannerBorder = isCrash ? "#FECACA" : isRecovery ? "#FDE68A" : "#BBF7D0";
+  const bannerText = isCrash ? "#991B1B" : isRecovery ? "#92400E" : "#166534";
+  const phaseIcon = isCrash ? "📉" : isRecovery ? "📈" : "✅";
+  const phaseLabel = isCrash
+    ? "MARKET CRASH IN PROGRESS"
+    : isRecovery
+      ? "MARKET RECOVERING"
+      : "MARKET NORMALISED";
 
   return (
     <div
       className="rounded-2xl ring-1 overflow-hidden mb-4"
       style={{ backgroundColor: bannerBg, borderColor: bannerBorder }}
     >
-      {/* Header */}
       <div className="px-5 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <span className="text-2xl flex-shrink-0">{phaseIcon}</span>
@@ -122,10 +125,15 @@ export default function MarketEventBanner({ username, mockInvestorApi }: Props) 
               <div className="w-24 h-1.5 rounded-full bg-slate-200">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${event.progress * 100}%`, backgroundColor: "#f59e0b" }}
+                  style={{
+                    width: `${event.progress * 100}%`,
+                    backgroundColor: "#f59e0b",
+                  }}
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">{(event.progress * 100).toFixed(0)}%</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {(event.progress * 100).toFixed(0)}%
+              </p>
             </div>
           )}
           <button
@@ -138,7 +146,6 @@ export default function MarketEventBanner({ username, mockInvestorApi }: Props) 
         </div>
       </div>
 
-      {/* Simulated prices disclaimer */}
       <div
         className="px-5 py-2 text-xs font-medium flex items-center gap-2"
         style={{ backgroundColor: bannerBorder, color: bannerText }}
@@ -151,7 +158,6 @@ export default function MarketEventBanner({ username, mockInvestorApi }: Props) 
         </span>
       </div>
 
-      {/* Expanded sector breakdown */}
       {expanded && (
         <div className="px-5 py-4 border-t" style={{ borderColor: bannerBorder }}>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
@@ -159,11 +165,12 @@ export default function MarketEventBanner({ username, mockInvestorApi }: Props) 
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {impacts.map(([sector, impact]) => {
-              const isUp   = impact.direction === "up";
-              const pct    = Math.abs(impact.pct_change);
-              const color  = isUp ? "#10b981" : "#ef4444";
-              const bg     = isUp ? "#F0FDF4"  : "#FEF2F2";
-              const border = isUp ? "#BBF7D0"  : "#FECACA";
+              const isUp = impact.direction === "up";
+              const pct = Math.abs(impact.pct_change);
+              const color = isUp ? "#10b981" : "#ef4444";
+              const bg = isUp ? "#F0FDF4" : "#FEF2F2";
+              const border = isUp ? "#BBF7D0" : "#FECACA";
+
               return (
                 <div
                   key={sector}
@@ -175,7 +182,8 @@ export default function MarketEventBanner({ username, mockInvestorApi }: Props) 
                     <span className="text-sm font-semibold text-slate-800">{sector}</span>
                   </div>
                   <span className="text-sm font-black" style={{ color }}>
-                    {isUp ? "+" : "-"}{pct.toFixed(0)}%
+                    {isUp ? "+" : "-"}
+                    {pct.toFixed(0)}%
                   </span>
                 </div>
               );

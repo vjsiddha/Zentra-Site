@@ -1,111 +1,97 @@
 from __future__ import annotations
-import json
-import os
-import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from .schemas import Portfolio, Txn
 from .errors import PersistenceError
-from .settings import PORTFOLIO_PATH, DATA_DIR
+from .firebase_client import get_db
 
-# ---------------------------------------------------------------------------
-# Legacy single-file helpers (kept for backward-compat / anonymous mode)
-# ---------------------------------------------------------------------------
+COLLECTION = "mockInvestorUsers"
 
-def _ensure_dirs() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
-def _default_portfolio() -> Portfolio:
-    return Portfolio(cash=100000.0, positions={}, history=[])
+def _default_portfolio(starting_cash: float = 100000.0) -> Portfolio:
+    return Portfolio(cash=float(starting_cash), positions={}, history=[])
 
-def load_portfolio() -> Portfolio:
-    _ensure_dirs()
-    if not PORTFOLIO_PATH.exists():
-        p = _default_portfolio()
-        save_portfolio(p)
-        return p
+def _doc_to_portfolio(data: dict | None) -> Portfolio:
+    data = data or {}
     try:
-        with open(PORTFOLIO_PATH, "r", encoding="utf-8") as f:
-            obj = json.load(f)
-        return Portfolio.model_validate(obj)
+        return Portfolio.model_validate({
+            "cash": data.get("cash", 100000.0),
+            "positions": data.get("positions", {}),
+            "history": data.get("history", []),
+        })
     except Exception as e:
-        raise PersistenceError(f"Failed to load portfolio: {e}") from e
+        raise PersistenceError(f"Failed to parse portfolio from Firestore: {e}") from e
 
-def save_portfolio(p: Portfolio) -> None:
-    _ensure_dirs()
-    tmp_fd, tmp_path = tempfile.mkstemp(
-        prefix="portfolio_",
-        suffix=".json",
-        dir=str(DATA_DIR)
-    )
+def load_user_portfolio(uid: str) -> Portfolio:
     try:
-        json_str = p.model_dump_json()
-        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
-            f.write(json_str)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp_path, str(PORTFOLIO_PATH))
-    except Exception as e:
-        try:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-        finally:
-            raise PersistenceError(f"Failed to save portfolio: {e}") from e
+        db = get_db()
+        ref = db.collection(COLLECTION).document(uid)
+        snap = ref.get()
 
-def reset_portfolio(starting_cash: float) -> Portfolio:
+        if not snap.exists:
+            p = _default_portfolio()
+            ref.set({
+                "cash": p.cash,
+                "positions": {},
+                "history": [],
+                "tradeCount": 0,
+                "simulationStartedAt": None,
+                "updatedAt": _now_iso(),
+            })
+            return p
+
+        return _doc_to_portfolio(snap.to_dict())
+    except Exception as e:
+        raise PersistenceError(f"Failed to load portfolio for {uid}: {e}") from e
+
+def save_user_portfolio(uid: str, p: Portfolio) -> None:
+    try:
+        db = get_db()
+        ref = db.collection(COLLECTION).document(uid)
+
+        trade_count = len([t for t in p.history if t.type in {"BUY", "SELL"}])
+
+        current = ref.get()
+        current_data = current.to_dict() if current.exists else {}
+        sim_started = current_data.get("simulationStartedAt")
+
+        if trade_count >= 5 and not sim_started:
+            sim_started = _now_iso()
+
+        ref.set({
+            "cash": p.cash,
+            "positions": {
+                sym: pos.model_dump()
+                for sym, pos in p.positions.items()
+            },
+            "history": [txn.model_dump(mode="json") for txn in p.history],
+            "tradeCount": trade_count,
+            "simulationStartedAt": sim_started,
+            "updatedAt": _now_iso(),
+        }, merge=True)
+    except Exception as e:
+        raise PersistenceError(f"Failed to save portfolio for {uid}: {e}") from e
+
+def reset_user_portfolio(uid: str, starting_cash: float) -> Portfolio:
     p = Portfolio(cash=float(starting_cash), positions={}, history=[])
     p.history.append(Txn(
-        ts=datetime.utcnow(), type="RESET", ticker="", qty=0.0, price=0.0, cash=p.cash
+        ts=datetime.now(timezone.utc),
+        type="RESET",
+        ticker="",
+        qty=0.0,
+        price=0.0,
+        cash=p.cash,
     ))
-    save_portfolio(p)
+    save_user_portfolio(uid, p)
     return p
 
-def deposit(amount: float) -> Portfolio:
-    p = load_portfolio()
-    p.cash += float(amount)
-    p.history.append(Txn(
-        ts=datetime.utcnow(), type="DEPOSIT", ticker="", qty=0.0, price=0.0, cash=p.cash
-    ))
-    save_portfolio(p)
-    return p
-
-def withdraw(amount: float) -> Portfolio:
-    p = load_portfolio()
-    p.cash -= float(amount)
-    p.history.append(Txn(
-        ts=datetime.utcnow(), type="WITHDRAW", ticker="", qty=0.0, price=0.0, cash=p.cash
-    ))
-    save_portfolio(p)
-    return p
-
-# ---------------------------------------------------------------------------
-# Per-user portfolio helpers  (used by authenticated API routes)
-# ---------------------------------------------------------------------------
-
-def load_user_portfolio(user_id: int) -> Portfolio:
-    """Load a specific user's portfolio from SQLite. Creates default if absent."""
-    from .users import load_user_portfolio_raw
-    raw = load_user_portfolio_raw(user_id)
-    if raw is None:
-        p = _default_portfolio()
-        save_user_portfolio(user_id, p)
-        return p
+def get_simulation_start(uid: str) -> str | None:
     try:
-        return Portfolio.model_validate(json.loads(raw))
+        db = get_db()
+        snap = db.collection(COLLECTION).document(uid).get()
+        if not snap.exists:
+            return None
+        return (snap.to_dict() or {}).get("simulationStartedAt")
     except Exception as e:
-        raise PersistenceError(f"Failed to load portfolio for user {user_id}: {e}") from e
-
-def save_user_portfolio(user_id: int, p: Portfolio) -> None:
-    """Persist a user's portfolio to SQLite."""
-    from .users import save_user_portfolio_raw
-    try:
-        save_user_portfolio_raw(user_id, p.model_dump_json())
-    except Exception as e:
-        raise PersistenceError(f"Failed to save portfolio for user {user_id}: {e}") from e
-
-def reset_user_portfolio(user_id: int, starting_cash: float) -> Portfolio:
-    p = Portfolio(cash=float(starting_cash), positions={}, history=[])
-    p.history.append(Txn(
-        ts=datetime.utcnow(), type="RESET", ticker="", qty=0.0, price=0.0, cash=p.cash
-    ))
-    save_user_portfolio(user_id, p)
-    return p
+        raise PersistenceError(f"Failed to get simulation start for {uid}: {e}") from e

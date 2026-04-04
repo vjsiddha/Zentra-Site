@@ -53,3 +53,14 @@ export const signOutUser = signOut;
 export function subscribeToAuth(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
 }
+
+/** Get Firebase ID token for authenticated requests */
+export async function getAuthToken(): Promise<string> {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  return user.getIdToken();
+}

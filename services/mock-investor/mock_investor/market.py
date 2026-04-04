@@ -7,8 +7,8 @@ from .schemas import Quote, Bar, NewsItem
 from .errors import MarketDataError
 from .settings import TTL_QUOTES, TTL_HISTORY, TTL_NEWS
 
-# URL for your Finnhub market data API
-MARKET_DATA_API = "http://localhost:8001"
+import os
+MARKET_DATA_API = os.environ.get("MARKET_DATA_API", "http://localhost:8001")
 
 _quotes_cache: TTLCache = TTLCache(maxsize=2048, ttl=TTL_QUOTES)
 _hist_cache: TTLCache = TTLCache(maxsize=512, ttl=TTL_HISTORY)
