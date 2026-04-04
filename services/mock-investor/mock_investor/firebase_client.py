@@ -1,19 +1,13 @@
-import os
-import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-
-_app = None
+import os
 
 def get_db():
-    global _app
-    if not firebase_admin._apps: 
-        service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-        if not service_account_json:
-            raise RuntimeError("FIREBASE_SERVICE_ACCOUNT_JSON is missing")
+if not firebase_admin._apps:
+base_dir = os.path.dirname(__file__)
+cred_path = os.path.join(base_dir, "..", "firebase-service-account.json")
 
-        cred_dict = json.loads(service_account_json)
-        cred = credentials.Certificate(cred_dict)
-        _app = firebase_admin.initialize_app(cred)
+cred = credentials.Certificate(cred_path)
+firebase_admin.initialize_app(cred)
 
-    return firestore.client()
+return firestore.client()
