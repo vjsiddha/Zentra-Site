@@ -154,7 +154,7 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
     run();
   }, [period, portfolio]);
 
-  if (loading)
+  if (loading) {
     return (
       <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-2xl">
         <div className="text-center">
@@ -166,8 +166,9 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
         </div>
       </div>
     );
+  }
 
-  if (!chartData.length)
+  if (!chartData.length) {
     return (
       <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-300">
         <div className="text-center">
@@ -176,6 +177,7 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
         </div>
       </div>
     );
+  }
 
   const sv = chartData[0].value || 100000;
   const cv = chartData[chartData.length - 1].value || 100000;
@@ -206,6 +208,7 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
           </button>
         ))}
       </div>
+
       <div className="grid grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-slate-50">
           <p className="text-xs text-slate-500 mb-1">Starting Value</p>
@@ -223,6 +226,7 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
           </p>
         </div>
       </div>
+
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
@@ -272,6 +276,7 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
       <p className="text-xs text-slate-400 text-center">
         📊 Total equity (cash + market value) from your first trade to today •{" "}
         {chartData.length} data points
@@ -290,6 +295,7 @@ function FutureProjectionsChart({
   const [th, setTh] = useState<1 | 5 | 10 | 20>(10);
   const fv = (r: number, y: number) => investedValue * Math.pow(1 + r, y);
   const pts = Math.min(th, 20);
+
   const data = Array.from({ length: pts + 1 }, (_, i) => {
     const y = (th / pts) * i;
     return {
@@ -301,104 +307,22 @@ function FutureProjectionsChart({
     };
   });
 
-  for (const txn of sorted) {
-    const side  = txn.type || txn.side;
-    const qty   = Number(txn.qty);
-    const price = Number(txn.price);
-    const sym   = txn.ticker;
-
-    if (side === 'BUY') {
-      cash -= qty * price;
-      if (!holdings[sym]) holdings[sym] = { qty: 0, avgCost: price };
-      const prev   = holdings[sym];
-      const newQty = prev.qty + qty;
-      holdings[sym] = { qty: newQty, avgCost: (prev.qty * prev.avgCost + qty * price) / newQty };
-    } else if (side === 'SELL') {
-      cash += qty * price;
-      if (holdings[sym]) {
-        holdings[sym].qty -= qty;
-        if (holdings[sym].qty <= 0) delete holdings[sym];
-      }
-    }
-
-    const holdingsValue = Object.values(holdings).reduce((s, h) => s + h.qty * h.avgCost, 0);
-    points.push({
-      time:  new Date(txn.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      value: cash + holdingsValue,
-    });
-  }
-
-  // Replace last point with live equity for accuracy
-  const todayLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  points[points.length - 1] = { time: todayLabel, value: currentCash + currentMarketValue };
-
-  // Deduplicate same-day points — keep last value per day
-  return points.reduce((acc: typeof points, pt) => {
-    if (acc.length > 0 && acc[acc.length - 1].time === pt.time) {
-      acc[acc.length - 1] = pt;
-    } else {
-      acc.push(pt);
-    }
-    return acc;
-  }, []);
-}
-
-// ── Unified Portfolio Chart: history + optional projections ──────────────────
-function PortfolioValueChart({
-  portfolio,
-  currentMarketValue,
-  startingEquity,
-}: {
-  portfolio: any;
-  currentMarketValue: number;
-  startingEquity: number;
-}) {
-  const [showProjections,  setShowProjections]  = useState(false);
-  const [projectionYears,  setProjectionYears]  = useState<1 | 5 | 10 | 20>(10);
-
-  const history     = portfolio?.history ?? [];
-  const currentCash = portfolio?.cash ?? startingEquity;
-  const investedVal = currentMarketValue;
-  const totalEquity = currentCash + investedVal;
-
-  const historicalPoints = buildEquityCurveFromHistory(history, startingEquity, currentMarketValue, currentCash);
-  const hasHistory = historicalPoints.length >= 2;
-
-  // Projection points extending from today's invested value
-  const projectionPoints = showProjections && investedVal > 0
-    ? Array.from({ length: projectionYears + 1 }, (_, i) => ({
-        time:         i === 0 ? 'Today' : `+${i}y`,
-        conservative: investedVal * Math.pow(1.05, i),
-        moderate:     investedVal * Math.pow(1.08, i),
-        aggressive:   investedVal * Math.pow(1.10, i),
-      }))
-    : [];
-
-  const sv  = hasHistory ? historicalPoints[0].value : startingEquity;
-  const g   = totalEquity - sv;
-  const gp  = sv > 0 ? ((g / sv) * 100).toFixed(2) : '0.00';
-  const pos = g >= 0;
-
-  if (!hasHistory) return (
-    <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-      <div className="text-center">
-        <p className="text-4xl mb-3">📊</p>
-        <p className="font-semibold text-slate-700">No trade history yet</p>
-        <p className="text-sm text-slate-500 mt-1">Make your first trade to start tracking</p>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl bg-slate-50 ring-1" style={{ borderColor: COLORS.cardBorder }}>
+        <div
+          className="p-3 rounded-xl bg-slate-50 ring-1"
+          style={{ borderColor: COLORS.cardBorder }}
+        >
           <p className="text-xs text-slate-500 mb-1">📈 Invested (being projected)</p>
           <p className="text-lg font-bold" style={{ color: COLORS.primary }}>
             ${investedValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-slate-50 ring-1" style={{ borderColor: COLORS.cardBorder }}>
+        <div
+          className="p-3 rounded-xl bg-slate-50 ring-1"
+          style={{ borderColor: COLORS.cardBorder }}
+        >
           <p className="text-xs text-slate-500 mb-1">💵 Cash (not projected)</p>
           <p className="text-lg font-bold text-slate-400">
             ${cashBalance.toLocaleString("en-US", { maximumFractionDigits: 0 })}
@@ -481,7 +405,7 @@ function PortfolioValueChart({
 
       <div className="h-[350px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={historicalPoints} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+          <AreaChart data={data}>
             <defs>
               {[
                 ["cc", "#3b82f6"],
@@ -503,30 +427,30 @@ function PortfolioValueChart({
               axisLine={false}
             />
             <Tooltip
-  formatter={(v: any, name: any): [string, string] => {
-    const n = isFinite(Number(v)) ? Number(v) : 0;
-    const key = String(name ?? "");
-    const label =
-      key === "conservative"
-        ? "Conservative (5%)"
-        : key === "moderate"
-          ? "Moderate (8%)"
-          : key === "aggressive"
-            ? "Aggressive (10%)"
-            : "Uninvested Cash";
+              formatter={(v: any, name: any): [string, string] => {
+                const n = isFinite(Number(v)) ? Number(v) : 0;
+                const key = String(name ?? "");
+                const label =
+                  key === "conservative"
+                    ? "Conservative (5%)"
+                    : key === "moderate"
+                      ? "Moderate (8%)"
+                      : key === "aggressive"
+                        ? "Aggressive (10%)"
+                        : "Uninvested Cash";
 
-    return [
-      `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
-      label,
-    ];
-  }}
-  labelFormatter={(l) => `Time: ${l}`}
-  contentStyle={{
-    borderRadius: "12px",
-    border: "none",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-  }}
-/>
+                return [
+                  `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+                  label,
+                ];
+              }}
+              labelFormatter={(l) => `Time: ${l}`}
+              contentStyle={{
+                borderRadius: "12px",
+                border: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              }}
+            />
             <Legend
               verticalAlign="top"
               height={36}
@@ -577,6 +501,7 @@ function PortfolioValueChart({
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
       <p className="text-xs text-slate-400 text-center">
         📚 Projections apply only to your{" "}
         <strong>
@@ -585,105 +510,13 @@ function PortfolioValueChart({
         in invested assets • Cash shown as flat line • Based on historical S&P 500
         average returns
       </p>
-
-      {/* Projections section */}
-      <div className="border-t pt-4" style={{ borderColor: COLORS.cardBorder }}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="font-semibold text-slate-800">🔮 Future Projections</p>
-            <p className="text-xs text-slate-500">
-              Projecting your ${investedVal.toLocaleString('en-US', { maximumFractionDigits: 0 })} in invested assets
-            </p>
-          </div>
-          <button
-            onClick={() => setShowProjections(!showProjections)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${showProjections ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-            style={showProjections ? { backgroundColor: COLORS.primary } : {}}
-          >
-            {showProjections ? 'Hide' : 'Show Projections'}
-          </button>
-        </div>
-
-        {showProjections && (
-          <div className="space-y-4">
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
-              <p className="text-xs text-amber-800">
-                ⚠️ <strong>Educational only.</strong> Based on historical S&P 500 averages (5–10%/yr). Past performance does not guarantee future results.
-                {currentCash > investedVal * 0.3 && (
-                  <span className="block mt-1">
-                    💡 <strong>{((currentCash / (currentCash + investedVal)) * 100).toFixed(0)}% of your portfolio is uninvested cash</strong> — only your ${investedVal.toLocaleString('en-US', { maximumFractionDigits: 0 })} in stocks is being projected.
-                  </span>
-                )}
-              </p>
-            </div>
-
-            {/* Horizon buttons */}
-            <div className="flex gap-2">
-              {[{ y: 1, l: '1 Year' }, { y: 5, l: '5 Years' }, { y: 10, l: '10 Years' }, { y: 20, l: '20 Years' }].map(o => (
-                <button key={o.y} onClick={() => setProjectionYears(o.y as any)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${projectionYears === o.y ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                  style={projectionYears === o.y ? { backgroundColor: COLORS.primary } : {}}>
-                  {o.l}
-                </button>
-              ))}
-            </div>
-
-            {/* Outcome cards */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { l: 'Conservative (5%/yr)', v: investedVal * Math.pow(1.05, projectionYears), bg: 'bg-blue-50',    t: 'text-blue-700'   },
-                { l: 'Moderate (8%/yr)',      v: investedVal * Math.pow(1.08, projectionYears), bg: 'bg-emerald-50', t: 'text-emerald-700' },
-                { l: 'Aggressive (10%/yr)',   v: investedVal * Math.pow(1.10, projectionYears), bg: 'bg-purple-50',  t: 'text-purple-700'  },
-              ].map(s => (
-                <div key={s.l} className={`p-3 rounded-xl ${s.bg}`}>
-                  <p className="text-xs text-slate-600 mb-1">{s.l}</p>
-                  <p className={`text-lg font-bold ${s.t}`}>${s.v.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
-                  <p className="text-xs text-slate-500">+${(s.v - investedVal).toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Projection chart */}
-            <div className="h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={projectionPoints} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                  <defs>
-                    {[['pc', '#3b82f6'], ['pm', '#10b981'], ['pa', '#8b5cf6']].map(([id, c]) => (
-                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={c} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={c} stopOpacity={0} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="time" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    formatter={(v: any, name: string) => {
-                      const n = isFinite(Number(v)) ? Number(v) : 0;
-                      const label = name === 'conservative' ? 'Conservative (5%)' : name === 'moderate' ? 'Moderate (8%)' : 'Aggressive (10%)';
-                      return [`$${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, label];
-                    }}
-                    labelFormatter={l => `Time: ${l}`}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <ReferenceLine x="Today" stroke="#94a3b8" strokeDasharray="4 4" />
-                  <Area type="monotone" dataKey="conservative" stroke="#3b82f6" fillOpacity={1} fill="url(#pc)" strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="moderate"     stroke="#10b981" fillOpacity={1} fill="url(#pm)" strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="aggressive"   stroke="#8b5cf6" fillOpacity={1} fill="url(#pa)" strokeWidth={2} dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
 
 function PortfolioAllocationChart({ positions }: { positions: any }) {
   const syms = Object.keys(positions);
-  if (!syms.length)
+  if (!syms.length) {
     return (
       <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-300">
         <div className="text-center">
@@ -692,12 +525,14 @@ function PortfolioAllocationChart({ positions }: { positions: any }) {
         </div>
       </div>
     );
+  }
 
   const sb: Record<string, number> = {};
   syms.forEach((s) => {
     const sec = getSectorForSymbol(s);
     sb[sec] = (sb[sec] || 0) + positions[s].qty * positions[s].avg_cost;
   });
+
   const cd = Object.entries(sb).map(([n, v]) => ({
     name: n,
     value: v,
@@ -737,6 +572,7 @@ function PortfolioAllocationChart({ positions }: { positions: any }) {
           </PieChart>
         </ResponsiveContainer>
       </div>
+
       <div className="space-y-2">
         {cd.map((s) => (
           <div
@@ -1018,22 +854,31 @@ export default function SimulatorPage() {
     : positionSymbols.slice(0, COLLAPSED_LIMIT);
   const hiddenCount = positionSymbols.length - COLLAPSED_LIMIT;
 
-  if (authLoading || loading)
+  if (authLoading || loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: COLORS.background }}>
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: COLORS.background }}
+      >
         <div className="text-center">
           <div
             className="animate-spin w-8 h-8 border-4 border-t-transparent rounded-full mx-auto mb-4"
             style={{ borderColor: COLORS.primary, borderTopColor: "transparent" }}
           />
-          <p className="text-slate-600">{authLoading ? "Loading..." : "Loading simulator..."}</p>
+          <p className="text-slate-600">
+            {authLoading ? "Loading..." : "Loading simulator..."}
+          </p>
         </div>
       </main>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: COLORS.background }}>
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: COLORS.background }}
+      >
         <div className="text-center max-w-md p-6">
           <p className="text-4xl mb-4">⚠️</p>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Connection Error</h2>
@@ -1048,6 +893,7 @@ export default function SimulatorPage() {
         </div>
       </main>
     );
+  }
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
@@ -1057,7 +903,10 @@ export default function SimulatorPage() {
           style={{ borderColor: COLORS.cardBorder }}
         >
           <div className="h-screen overflow-y-auto p-5">
-            <Link href="/" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6"
+            >
               ← Back to Home
             </Link>
 
@@ -1073,9 +922,6 @@ export default function SimulatorPage() {
                   <div className="space-y-2">
                     {visibleHoldings.map((sym) => {
                       const pos = positions[sym];
-                      const livePrice = marketPrices[sym] ?? pos.avg_cost;
-                      const liveValue = pos.qty * livePrice;
-                      const gain = liveValue - pos.qty * pos.avg_cost;
                       return (
                         <button
                           key={sym}
@@ -1100,7 +946,8 @@ export default function SimulatorPage() {
                     })}
                   </div>
                   {positionSymbols.length > COLLAPSED_LIMIT && (
-                    <button onClick={() => setShowAllHoldings(!showAllHoldings)}
+                    <button
+                      onClick={() => setShowAllHoldings(!showAllHoldings)}
                       className="w-full mt-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-slate-100"
                       style={{ color: COLORS.primary, backgroundColor: COLORS.primaryLight }}
                     >
@@ -1129,7 +976,10 @@ export default function SimulatorPage() {
                     <span className="text-slate-400">{expandedSector === name ? "−" : "+"}</span>
                   </button>
                   {expandedSector === name && (
-                    <div className="mt-2 p-3 rounded-xl text-sm" style={{ backgroundColor: COLORS.primaryLight }}>
+                    <div
+                      className="mt-2 p-3 rounded-xl text-sm"
+                      style={{ backgroundColor: COLORS.primaryLight }}
+                    >
                       <p className="text-slate-600 mb-2">{sector.description}</p>
                       <div className="space-y-1">
                         {sector.symbols.map((sym) => (
@@ -1153,17 +1003,35 @@ export default function SimulatorPage() {
         </aside>
 
         <div className="flex-1">
-          <header className="bg-white border-b px-6 py-4" style={{ borderColor: COLORS.cardBorder }}>
+          <header
+            className="bg-white border-b px-6 py-4"
+            style={{ borderColor: COLORS.cardBorder }}
+          >
             <div className="max-w-6xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100">
-                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-2 rounded-lg hover:bg-slate-100"
+                >
+                  <svg
+                    className="w-5 h-5 text-slate-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   </svg>
                 </button>
                 <div>
                   <h1 className="text-2xl font-extrabold text-slate-900">Stock Simulator</h1>
-                  <p className="text-slate-500 text-sm">Practice with $100,000 • Track Your Performance</p>
+                  <p className="text-slate-500 text-sm">
+                    Practice with $100,000 • Track Your Performance
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-6">
@@ -1193,7 +1061,11 @@ export default function SimulatorPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-slate-500">Total Gain</p>
-                  <p className={`text-sm font-bold ${isPositive ? "text-emerald-700" : "text-red-700"}`}>
+                  <p
+                    className={`text-sm font-bold ${
+                      isPositive ? "text-emerald-700" : "text-red-700"
+                    }`}
+                  >
                     {isPositive ? "+" : ""}$
                     {totalGain.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                   </p>
@@ -1202,7 +1074,10 @@ export default function SimulatorPage() {
             </div>
           </header>
 
-          <nav className="bg-white border-b px-6" style={{ borderColor: COLORS.cardBorder }}>
+          <nav
+            className="bg-white border-b px-6"
+            style={{ borderColor: COLORS.cardBorder }}
+          >
             <div className="max-w-6xl mx-auto flex gap-1">
               {[
                 { id: "trade", label: "Trade", icon: "📈" },
@@ -1297,7 +1172,12 @@ export default function SimulatorPage() {
 
               {activeTab === "trade" && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card title="Buy Stocks" icon="📈" iconBg={COLORS.successLight} iconColor={COLORS.success}>
+                  <Card
+                    title="Buy Stocks"
+                    icon="📈"
+                    iconBg={COLORS.successLight}
+                    iconColor={COLORS.success}
+                  >
                     {!selectedSymbol ? (
                       <div className="space-y-4">
                         <div>
@@ -1312,9 +1192,14 @@ export default function SimulatorPage() {
                             className="w-full px-4 py-3 rounded-xl ring-1 text-sm"
                             style={{ borderColor: COLORS.cardBorder }}
                           />
-                          {searchLoading && <p className="text-xs text-slate-500 mt-2">Searching...</p>}
+                          {searchLoading && (
+                            <p className="text-xs text-slate-500 mt-2">Searching...</p>
+                          )}
                           {searchResults.length > 0 && (
-                            <div className="mt-2 max-h-48 overflow-y-auto rounded-xl ring-1" style={{ borderColor: COLORS.cardBorder }}>
+                            <div
+                              className="mt-2 max-h-48 overflow-y-auto rounded-xl ring-1"
+                              style={{ borderColor: COLORS.cardBorder }}
+                            >
                               {searchResults.map((s) => (
                                 <button
                                   key={s.symbol}
@@ -1322,7 +1207,10 @@ export default function SimulatorPage() {
                                   className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b last:border-b-0 text-sm"
                                   style={{ borderColor: COLORS.cardBorder }}
                                 >
-                                  <span className="font-bold" style={{ color: COLORS.primary }}>
+                                  <span
+                                    className="font-bold"
+                                    style={{ color: COLORS.primary }}
+                                  >
                                     {s.symbol}
                                   </span>
                                   <span className="text-slate-500 ml-2">{s.name}</span>
@@ -1335,16 +1223,24 @@ export default function SimulatorPage() {
                           className="p-4 rounded-xl bg-slate-50 border border-dashed text-center"
                           style={{ borderColor: COLORS.cardBorder }}
                         >
-                          <p className="text-sm text-slate-500">Or browse sectors in the left sidebar</p>
+                          <p className="text-sm text-slate-500">
+                            Or browse sectors in the left sidebar
+                          </p>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{ backgroundColor: COLORS.primaryLight }}
+                        >
                           <div className="flex justify-between items-center">
                             <div>
                               <p className="text-sm text-slate-600">Selected Stock</p>
-                              <p className="text-xl font-bold" style={{ color: COLORS.primary }}>
+                              <p
+                                className="text-xl font-bold"
+                                style={{ color: COLORS.primary }}
+                              >
                                 {selectedSymbol}
                               </p>
                             </div>
@@ -1356,14 +1252,20 @@ export default function SimulatorPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.successLight }}>
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{ backgroundColor: COLORS.successLight }}
+                        >
                           <div className="flex justify-between items-center">
                             <span className="text-slate-600">Current Price</span>
                             <div className="text-right">
                               {priceLoading ? (
                                 <span className="text-slate-400">Loading...</span>
                               ) : currentPrice ? (
-                                <span className="text-2xl font-bold" style={{ color: COLORS.success }}>
+                                <span
+                                  className="text-2xl font-bold"
+                                  style={{ color: COLORS.success }}
+                                >
                                   ${currentPrice.toFixed(2)}
                                 </span>
                               ) : (
@@ -1389,14 +1291,22 @@ export default function SimulatorPage() {
                           {currentPrice && buyQty > 0 && (
                             <p className="text-sm text-slate-500 mt-2">
                               Total:{" "}
-                              <span className="font-semibold text-slate-900">${buyTotal.toFixed(2)}</span>
+                              <span className="font-semibold text-slate-900">
+                                ${buyTotal.toFixed(2)}
+                              </span>
                               {buyTotal > cashBalance && (
-                                <span className="text-red-500 ml-2">(Insufficient funds)</span>
+                                <span className="text-red-500 ml-2">
+                                  (Insufficient funds)
+                                </span>
                               )}
                             </p>
                           )}
                         </div>
-                        <PreTradeWarning impact={preTradImpact} qty={buyQty} price={currentPrice} />
+                        <PreTradeWarning
+                          impact={preTradImpact}
+                          qty={buyQty}
+                          price={currentPrice}
+                        />
                         <button
                           onClick={handleBuy}
                           disabled={tradeLoading || !canBuy}
@@ -1409,16 +1319,26 @@ export default function SimulatorPage() {
                     )}
                   </Card>
 
-                  <Card title="Sell Stocks" icon="📉" iconBg={COLORS.dangerLight} iconColor={COLORS.danger}>
+                  <Card
+                    title="Sell Stocks"
+                    icon="📉"
+                    iconBg={COLORS.dangerLight}
+                    iconColor={COLORS.danger}
+                  >
                     {positionSymbols.length === 0 ? (
                       <div className="text-center py-8">
                         <p className="text-4xl mb-3">📭</p>
                         <p className="font-semibold text-slate-700">No positions</p>
-                        <p className="text-sm text-slate-500 mt-1">Buy some stocks first!</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                          Buy some stocks first!
+                        </p>
                       </div>
                     ) : !sellSymbol ? (
                       <div className="space-y-4">
-                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{ backgroundColor: COLORS.primaryLight }}
+                        >
                           <p className="text-sm text-slate-600 mb-3">Select Position</p>
                           <select
                             value={sellSymbol}
@@ -1427,7 +1347,10 @@ export default function SimulatorPage() {
                               setSellQty(0);
                             }}
                             className="w-full px-4 py-2.5 rounded-lg bg-white ring-1 font-medium cursor-pointer"
-                            style={{ borderColor: COLORS.cardBorder, color: COLORS.primary }}
+                            style={{
+                              borderColor: COLORS.cardBorder,
+                              color: COLORS.primary,
+                            }}
                           >
                             <option value="">Select a position...</option>
                             {positionSymbols.map((sym) => (
@@ -1438,7 +1361,10 @@ export default function SimulatorPage() {
                             ))}
                           </select>
                         </div>
-                        <div className="p-4 rounded-xl bg-slate-50 border border-dashed" style={{ borderColor: COLORS.cardBorder }}>
+                        <div
+                          className="p-4 rounded-xl bg-slate-50 border border-dashed"
+                          style={{ borderColor: COLORS.cardBorder }}
+                        >
                           <p className="text-center text-slate-500 text-sm">
                             Choose a position above to start selling
                           </p>
@@ -1446,15 +1372,22 @@ export default function SimulatorPage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{ backgroundColor: COLORS.primaryLight }}
+                        >
                           <div className="flex justify-between items-center">
                             <div>
                               <p className="text-sm text-slate-600">Selected Position</p>
-                              <p className="text-xl font-bold" style={{ color: COLORS.primary }}>
+                              <p
+                                className="text-xl font-bold"
+                                style={{ color: COLORS.primary }}
+                              >
                                 {sellSymbol}
                               </p>
                               <p className="text-xs text-slate-500 mt-1">
-                                You own {maxSellQty} shares @ ${positions[sellSymbol].avg_cost.toFixed(2)} avg
+                                You own {maxSellQty} shares @ $
+                                {positions[sellSymbol].avg_cost.toFixed(2)} avg
                               </p>
                             </div>
                             <button
@@ -1468,10 +1401,16 @@ export default function SimulatorPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.dangerLight }}>
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{ backgroundColor: COLORS.dangerLight }}
+                        >
                           <div className="flex justify-between">
                             <span className="text-slate-600">Current Price</span>
-                            <span className="text-2xl font-bold" style={{ color: COLORS.danger }}>
+                            <span
+                              className="text-2xl font-bold"
+                              style={{ color: COLORS.danger }}
+                            >
                               {sellPrice ? `$${sellPrice.toFixed(2)}` : "Loading..."}
                             </span>
                           </div>
@@ -1524,7 +1463,9 @@ export default function SimulatorPage() {
                   <div className="lg:col-span-2">
                     <Card>
                       <div className="flex justify-between mb-3">
-                        <span className="font-semibold text-slate-900">💵 Available Cash</span>
+                        <span className="font-semibold text-slate-900">
+                          💵 Available Cash
+                        </span>
                         <span className="font-bold" style={{ color: COLORS.primary }}>
                           ${cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                         </span>
@@ -1542,14 +1483,20 @@ export default function SimulatorPage() {
                         <p className="text-sm text-slate-500">
                           {((cashBalance / 100000) * 100).toFixed(1)}% remaining
                         </p>
-                        <button onClick={handleReset} className="text-xs text-slate-400 hover:text-red-500">
+                        <button
+                          onClick={handleReset}
+                          className="text-xs text-slate-400 hover:text-red-500"
+                        >
                           Reset Portfolio
                         </button>
                       </div>
                     </Card>
                   </div>
 
-                  <div className="lg:col-span-2 p-4 rounded-2xl" style={{ backgroundColor: COLORS.warningLight }}>
+                  <div
+                    className="lg:col-span-2 p-4 rounded-2xl"
+                    style={{ backgroundColor: COLORS.warningLight }}
+                  >
                     <p className="text-slate-700">{currentTip}</p>
                   </div>
                 </div>
@@ -1609,13 +1556,15 @@ export default function SimulatorPage() {
                           onClick={() => setActiveTab("dss")}
                           style={{
                             backgroundColor:
-                              dssScorecard.overallGrade === "A" || dssScorecard.overallGrade === "B"
+                              dssScorecard.overallGrade === "A" ||
+                              dssScorecard.overallGrade === "B"
                                 ? "#F0FDF4"
                                 : dssScorecard.overallGrade === "C"
                                   ? "#FFFBEB"
                                   : "#FEF2F2",
                             borderColor:
-                              dssScorecard.overallGrade === "A" || dssScorecard.overallGrade === "B"
+                              dssScorecard.overallGrade === "A" ||
+                              dssScorecard.overallGrade === "B"
                                 ? "#BBF7D0"
                                 : dssScorecard.overallGrade === "C"
                                   ? "#FDE68A"
@@ -1650,8 +1599,13 @@ export default function SimulatorPage() {
                                 {riskLabel} · {dssScorecard.components.riskBalance.note}
                               </p>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">{dssScorecard.topDrag}</p>
-                            <p className="text-xs font-semibold mt-2" style={{ color: COLORS.primary }}>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {dssScorecard.topDrag}
+                            </p>
+                            <p
+                              className="text-xs font-semibold mt-2"
+                              style={{ color: COLORS.primary }}
+                            >
                               View full analysis →
                             </p>
                           </div>
@@ -1659,14 +1613,21 @@ export default function SimulatorPage() {
                       </Card>
 
                       <Card title="Estimated Monthly Dividends" icon="💰">
-                        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.primaryLight }}>
-                          <p className="text-sm text-slate-600 mb-1">Estimated Monthly Dividends</p>
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{ backgroundColor: COLORS.primaryLight }}
+                        >
+                          <p className="text-sm text-slate-600 mb-1">
+                            Estimated Monthly Dividends
+                          </p>
                           <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
                             ${monthlyDividends.toFixed(2)}
                           </p>
                           <p className="text-xs text-slate-500 mt-2">
                             {monthlyDividends > 0
-                              ? `$${(monthlyDividends * 12).toFixed(2)} annually from dividend-paying stocks`
+                              ? `$${(monthlyDividends * 12).toFixed(
+                                  2
+                                )} annually from dividend-paying stocks`
                               : "None of your holdings pay dividends"}
                           </p>
                         </div>
@@ -1688,12 +1649,16 @@ export default function SimulatorPage() {
                           </p>
                           <p className="text-sm text-amber-800">
                             These projections are based on historical market averages
-                            (5–10% annual returns). <strong>Past performance does not guarantee future results.</strong>
+                            (5–10% annual returns).{" "}
+                            <strong>Past performance does not guarantee future results.</strong>
                           </p>
                         </div>
                       </div>
                     </div>
-                    <FutureProjectionsChart investedValue={currentMarketValue} cashBalance={cashBalance} />
+                    <FutureProjectionsChart
+                      investedValue={currentMarketValue}
+                      cashBalance={cashBalance}
+                    />
                   </Card>
 
                   <Card title="Transaction History" icon="📋">
@@ -1701,7 +1666,9 @@ export default function SimulatorPage() {
                       <div className="text-center py-12">
                         <p className="text-5xl mb-4">📭</p>
                         <p className="font-semibold text-slate-700">No transactions yet</p>
-                        <p className="text-sm text-slate-500 mt-1">Start trading to see your history!</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                          Start trading to see your history!
+                        </p>
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
@@ -1815,7 +1782,10 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl p-6 ring-1" style={{ borderColor: COLORS.cardBorder }}>
+    <div
+      className="bg-white rounded-2xl p-6 ring-1"
+      style={{ borderColor: COLORS.cardBorder }}
+    >
       {title && (
         <div className="flex items-center gap-3 mb-5">
           {icon && (

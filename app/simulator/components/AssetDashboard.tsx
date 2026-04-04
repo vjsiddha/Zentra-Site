@@ -1,6 +1,7 @@
 // app/simulator/components/AssetDashboard.tsx
 "use client";
 
+import { mockInvestorApi } from '@/lib/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, 
@@ -34,7 +35,6 @@ interface AssetDashboardProps {
   symbol: string;
   onClose: () => void;
   portfolio: any;
-  username: string;
 }
 
 interface CompanyInfo {
@@ -51,7 +51,7 @@ interface PriceHistory {
   close: number;
 }
 
-export default function AssetDashboard({ symbol, onClose, portfolio, username }: AssetDashboardProps) {
+export default function AssetDashboard({ symbol, onClose, portfolio}: AssetDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
@@ -80,9 +80,8 @@ export default function AssetDashboard({ symbol, onClose, portfolio, username }:
   // ── Fetch price through mock-investor so shock multipliers apply ──
   const fetchLivePrice = async () => {
     try {
-      const r = await fetch(`${MOCK_INVESTOR_API}/metrics/quote/${encodeURIComponent(symbol)}?user=${encodeURIComponent(username)}`);
-      const d = await r.json();
-      if (d.ok) setCurrentPrice(d.data.last);
+      const data = await mockInvestorApi.getShockedQuote(symbol);
+      setCurrentPrice(data.last);
     } catch {}
   };
 
@@ -137,7 +136,7 @@ export default function AssetDashboard({ symbol, onClose, portfolio, username }:
   useEffect(() => {
     const t = setInterval(fetchLivePrice, 30000);
     return () => clearInterval(t);
-  }, [symbol, username]);
+  }, [symbol]);
 
   if (loading) {
     return (
