@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Optional
-
+from mangum import mangum
 import pandas as pd
 import requests as req_lib
 from fastapi import FastAPI, Header, Query
@@ -431,3 +431,6 @@ def post_position_size(body: PositionSizeBody):
 def post_expected_pl(body: ExpectedPLBody):
     res = expected_pl(body.entry, body.target, body.stop, body.shares)
     return ok(res)
+
+    rom mangum import Mangum
+handler = Mangum(app)
