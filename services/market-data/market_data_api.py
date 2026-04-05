@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import finnhub
 import requests as req
+from mangum import Mangum
 import os
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
