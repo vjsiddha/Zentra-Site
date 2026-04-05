@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Optional
-from mangum import mangum
+from mangum import Mangum
 import pandas as pd
 import requests as req_lib
 from fastapi import FastAPI, Header, Query
