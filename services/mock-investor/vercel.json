@@ -1,14 +1,14 @@
 {
   "builds": [
     {
-      "src": "mock_investor/api.py",
+      "src": "mock_investor//mock_investor/api.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "mock_investor/api.py"
+      "dest": "mock_investor/mock_investor/api.py"
     }
   ]
 }
