@@ -1,3 +1,6 @@
 firebase-admin
 google-cloud-firestore
 mangum
+fastapi
+uvicorn
+pandas
