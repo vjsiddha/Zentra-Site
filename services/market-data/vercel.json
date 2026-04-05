@@ -1,14 +1,14 @@
 {
   "builds": [
     {
-      "src": "api.py",
+      "src": "market_data_api.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api.py"
+      "dest": "market_data_api.py"
     }
   ]
 }

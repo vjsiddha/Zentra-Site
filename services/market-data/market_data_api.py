@@ -546,3 +546,6 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     logger.info(f"Starting Market Data API on port {port}")
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+
+    from mangum import Mangum
+handler = Mangum(app)
