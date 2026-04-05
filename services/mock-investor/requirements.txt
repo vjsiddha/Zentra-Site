@@ -4,3 +4,4 @@ mangum
 fastapi
 uvicorn
 pandas
+cachetools
