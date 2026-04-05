@@ -432,5 +432,5 @@ def post_expected_pl(body: ExpectedPLBody):
     res = expected_pl(body.entry, body.target, body.stop, body.shares)
     return ok(res)
 
-    rom mangum import Mangum
+    from mangum import Mangum
 handler = Mangum(app)
