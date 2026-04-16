@@ -346,7 +346,24 @@ def get_equity_curve(
                 continue
 
         series = equity_curve(p.history, closes)
-        return ok([{"ts": ts.isoformat(), "equity": float(val)} for ts, val in series.items()])
+points = [{"ts": ts.isoformat(), "equity": float(val)} for ts, val in series.items()]
+
+# Force latest point to match live mark-to-market equity
+sim_start = get_simulation_start(uid)
+live_market_value = 0.0
+for sym, pos in p.positions.items():
+    live_price = get_shocked_price(sym, fallback=pos.avg_cost, sim_start=sim_start)
+    live_market_value += pos.qty * live_price
+
+live_total_equity = p.cash + live_market_value
+
+if points:
+    points[-1]["ts"] = datetime.now().isoformat()
+    points[-1]["equity"] = float(live_total_equity)
+else:
+    points = [{"ts": datetime.now().isoformat(), "equity": float(live_total_equity)}]
+
+return ok(points)
     except ValueError as e:
         return fail(str(e), 401)
     except Exception as e:
@@ -433,4 +450,4 @@ def post_expected_pl(body: ExpectedPLBody):
     return ok(res)
 
     from mangum import Mangum
-handler = Mangum(app)
+handler = Mangum(app)   

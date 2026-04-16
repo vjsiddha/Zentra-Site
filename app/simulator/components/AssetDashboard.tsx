@@ -111,10 +111,36 @@ export default function AssetDashboard({ symbol, onClose, portfolio}: AssetDashb
         const historyResponse = await fetch(`${MARKET_DATA_API}/history/${symbol}?period=${timeframe}`);
         const historyData = await historyResponse.json();
         if (historyData.ok && Array.isArray(historyData.data) && historyData.data.length > 0) {
-          setPriceHistory(historyData.data);
-        } else {
-          setPriceHistory(generateMockData(timeframe));
-        }
+  const mappedHistory = historyData.data.map((item: any) => ({
+    date:
+      item.date ||
+      new Date(item.ts).toLocaleDateString(
+        "en-US",
+        timeframe === "1y"
+          ? { month: "short", year: "2-digit" }
+          : { month: "short", day: "numeric" }
+      ),
+    close: Number(item.close ?? 0),
+  }));
+
+  if (currentPrice != null && mappedHistory.length > 0) {
+    mappedHistory[mappedHistory.length - 1] = {
+      ...mappedHistory[mappedHistory.length - 1],
+      close: Number(currentPrice),
+    };
+  }
+
+  setPriceHistory(mappedHistory);
+} else {
+  const fallback = generateMockData(timeframe);
+  if (currentPrice != null && fallback.length > 0) {
+    fallback[fallback.length - 1] = {
+      ...fallback[fallback.length - 1],
+      close: Number(currentPrice),
+    };
+  }
+  setPriceHistory(fallback);
+}
 
         // News
         const newsResponse = await fetch(`${MARKET_DATA_API}/news/${symbol}`);
@@ -134,9 +160,10 @@ export default function AssetDashboard({ symbol, onClose, portfolio}: AssetDashb
 
   // ── Poll live price every 30s via mock-investor ──
   useEffect(() => {
-    const t = setInterval(fetchLivePrice, 30000);
-    return () => clearInterval(t);
-  }, [symbol]);
+  fetchLivePrice();
+  const interval = setInterval(fetchLivePrice, 30000);
+  return () => clearInterval(interval);
+}, [symbol]);
 
   if (loading) {
     return (

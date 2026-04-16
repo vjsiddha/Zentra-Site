@@ -109,7 +109,13 @@ function getSectorForSymbol(symbol: string): string {
   return "Other";
 }
 
-function PortfolioValueChart({ portfolio }: { portfolio: any }) {
+function PortfolioValueChart({
+  portfolio,
+  liveTotalEquity,
+}: {
+  portfolio: any;
+  liveTotalEquity: number;
+}) {
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"ALL" | "1y" | "3m" | "1m">("ALL");
@@ -117,42 +123,93 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
   useEffect(() => {
     const run = async () => {
       setLoading(true);
+
       try {
-        const p = period === "ALL" ? "1y" : period;
-        const data = await mockInvestorApi.getEquityCurve(p, "1d");
-        if (!data || data.length === 0) {
-          setChartData([
-            { time: new Date().toLocaleDateString(), value: portfolio?.cash || 100000 },
-          ]);
-        } else {
-          let fd = data;
-          if (period !== "ALL") {
-            const cut = new Date();
-            if (period === "1m") cut.setMonth(cut.getMonth() - 1);
-            if (period === "3m") cut.setMonth(cut.getMonth() - 3);
-            if (period === "1y") cut.setFullYear(cut.getFullYear() - 1);
-            fd = data.filter((x: any) => new Date(x.ts) >= cut);
-          }
-          setChartData(
-            fd.map((x: any) => ({
-              time: new Date(x.ts).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              }),
-              value: x.equity,
-            }))
-          );
-        }
+        const apiPeriod = period === "ALL" ? "1y" : period;
+const raw: any = await mockInvestorApi.getEquityCurve(apiPeriod, "1d");
+
+let points: any[] = [];
+if (Array.isArray(raw)) {
+  points = raw;
+} else if (raw && Array.isArray(raw.data)) {
+  points = raw.data;
+}
+
+if (points.length === 0) {
+  setChartData([
+    {
+      time: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      value: Number(liveTotalEquity || portfolio?.cash || 100000),
+    },
+  ]);
+  return;
+}
+
+if (period !== "ALL") {
+  const cut = new Date();
+  if (period === "1m") cut.setMonth(cut.getMonth() - 1);
+  if (period === "3m") cut.setMonth(cut.getMonth() - 3);
+  if (period === "1y") cut.setFullYear(cut.getFullYear() - 1);
+
+  points = points.filter((x: any) => new Date(x.ts) >= cut);
+}
+
+let mapped = points.map((x: any) => ({
+  ts: x.ts,
+  time: new Date(x.ts).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  }),
+  value: Number(x.equity ?? 0),
+}));
+
+const latestValue = Number(liveTotalEquity || 0);
+const latestTs = new Date().toISOString();
+
+if (mapped.length === 0) {
+  mapped = [
+    {
+      ts: latestTs,
+      time: new Date(latestTs).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      value: latestValue || portfolio?.cash || 100000,
+    },
+  ];
+} else {
+  mapped[mapped.length - 1] = {
+    ...mapped[mapped.length - 1],
+    ts: latestTs,
+    time: new Date(latestTs).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+    value: latestValue || mapped[mapped.length - 1].value,
+  };
+}
+
+setChartData(mapped);
       } catch {
         setChartData([
-          { time: new Date().toLocaleDateString(), value: portfolio?.cash || 100000 },
+          {
+            time: new Date().toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+            value: Number(liveTotalEquity || portfolio?.cash || 100000),
+          },
         ]);
       } finally {
         setLoading(false);
       }
     };
+
     run();
-  }, [period, portfolio]);
+  }, [period, portfolio, liveTotalEquity]);
 
   if (loading) {
     return (
@@ -179,10 +236,10 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
     );
   }
 
-  const sv = chartData[0].value || 100000;
-  const cv = chartData[chartData.length - 1].value || 100000;
+  const sv = Number(chartData[0]?.value || 100000);
+  const cv = Number(liveTotalEquity || chartData[chartData.length - 1]?.value || 100000);
   const g = cv - sv;
-  const gp = ((g / sv) * 100).toFixed(2);
+  const gp = sv > 0 ? ((g / sv) * 100).toFixed(2) : "0.00";
   const pos = g >= 0;
 
   return (
@@ -212,17 +269,24 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
       <div className="grid grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-slate-50">
           <p className="text-xs text-slate-500 mb-1">Starting Value</p>
-          <p className="text-lg font-bold text-slate-900">${sv.toLocaleString()}</p>
+          <p className="text-lg font-bold text-slate-900">
+            ${sv.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
         </div>
         <div className="p-4 rounded-xl bg-slate-50">
           <p className="text-xs text-slate-500 mb-1">Current Value</p>
-          <p className="text-lg font-bold text-slate-900">${cv.toLocaleString()}</p>
+          <p className="text-lg font-bold text-slate-900">
+            ${cv.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
         </div>
         <div className={`p-4 rounded-xl ${pos ? "bg-emerald-50" : "bg-red-50"}`}>
           <p className="text-xs text-slate-500 mb-1">Total Gain</p>
           <p className={`text-lg font-bold ${pos ? "text-emerald-700" : "text-red-700"}`}>
-            {pos ? "+" : ""} ${g.toLocaleString()} ({pos ? "+" : ""}
-            {gp}%)
+            {pos ? "+" : ""}${g.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            ({pos ? "+" : ""}{gp}%)
           </p>
         </div>
       </div>
@@ -255,7 +319,10 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
             />
             <Tooltip
               formatter={(v: any): [string, string] => [
-                `$${(isFinite(Number(v)) ? Number(v) : 0).toLocaleString()}`,
+                `$${Number(v || 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`,
                 "Portfolio Value",
               ]}
               labelFormatter={(l) => `Date: ${l}`}
@@ -278,8 +345,7 @@ function PortfolioValueChart({ portfolio }: { portfolio: any }) {
       </div>
 
       <p className="text-xs text-slate-400 text-center">
-        📊 Total equity (cash + market value) from your first trade to today •{" "}
-        {chartData.length} data points
+        📊 Total equity (cash + market value) from your first trade to today • {chartData.length} data points
       </p>
     </div>
   );
@@ -601,6 +667,7 @@ export default function SimulatorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMarketValue, setCurrentMarketValue] = useState<number>(0);
+  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
   const [marketValueLoading, setMarketValueLoading] = useState(false);
   const [monthlyDividends, setMonthlyDividends] = useState<number>(0);
   const [activeTab, setActiveTab] = useState("trade");
@@ -622,44 +689,60 @@ export default function SimulatorPage() {
   const [tradeSuccess, setTradeSuccess] = useState<string | null>(null);
   const [dssNudge, setDssNudge] = useState<string | null>(null);
   const [showAllHoldings, setShowAllHoldings] = useState(false);
+  const [showProjections, setShowProjections] = useState(false);
 
   const fetchMarketValue = useCallback(async () => {
-    if (!portfolio || !Object.keys(portfolio.positions || {}).length) {
-      setCurrentMarketValue(0);
-      setMonthlyDividends(0);
-      return;
+  if (!portfolio || !Object.keys(portfolio.positions || {}).length) {
+    setCurrentMarketValue(0);
+    setMonthlyDividends(0);
+    setCurrentPrices({});
+    return;
+  }
+
+  try {
+    setMarketValueLoading(true);
+    const mtm = await mockInvestorApi.getMarkToMarket();
+
+    setCurrentMarketValue(Number(mtm.market_value || 0));
+    setCurrentPrices(mtm.prices || {});
+
+    let ann = 0;
+    for (const sym of Object.keys(portfolio.positions || {})) {
+      try {
+        const r = await fetch(`${MARKET_DATA_API}/company-info/${sym}`);
+        const d = await r.json();
+        const livePrice = Number(
+          mtm.prices?.[sym] || portfolio.positions[sym].avg_cost || 0
+        );
+
+        if (d.ok && d.data.dividend_yield) {
+          ann += portfolio.positions[sym].qty * livePrice * (d.data.dividend_yield / 100);
+        }
+      } catch {}
     }
 
-    try {
-      setMarketValueLoading(true);
-      const mtm = await mockInvestorApi.getMarkToMarket();
-      setCurrentMarketValue(mtm.market_value || 0);
+    setMonthlyDividends(ann / 12);
+  } catch {
+    const fallbackPrices = Object.fromEntries(
+      Object.entries(portfolio.positions || {}).map(([sym, pos]: [string, any]) => [
+        sym,
+        Number(pos.avg_cost || 0),
+      ])
+    );
 
-      let ann = 0;
-      for (const sym of Object.keys(portfolio.positions || {})) {
-        try {
-          const r = await fetch(`${MARKET_DATA_API}/company-info/${sym}`);
-          const d = await r.json();
-          if (d.ok && d.data.dividend_yield) {
-            ann +=
-              portfolio.positions[sym].qty *
-              (mtm.prices?.[sym] || portfolio.positions[sym].avg_cost) *
-              (d.data.dividend_yield / 100);
-          }
-        } catch {}
-      }
-      setMonthlyDividends(ann / 12);
-    } catch {
-      const fb = Object.values(portfolio.positions || {}).reduce(
-        (s: number, p: any) => s + p.qty * p.avg_cost,
-        0
-      );
-      setCurrentMarketValue(fb as number);
-      setMonthlyDividends(0);
-    } finally {
-      setMarketValueLoading(false);
-    }
-  }, [portfolio]);
+    const fallbackMarketValue = Object.entries(portfolio.positions || {}).reduce(
+      (sum: number, [sym, pos]: [string, any]) =>
+        sum + Number(pos.qty || 0) * Number(fallbackPrices[sym] || pos.avg_cost || 0),
+      0
+    );
+
+    setCurrentPrices(fallbackPrices);
+    setCurrentMarketValue(fallbackMarketValue);
+    setMonthlyDividends(0);
+  } finally {
+    setMarketValueLoading(false);
+  }
+}, [portfolio]);
 
   useEffect(() => {
     fetchMarketValue();
@@ -824,6 +907,18 @@ export default function SimulatorPage() {
   const cashBalance = portfolio?.cash ?? 100000;
   const positions = portfolio?.positions ?? {};
   const positionSymbols = Object.keys(positions);
+  const getHoldingMetrics = (sym: string) => {
+  const pos = positions[sym];
+  const qty = Number(pos?.qty || 0);
+  const avgCost = Number(pos?.avg_cost || 0);
+  const livePrice = Number(currentPrices[sym] ?? avgCost);
+
+  const marketValue = qty * livePrice;
+  const costBasis = qty * avgCost;
+  const gainLoss = marketValue - costBasis;
+
+  return { qty, avgCost, livePrice, marketValue, costBasis, gainLoss };
+};
   const totalEquity = cashBalance + currentMarketValue;
   const totalGain = totalEquity - 100000;
   const percentageGain = (totalGain / 100000) * 100;
@@ -921,29 +1016,41 @@ export default function SimulatorPage() {
                   </div>
                   <div className="space-y-2">
                     {visibleHoldings.map((sym) => {
-                      const pos = positions[sym];
-                      return (
-                        <button
-                          key={sym}
-                          onClick={() => setSelectedAsset(sym)}
-                          className="w-full flex items-center justify-between p-3 rounded-xl ring-1 hover:bg-slate-50 transition-colors"
-                          style={{ borderColor: COLORS.cardBorder }}
-                        >
-                          <div className="text-left">
-                            <p className="font-semibold" style={{ color: COLORS.primary }}>
-                              {sym}
-                            </p>
-                            <p className="text-xs text-slate-500">{pos.qty} shares</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-slate-900">
-                              ${(pos.qty * pos.avg_cost).toFixed(2)}
-                            </p>
-                            <p className="text-xs text-slate-400">View →</p>
-                          </div>
-                        </button>
-                      );
-                    })}
+  const { qty, marketValue, gainLoss } = getHoldingMetrics(sym);
+
+  return (
+    <button
+      key={sym}
+      onClick={() => setSelectedAsset(sym)}
+      className="w-full flex items-center justify-between p-3 rounded-xl ring-1 hover:bg-slate-50 transition-colors"
+      style={{ borderColor: COLORS.cardBorder }}
+    >
+      <div className="text-left">
+        <p className="font-semibold" style={{ color: COLORS.primary }}>
+          {sym}
+        </p>
+        <p className="text-xs text-slate-500">{qty} shares</p>
+      </div>
+
+      <div className="text-right">
+        <p className="font-semibold text-slate-900">
+          ${marketValue.toFixed(2)}
+        </p>
+        <p
+          className={`text-xs font-semibold ${
+            gainLoss > 0
+              ? "text-emerald-600"
+              : gainLoss < 0
+              ? "text-red-500"
+              : "text-slate-400"
+          }`}
+        >
+          {gainLoss > 0 ? "+" : ""}${gainLoss.toFixed(2)}
+        </p>
+      </div>
+    </button>
+  );
+})}
                   </div>
                   {positionSymbols.length > COLLAPSED_LIMIT && (
                     <button
@@ -1504,9 +1611,59 @@ export default function SimulatorPage() {
 
               {activeTab === "portfolio" && (
                 <div className="space-y-6">
-                  <Card title="Portfolio Value Over Time" icon="📈">
-                    <PortfolioValueChart portfolio={portfolio} />
-                  </Card>
+                  <Card title="Portfolio Value & Projections" icon="📈">
+  <PortfolioValueChart
+    portfolio={portfolio}
+    liveTotalEquity={totalEquity}
+  />
+
+  <div className="mt-6 pt-6 border-t" style={{ borderColor: COLORS.cardBorder }}>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-lg font-bold text-slate-900">🔮 Future Projections</p>
+        <p className="text-sm text-slate-500">
+          Projecting your $
+          {currentMarketValue.toLocaleString("en-US", {
+            maximumFractionDigits: 0,
+          })}{" "}
+          in invested assets
+        </p>
+      </div>
+
+      <button
+        onClick={() => setShowProjections((prev) => !prev)}
+        className="px-5 py-2 rounded-xl font-semibold bg-slate-100 hover:bg-slate-200 transition-colors"
+      >
+        {showProjections ? "Hide Projections" : "Show Projections"}
+      </button>
+    </div>
+
+    {showProjections && (
+      <div className="mt-6">
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="font-semibold text-amber-900 mb-1">
+                Educational Projections Only
+              </p>
+              <p className="text-sm text-amber-800">
+                These projections are based on historical market averages
+                (5–10% annual returns).{" "}
+                <strong>Past performance does not guarantee future results.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <FutureProjectionsChart
+          investedValue={currentMarketValue}
+          cashBalance={cashBalance}
+        />
+      </div>
+    )}
+  </div>
+</Card>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card title="Portfolio Allocation" icon="🥧">
                       <PortfolioAllocationChart positions={positions} />
@@ -1522,30 +1679,43 @@ export default function SimulatorPage() {
                         ) : (
                           <div className="space-y-2">
                             {positionSymbols.map((sym) => {
-                              const pos = positions[sym];
-                              return (
-                                <div
-                                  key={sym}
-                                  className="flex justify-between items-center p-3 rounded-lg bg-slate-50"
-                                >
-                                  <div>
-                                    <button
-                                      onClick={() => setSelectedAsset(sym)}
-                                      className="font-semibold hover:underline cursor-pointer"
-                                      style={{ color: COLORS.primary }}
-                                    >
-                                      {sym}
-                                    </button>
-                                    <p className="text-xs text-slate-500">
-                                      {pos.qty} shares @ ${pos.avg_cost.toFixed(2)}
-                                    </p>
-                                  </div>
-                                  <p className="font-bold text-slate-900">
-                                    ${(pos.qty * pos.avg_cost).toFixed(2)}
-                                  </p>
-                                </div>
-                              );
-                            })}
+  const { qty, avgCost, marketValue, gainLoss } = getHoldingMetrics(sym);
+
+  return (
+    <div
+      key={sym}
+      className="flex justify-between items-center p-3 rounded-lg bg-slate-50"
+    >
+      <div>
+        <button
+          onClick={() => setSelectedAsset(sym)}
+          className="font-semibold hover:underline cursor-pointer"
+          style={{ color: COLORS.primary }}
+        >
+          {sym}
+        </button>
+        <p className="text-xs text-slate-500">
+          {qty} shares @ ${avgCost.toFixed(2)}
+        </p>
+      </div>
+
+      <div className="text-right">
+        <p className="font-bold text-slate-900">${marketValue.toFixed(2)}</p>
+        <p
+          className={`text-xs font-semibold ${
+            gainLoss > 0
+              ? "text-emerald-600"
+              : gainLoss < 0
+              ? "text-red-500"
+              : "text-slate-400"
+          }`}
+        >
+          {gainLoss > 0 ? "+" : ""}${gainLoss.toFixed(2)}
+        </p>
+      </div>
+    </div>
+  );
+})}
                           </div>
                         )}
                       </Card>
@@ -1639,28 +1809,6 @@ export default function SimulatorPage() {
 
               {activeTab === "history" && (
                 <div className="space-y-6">
-                  <Card title="Future Portfolio Projections" icon="🔮">
-                    <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">⚠️</span>
-                        <div>
-                          <p className="font-semibold text-amber-900 mb-1">
-                            Educational Projections Only
-                          </p>
-                          <p className="text-sm text-amber-800">
-                            These projections are based on historical market averages
-                            (5–10% annual returns).{" "}
-                            <strong>Past performance does not guarantee future results.</strong>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <FutureProjectionsChart
-                      investedValue={currentMarketValue}
-                      cashBalance={cashBalance}
-                    />
-                  </Card>
-
                   <Card title="Transaction History" icon="📋">
                     {!portfolio?.history || portfolio.history.length === 0 ? (
                       <div className="text-center py-12">
